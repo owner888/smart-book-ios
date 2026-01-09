@@ -14,7 +14,7 @@ struct ReaderSettingsView: View {
                 // MARK: - 显示设置
                 Section {
                     // 字体大小
-                    SettingsRow(icon: "textformat.size", iconColor: .blue, title: "字体大小") {
+                    SettingsRow(icon: "textformat.size", iconColor: .teal, title: "字体大小") {
                         Stepper("\(Int(settings.fontSize))", value: $settings.fontSize, in: 14...28, step: 1)
                             .labelsHidden()
                     }
@@ -208,7 +208,7 @@ struct BackgroundColorButton: View {
                         .frame(width: 50, height: 50)
                         .overlay(
                             Circle()
-                                .stroke(isSelected ? Color.blue : Color.gray.opacity(0.4), lineWidth: isSelected ? 3 : 1)
+                                .stroke(isSelected ? Color.green : Color.gray.opacity(0.4), lineWidth: isSelected ? 3 : 1)
                         )
                     
                     Image(systemName: option.icon)
@@ -218,7 +218,7 @@ struct BackgroundColorButton: View {
                 
                 Text(option.name)
                     .font(.caption2)
-                    .foregroundColor(isSelected ? .blue : .gray)
+                    .foregroundColor(isSelected ? .green : .gray)
             }
         }
         .buttonStyle(.plain)

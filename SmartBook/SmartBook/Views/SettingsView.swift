@@ -14,7 +14,7 @@ struct SettingsView: View {
             List {
                 // 服务器设置
                 Section {
-                    SettingsRow(icon: "server.rack", iconColor: .blue, title: apiBaseURL) {
+                    SettingsRow(icon: "server.rack", iconColor: .teal, title: apiBaseURL) {
                         EmptyView()
                     }
                     .contextMenu {
@@ -49,7 +49,7 @@ struct SettingsView: View {
                                 .foregroundColor(.gray)
                         }
                         Slider(value: $ttsRate, in: 0.5...2.0, step: 0.1)
-                            .tint(.blue)
+                            .tint(.white)
                     }
                     
                     // 语音选择

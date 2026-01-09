@@ -17,14 +17,14 @@ struct TOCView: View {
                     } label: {
                         HStack {
                             Text(chapter.title)
-                                .foregroundColor(index == currentIndex ? .blue : .primary)
+                                .foregroundColor(index == currentIndex ? .green : .primary)
                                 .lineLimit(2)
                             
                             Spacer()
                             
                             if index == currentIndex {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.green)
                             }
                         }
                     }

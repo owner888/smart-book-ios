@@ -1,4 +1,4 @@
-// ChatView.swift - AI 对话视图（支持语音对话）
+// ChatView.swift - AI 对话视图（iOS 暗黑风格）
 
 import SwiftUI
 
@@ -12,13 +12,8 @@ struct ChatView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 背景
-                LinearGradient(
-                    colors: [Color(hex: "1a1a2e"), Color(hex: "16213e")],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // 纯黑色背景
+                Color.black.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // 当前书籍提示
@@ -61,6 +56,8 @@ struct ChatView: View {
             }
             .navigationTitle("AI 对话")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .scrollDismissesKeyboard(.interactively)
             .onTapGesture {
                 // 点击空白处收起键盘
@@ -77,6 +74,7 @@ struct ChatView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
+                            .foregroundColor(.white)
                     }
                 }
             }
@@ -160,7 +158,7 @@ struct BookContextBar: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
+        .background(Color(white: 0.11))
     }
 }
 
@@ -179,11 +177,13 @@ struct MessageBubble: View {
                     .padding(12)
                     .background {
                         if message.role == .user {
+                            // 用户消息：深灰色背景
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.blue.opacity(0.8))
+                                .fill(Color(white: 0.25))
                         } else {
+                            // AI 消息：更深的灰色
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(.ultraThinMaterial)
+                                .fill(Color(white: 0.15))
                         }
                     }
                     .foregroundColor(.white)
@@ -228,8 +228,9 @@ struct InputBar: View {
                 .padding(12)
                 .background {
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
+                        .fill(Color(white: 0.15))
                 }
+                .foregroundColor(.white)
                 .focused(isFocused)
                 .lineLimit(1...5)
             
@@ -238,7 +239,7 @@ struct InputBar: View {
                 Button(action: onVoice) {
                     Image(systemName: speechService.isRecording ? "stop.circle.fill" : "mic.circle")
                         .font(.title2)
-                        .foregroundColor(speechService.isRecording ? .red : .blue)
+                        .foregroundColor(speechService.isRecording ? .red : .gray)
                         .symbolEffect(.bounce, value: speechService.isRecording)
                 }
             } else {
@@ -257,7 +258,7 @@ struct InputBar: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
+        .background(Color(white: 0.11))
     }
 }
 

@@ -1,4 +1,4 @@
-// ContentView.swift - 主视图（Liquid Glass 风格）
+// ContentView.swift - 主视图（iOS 暗黑风格）
 
 import SwiftUI
 import UniformTypeIdentifiers
@@ -30,7 +30,7 @@ struct ContentView: View {
                 }
                 .tag(2)
         }
-        .tint(.white)
+        .preferredColorScheme(.dark)
     }
 }
 
@@ -50,13 +50,8 @@ struct BookshelfView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // 背景渐变
-                LinearGradient(
-                    colors: [Color(hex: "1a1a2e"), Color(hex: "16213e")],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                // 纯黑色背景
+                Color.black.ignoresSafeArea()
                 
                 if isLoading {
                     // 加载中状态
@@ -152,6 +147,8 @@ struct BookshelfView: View {
                 }
             }
             .navigationTitle("书架")
+            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -254,7 +251,7 @@ struct BookshelfView: View {
     }
 }
 
-// MARK: - 书籍卡片（Liquid Glass 风格）
+// MARK: - 书籍卡片（iOS 暗黑风格）
 struct BookCard: View {
     let book: Book
     var isUserImported: Bool = false
@@ -293,10 +290,9 @@ struct BookCard: View {
         }
         .padding(12)
         .background {
-            // Liquid Glass 效果
+            // 深灰色卡片背景
             RoundedRectangle(cornerRadius: 16)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
+                .fill(Color(white: 0.11))
         }
     }
     
@@ -332,7 +328,7 @@ struct BookCard: View {
     /// 占位封面
     var placeholderCover: some View {
         Rectangle()
-            .fill(Color.gray.opacity(0.3))
+            .fill(Color(white: 0.2))
             .overlay {
                 Image(systemName: "book.closed")
                     .font(.largeTitle)
