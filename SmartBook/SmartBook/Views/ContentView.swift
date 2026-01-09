@@ -1,10 +1,11 @@
-// ContentView.swift - 主视图（iOS 暗黑风格）
+// ContentView.swift - 主视图（支持主题切换）
 
 import SwiftUI
 import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Environment(AppState.self) var appState
+    @Environment(ThemeManager.self) var themeManager
     @State private var selectedTab = 0
     
     var body: some View {
@@ -30,13 +31,13 @@ struct ContentView: View {
                 }
                 .tag(2)
         }
-        .preferredColorScheme(.dark)
     }
 }
 
 // MARK: - 书架视图
 struct BookshelfView: View {
     @Environment(AppState.self) var appState
+    @Environment(ThemeManager.self) var themeManager
     @State private var books: [Book] = []
     @State private var searchText = ""
     @State private var isLoading = false
@@ -47,33 +48,34 @@ struct BookshelfView: View {
     @State private var showingError = false
     @State private var selectedBookForReading: Book?
     
+    private var colors: ThemeColors {
+        themeManager.colors
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack {
-                // 纯黑色背景
-                Color.black.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 
                 if isLoading {
-                    // 加载中状态
                     VStack(spacing: 16) {
                         ProgressView()
                             .scaleEffect(1.5)
-                            .tint(.white)
+                            .tint(colors.primaryText)
                         Text("正在加载书籍...")
-                            .foregroundColor(.gray)
+                            .foregroundColor(colors.secondaryText)
                     }
                 } else if books.isEmpty {
-                    // 空状态
                     VStack(spacing: 20) {
                         Image(systemName: "books.vertical")
                             .font(.system(size: 60))
-                            .foregroundColor(.gray)
+                            .foregroundColor(colors.secondaryText)
                         Text("暂无书籍")
                             .font(.headline)
-                            .foregroundColor(.gray)
+                            .foregroundColor(colors.secondaryText)
                         Text("点击右上角 + 按钮导入 epub 书籍")
                             .font(.caption)
-                            .foregroundColor(.gray.opacity(0.7))
+                            .foregroundColor(colors.secondaryText.opacity(0.7))
                         
                         Button {
                             showingImporter = true
@@ -89,11 +91,10 @@ struct BookshelfView: View {
                     }
                 } else {
                     ScrollView {
-                        // 书籍数量统计
                         HStack {
                             Text("共 \(filteredBooks.count) 本书")
                                 .font(.subheadline)
-                                .foregroundColor(.gray)
+                                .foregroundColor(colors.secondaryText)
                             Spacer()
                         }
                         .padding(.horizontal)
@@ -104,9 +105,8 @@ struct BookshelfView: View {
                             GridItem(.flexible())
                         ], spacing: 16) {
                             ForEach(filteredBooks) { book in
-                                BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book))
+                                BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book), colors: colors)
                                     .onTapGesture {
-                                        // 如果有文件路径，打开阅读器
                                         if book.filePath != nil {
                                             selectedBookForReading = book
                                         } else {
@@ -114,7 +114,6 @@ struct BookshelfView: View {
                                         }
                                     }
                                     .contextMenu {
-                                        // 阅读
                                         if book.filePath != nil {
                                             Button {
                                                 selectedBookForReading = book
@@ -123,14 +122,12 @@ struct BookshelfView: View {
                                             }
                                         }
                                         
-                                        // AI 对话
                                         Button {
                                             appState.selectedBook = book
                                         } label: {
                                             Label("AI 对话", systemImage: "bubble.left.and.bubble.right")
                                         }
                                         
-                                        // 删除
                                         if appState.bookService.isUserImportedBook(book) {
                                             Button(role: .destructive) {
                                                 bookToDelete = book
@@ -147,7 +144,7 @@ struct BookshelfView: View {
                 }
             }
             .navigationTitle("书架")
-            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarBackground(colors.navigationBar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -155,7 +152,7 @@ struct BookshelfView: View {
                         showingImporter = true
                     } label: {
                         Image(systemName: "plus")
-                            .foregroundColor(.white)
+                            .foregroundColor(colors.primaryText)
                     }
                 }
             }
@@ -212,7 +209,6 @@ struct BookshelfView: View {
             books = try await appState.bookService.fetchBooks()
         } catch {
             appState.errorMessage = error.localizedDescription
-            // 如果 API 失败，尝试直接加载本地书籍
             books = appState.bookService.loadLocalBooks()
         }
         isLoading = false
@@ -251,20 +247,19 @@ struct BookshelfView: View {
     }
 }
 
-// MARK: - 书籍卡片（iOS 暗黑风格）
+// MARK: - 书籍卡片
 struct BookCard: View {
     let book: Book
     var isUserImported: Bool = false
+    var colors: ThemeColors = .dark
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // 封面
             ZStack(alignment: .topTrailing) {
                 coverImage
                     .frame(height: 180)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 
-                // 用户导入标识
                 if isUserImported {
                     Text("已导入")
                         .font(.caption2)
@@ -277,31 +272,26 @@ struct BookCard: View {
                 }
             }
             
-            // 标题
             Text(book.title)
                 .font(.headline)
                 .lineLimit(2)
-                .foregroundColor(.white)
+                .foregroundColor(colors.primaryText)
             
-            // 作者
             Text(book.author)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(colors.secondaryText)
         }
         .padding(12)
         .background {
-            // 深灰色卡片背景
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(white: 0.11))
+                .fill(colors.cardBackground)
         }
     }
     
-    /// 封面图片视图
     @ViewBuilder
     var coverImage: some View {
         if let coverURLString = book.coverURL,
            let coverURL = URL(string: coverURLString) {
-            // 本地文件封面
             if coverURL.isFileURL {
                 if let uiImage = UIImage(contentsOfFile: coverURL.path) {
                     Image(uiImage: uiImage)
@@ -311,7 +301,6 @@ struct BookCard: View {
                     placeholderCover
                 }
             } else {
-                // 网络封面
                 AsyncImage(url: coverURL) { image in
                     image
                         .resizable()
@@ -325,14 +314,13 @@ struct BookCard: View {
         }
     }
     
-    /// 占位封面
     var placeholderCover: some View {
         Rectangle()
-            .fill(Color(white: 0.2))
+            .fill(colors.inputBackground)
             .overlay {
                 Image(systemName: "book.closed")
                     .font(.largeTitle)
-                    .foregroundColor(.gray)
+                    .foregroundColor(colors.secondaryText)
             }
     }
 }
@@ -345,11 +333,11 @@ extension Color {
         Scanner(string: hex).scanHexInt64(&int)
         let a, r, g, b: UInt64
         switch hex.count {
-        case 3: // RGB (12-bit)
+        case 3:
             (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
+        case 6:
             (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
+        case 8:
             (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
         default:
             (a, r, g, b) = (1, 1, 1, 0)
@@ -367,4 +355,5 @@ extension Color {
 #Preview {
     ContentView()
         .environment(AppState())
+        .environment(ThemeManager.shared)
 }

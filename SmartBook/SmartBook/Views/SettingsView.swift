@@ -1,20 +1,47 @@
-// SettingsView.swift - 设置视图（iOS 深色系统设置风格）
+// SettingsView.swift - 设置视图（支持主题切换）
 
 import SwiftUI
 internal import AVFAudio
 
 struct SettingsView: View {
     @Environment(AppState.self) var appState
+    @Environment(ThemeManager.self) var themeManager
     @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:8080"
     @AppStorage("autoTTS") private var autoTTS = true
     @AppStorage("ttsRate") private var ttsRate = 1.0
     
+    private var colors: ThemeColors {
+        themeManager.colors
+    }
+    
     var body: some View {
         NavigationStack {
             List {
+                // 外观设置
+                Section {
+                    // 主题选择
+                    HStack(spacing: 12) {
+                        SettingsIcon(icon: "paintbrush", color: .purple)
+                        Text("外观")
+                            .foregroundColor(colors.primaryText)
+                        Spacer()
+                        Picker("", selection: Bindable(themeManager).themeMode) {
+                            ForEach(AppThemeMode.allCases, id: \.self) { mode in
+                                Label(mode.name, systemImage: mode.icon).tag(mode)
+                            }
+                        }
+                        .labelsHidden()
+                        .tint(colors.secondaryText)
+                    }
+                } header: {
+                    Text("外观")
+                        .foregroundColor(colors.secondaryText)
+                }
+                .listRowBackground(colors.cardBackground)
+                
                 // 服务器设置
                 Section {
-                    SettingsRow(icon: "server.rack", iconColor: .teal, title: apiBaseURL) {
+                    SettingsRow(icon: "server.rack", iconColor: .teal, title: apiBaseURL, colors: colors) {
                         EmptyView()
                     }
                     .contextMenu {
@@ -22,9 +49,9 @@ struct SettingsView: View {
                     }
                 } header: {
                     Text("服务器")
-                        .foregroundColor(.gray)
+                        .foregroundColor(colors.secondaryText)
                 }
-                .listRowBackground(Color(white: 0.11))
+                .listRowBackground(colors.cardBackground)
                 
                 // 语音设置
                 Section {
@@ -32,7 +59,7 @@ struct SettingsView: View {
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "speaker.wave.2", color: .orange)
                         Text("自动朗读 AI 回复")
-                            .foregroundColor(.white)
+                            .foregroundColor(colors.primaryText)
                         Spacer()
                         Toggle("", isOn: $autoTTS)
                             .labelsHidden()
@@ -43,13 +70,13 @@ struct SettingsView: View {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "speedometer", color: .green)
                             Text("语速")
-                                .foregroundColor(.white)
+                                .foregroundColor(colors.primaryText)
                             Spacer()
                             Text(String(format: "%.1fx", ttsRate))
-                                .foregroundColor(.gray)
+                                .foregroundColor(colors.secondaryText)
                         }
                         Slider(value: $ttsRate, in: 0.5...2.0, step: 0.1)
-                            .tint(.white)
+                            .tint(.green)
                     }
                     
                     // 语音选择
@@ -59,48 +86,47 @@ struct SettingsView: View {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "waveform", color: .purple)
                             Text("选择语音")
-                                .foregroundColor(.white)
+                                .foregroundColor(colors.primaryText)
                         }
                     }
                 } header: {
                     Text("语音")
-                        .foregroundColor(.gray)
+                        .foregroundColor(colors.secondaryText)
                 }
-                .listRowBackground(Color(white: 0.11))
+                .listRowBackground(colors.cardBackground)
                 
                 // 关于
                 Section {
-                    SettingsRow(icon: "info.circle", iconColor: .cyan, title: "版本") {
+                    SettingsRow(icon: "info.circle", iconColor: .cyan, title: "版本", colors: colors) {
                         Text("1.0.0")
-                            .foregroundColor(.gray)
+                            .foregroundColor(colors.secondaryText)
                     }
                     
                     Link(destination: URL(string: "https://github.com")!) {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "link", color: .pink)
                             Text("GitHub")
-                                .foregroundColor(.white)
+                                .foregroundColor(colors.primaryText)
                             Spacer()
                             Image(systemName: "arrow.up.right")
-                                .foregroundColor(.gray)
+                                .foregroundColor(colors.secondaryText)
                                 .font(.caption)
                         }
                     }
                 } header: {
                     Text("关于")
-                        .foregroundColor(.gray)
+                        .foregroundColor(colors.secondaryText)
                 }
-                .listRowBackground(Color(white: 0.11))
+                .listRowBackground(colors.cardBackground)
             }
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
-            .background(Color.black)
+            .background(colors.background.ignoresSafeArea())
             .navigationTitle("设置")
             .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarBackground(colors.navigationBar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
         }
-        .preferredColorScheme(.dark)
         .onChange(of: ttsRate) { _, newValue in
             appState.ttsService.rate = Float(newValue)
         }
@@ -127,13 +153,14 @@ struct SettingsRow<Content: View>: View {
     let icon: String
     let iconColor: Color
     let title: String
+    var colors: ThemeColors = .dark
     @ViewBuilder let content: () -> Content
     
     var body: some View {
         HStack(spacing: 12) {
             SettingsIcon(icon: icon, color: iconColor)
             Text(title)
-                .foregroundColor(.white)
+                .foregroundColor(colors.primaryText)
             Spacer()
             content()
         }
@@ -143,7 +170,12 @@ struct SettingsRow<Content: View>: View {
 // MARK: - 语音选择视图
 struct VoiceSelectionView: View {
     @Environment(AppState.self) var appState
+    @Environment(ThemeManager.self) var themeManager
     @State private var selectedVoiceId: String = ""
+    
+    private var colors: ThemeColors {
+        themeManager.colors
+    }
     
     var body: some View {
         List(appState.ttsService.availableVoices, id: \.identifier) { voice in
@@ -151,10 +183,10 @@ struct VoiceSelectionView: View {
                 VStack(alignment: .leading) {
                     Text(voice.name)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(colors.primaryText)
                     Text(voice.language)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundColor(colors.secondaryText)
                 }
                 
                 Spacer()
@@ -169,13 +201,13 @@ struct VoiceSelectionView: View {
                 selectedVoiceId = voice.identifier
                 appState.ttsService.selectedVoice = voice
             }
-            .listRowBackground(Color(white: 0.11))
+            .listRowBackground(colors.cardBackground)
         }
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
-        .background(Color.black)
+        .background(colors.background.ignoresSafeArea())
         .navigationTitle("选择语音")
-        .toolbarBackground(Color.black, for: .navigationBar)
+        .toolbarBackground(colors.navigationBar, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .onAppear {
             selectedVoiceId = appState.ttsService.selectedVoice?.identifier ?? ""
@@ -186,4 +218,5 @@ struct VoiceSelectionView: View {
 #Preview {
     SettingsView()
         .environment(AppState())
+        .environment(ThemeManager.shared)
 }

@@ -1,17 +1,19 @@
 // SmartBook iOS App - 主入口
-// iOS 18+ / SwiftUI / Liquid Glass Design
+// iOS 18+ / SwiftUI / 支持暗黑/浅色主题
 
 import SwiftUI
 
 @main
 struct SmartBookApp: App {
     @State private var appState = AppState()
+    @State private var themeManager = ThemeManager.shared
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(appState)
-                .preferredColorScheme(.dark)
+                .environment(themeManager)
+                .preferredColorScheme(themeManager.colorScheme)
         }
     }
 }

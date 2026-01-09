@@ -1,24 +1,28 @@
-// ChatView.swift - AI 对话视图（iOS 暗黑风格）
+// ChatView.swift - AI 对话视图（支持主题切换）
 
 import SwiftUI
 
 struct ChatView: View {
     @Environment(AppState.self) var appState
+    @Environment(ThemeManager.self) var themeManager
     @State private var viewModel = ChatViewModel()
     @State private var inputText = ""
     @State private var isConversationMode = false
     @FocusState private var isInputFocused: Bool
     
+    private var colors: ThemeColors {
+        themeManager.colors
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack {
-                // 纯黑色背景
-                Color.black.ignoresSafeArea()
+                colors.background.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
                     // 当前书籍提示
                     if let book = appState.selectedBook {
-                        BookContextBar(book: book)
+                        BookContextBar(book: book, colors: colors)
                     }
                     
                     // 消息列表
@@ -26,7 +30,7 @@ struct ChatView: View {
                         ScrollView {
                             LazyVStack(spacing: 12) {
                                 ForEach(viewModel.messages) { message in
-                                    MessageBubble(message: message)
+                                    MessageBubble(message: message, colors: colors)
                                         .id(message.id)
                                 }
                             }
@@ -48,6 +52,7 @@ struct ChatView: View {
                         isFocused: $isInputFocused,
                         isLoading: viewModel.isLoading,
                         speechService: appState.speechService,
+                        colors: colors,
                         onSend: sendMessage,
                         onVoice: toggleVoiceInput,
                         onConversation: toggleConversationMode
@@ -56,11 +61,10 @@ struct ChatView: View {
             }
             .navigationTitle("AI 对话")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(Color.black, for: .navigationBar)
+            .toolbarBackground(colors.navigationBar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .scrollDismissesKeyboard(.interactively)
             .onTapGesture {
-                // 点击空白处收起键盘
                 isInputFocused = false
             }
             .toolbar {
@@ -74,7 +78,7 @@ struct ChatView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .foregroundColor(.white)
+                            .foregroundColor(colors.primaryText)
                     }
                 }
             }
@@ -94,10 +98,8 @@ struct ChatView: View {
         Task {
             await viewModel.sendMessage(text)
             
-            // 对话模式：自动播放 TTS
             if isConversationMode, let lastMessage = viewModel.messages.last, lastMessage.role == .assistant {
                 await appState.ttsService.speak(lastMessage.content)
-                // TTS 完成后继续监听
                 startVoiceInput()
             }
         }
@@ -117,7 +119,6 @@ struct ChatView: View {
         } onFinal: { finalResult in
             inputText = finalResult
             if isConversationMode {
-                // 对话模式：自动发送
                 sendMessage()
             }
         }
@@ -137,6 +138,7 @@ struct ChatView: View {
 // MARK: - 书籍上下文栏
 struct BookContextBar: View {
     let book: Book
+    var colors: ThemeColors = .dark
     
     var body: some View {
         HStack(spacing: 8) {
@@ -145,7 +147,7 @@ struct BookContextBar: View {
             
             Text("正在阅读: \(book.title)")
                 .font(.caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(colors.primaryText.opacity(0.8))
             
             Spacer()
             
@@ -153,18 +155,19 @@ struct BookContextBar: View {
                 // 清除选择
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.gray)
+                    .foregroundColor(colors.secondaryText)
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(Color(white: 0.11))
+        .background(colors.cardBackground)
     }
 }
 
 // MARK: - 消息气泡
 struct MessageBubble: View {
     let message: ChatMessage
+    var colors: ThemeColors = .dark
     
     var body: some View {
         HStack {
@@ -177,21 +180,18 @@ struct MessageBubble: View {
                     .padding(12)
                     .background {
                         if message.role == .user {
-                            // 用户消息：深灰色背景
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(white: 0.25))
+                                .fill(colors.userBubble)
                         } else {
-                            // AI 消息：更深的灰色
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(white: 0.15))
+                                .fill(colors.assistantBubble)
                         }
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(colors.primaryText)
                 
-                // 时间戳
                 Text(message.timestamp, style: .time)
                     .font(.caption2)
-                    .foregroundColor(.gray)
+                    .foregroundColor(colors.secondaryText)
             }
             
             if message.role == .assistant {
@@ -208,6 +208,7 @@ struct InputBar: View {
     var isFocused: FocusState<Bool>.Binding
     let isLoading: Bool
     let speechService: SpeechService
+    var colors: ThemeColors = .dark
     let onSend: () -> Void
     let onVoice: () -> Void
     let onConversation: () -> Void
@@ -218,7 +219,7 @@ struct InputBar: View {
             Button(action: onConversation) {
                 Image(systemName: isConversationMode ? "waveform.circle.fill" : "plus.circle")
                     .font(.title2)
-                    .foregroundColor(isConversationMode ? .green : .gray)
+                    .foregroundColor(isConversationMode ? .green : colors.secondaryText)
                     .symbolEffect(.pulse, isActive: isConversationMode)
             }
             
@@ -228,9 +229,9 @@ struct InputBar: View {
                 .padding(12)
                 .background {
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(Color(white: 0.15))
+                        .fill(colors.inputBackground)
                 }
-                .foregroundColor(.white)
+                .foregroundColor(colors.primaryText)
                 .focused(isFocused)
                 .lineLimit(1...5)
             
@@ -239,14 +240,14 @@ struct InputBar: View {
                 Button(action: onVoice) {
                     Image(systemName: speechService.isRecording ? "stop.circle.fill" : "mic.circle")
                         .font(.title2)
-                        .foregroundColor(speechService.isRecording ? .red : .gray)
+                        .foregroundColor(speechService.isRecording ? .red : colors.secondaryText)
                         .symbolEffect(.bounce, value: speechService.isRecording)
                 }
             } else {
                 Button(action: onSend) {
                     if isLoading {
                         ProgressView()
-                            .tint(.white)
+                            .tint(colors.primaryText)
                     } else {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.title2)
@@ -258,7 +259,7 @@ struct InputBar: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(Color(white: 0.11))
+        .background(colors.cardBackground)
     }
 }
 
@@ -274,7 +275,6 @@ class ChatViewModel {
     func sendMessage(_ text: String) async {
         guard let appState = appState else { return }
         
-        // 添加用户消息
         let userMessage = ChatMessage(role: .user, content: text)
         messages.append(userMessage)
         
@@ -306,4 +306,5 @@ class ChatViewModel {
 #Preview {
     ChatView()
         .environment(AppState())
+        .environment(ThemeManager.shared)
 }
