@@ -9,6 +9,7 @@ struct ChatView: View {
     @State private var viewModel = ChatViewModel()
     @State private var inputText = ""
     @State private var isConversationMode = false
+    @State private var showBookPicker = false
     @FocusState private var isInputFocused: Bool
     
     private var colors: ThemeColors {
@@ -23,7 +24,12 @@ struct ChatView: View {
                 VStack(spacing: 0) {
                     // 当前书籍提示
                     if let book = appState.selectedBook {
-                        BookContextBar(book: book, colors: colors)
+                        BookContextBar(book: book, colors: colors) {
+                            // 清除选择的书籍
+                            withAnimation {
+                                appState.selectedBook = nil
+                            }
+                        }
                     }
                     
                     // 消息列表
@@ -71,16 +77,35 @@ struct ChatView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button("清空对话", systemImage: "trash") {
-                            viewModel.clearMessages()
-                        }
                         Button("选择书籍", systemImage: "book") {
-                            // TODO: 选择书籍
+                            showBookPicker = true
+                        }
+                        
+                        if appState.selectedBook != nil {
+                            Button("取消选择书籍", systemImage: "book.closed") {
+                                withAnimation {
+                                    appState.selectedBook = nil
+                                }
+                            }
+                        }
+                        
+                        Divider()
+                        
+                        Button("清空对话", systemImage: "trash", role: .destructive) {
+                            viewModel.clearMessages()
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .foregroundColor(colors.primaryText)
                     }
+                }
+            }
+            .sheet(isPresented: $showBookPicker) {
+                BookPickerView(colors: colors) { book in
+                    withAnimation {
+                        appState.selectedBook = book
+                    }
+                    showBookPicker = false
                 }
             }
         }
@@ -140,6 +165,7 @@ struct ChatView: View {
 struct BookContextBar: View {
     let book: Book
     var colors: ThemeColors = .dark
+    var onClear: () -> Void
     
     var body: some View {
         HStack(spacing: 8) {
@@ -149,12 +175,11 @@ struct BookContextBar: View {
             Text("正在阅读: \(book.title)")
                 .font(.caption)
                 .foregroundColor(colors.primaryText.opacity(0.8))
+                .lineLimit(1)
             
             Spacer()
             
-            Button {
-                // 清除选择
-            } label: {
+            Button(action: onClear) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(colors.secondaryText)
             }
