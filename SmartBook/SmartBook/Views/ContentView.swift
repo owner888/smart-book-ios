@@ -145,8 +145,7 @@ struct BookshelfView: View {
                 }
             }
             .navigationTitle("书架")
-            .toolbarBackground(colors.navigationBar, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {

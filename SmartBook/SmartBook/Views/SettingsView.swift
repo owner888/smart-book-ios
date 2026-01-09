@@ -145,8 +145,6 @@ struct SettingsView: View {
             .background(colors.background.ignoresSafeArea())
             .navigationTitle("设置")
             .navigationBarTitleDisplayMode(.large)
-            .toolbarBackground(colors.navigationBar, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
             .sheet(isPresented: $showServerEditor) {
                 ServerEditorView(url: $editingURL, colors: colors) { newURL in
                     apiBaseURL = newURL
