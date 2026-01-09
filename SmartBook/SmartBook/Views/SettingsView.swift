@@ -11,6 +11,9 @@ struct SettingsView: View {
     @AppStorage("autoTTS") private var autoTTS = true
     @AppStorage("ttsRate") private var ttsRate = 1.0
     
+    @State private var showServerEditor = false
+    @State private var editingURL = ""
+    
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
@@ -42,14 +45,31 @@ struct SettingsView: View {
                 
                 // 服务器设置
                 Section {
-                    SettingsRow(icon: "server.rack", iconColor: .teal, title: apiBaseURL, colors: colors) {
-                        EmptyView()
-                    }
-                    .contextMenu {
-                        Button("编辑") { }
+                    Button {
+                        editingURL = apiBaseURL
+                        showServerEditor = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "server.rack", color: .teal)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("服务器地址")
+                                    .foregroundColor(colors.primaryText)
+                                Text(apiBaseURL)
+                                    .font(.caption)
+                                    .foregroundColor(colors.secondaryText)
+                                    .lineLimit(1)
+                            }
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(colors.secondaryText)
+                        }
                     }
                 } header: {
                     Text("服务器")
+                        .foregroundColor(colors.secondaryText)
+                } footer: {
+                    Text("PHP 后端服务器地址，用于 AI 对话和书籍搜索")
                         .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
@@ -127,10 +147,146 @@ struct SettingsView: View {
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(colors.navigationBar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .sheet(isPresented: $showServerEditor) {
+                ServerEditorView(url: $editingURL, colors: colors) { newURL in
+                    apiBaseURL = newURL
+                    showServerEditor = false
+                }
+            }
         }
         .onChange(of: ttsRate) { _, newValue in
             appState.ttsService.rate = Float(newValue)
         }
+    }
+}
+
+// MARK: - 服务器地址编辑视图
+struct ServerEditorView: View {
+    @Binding var url: String
+    var colors: ThemeColors
+    let onSave: (String) -> Void
+    @Environment(\.dismiss) private var dismiss
+    @FocusState private var isFocused: Bool
+    @State private var isValid = true
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                colors.background.ignoresSafeArea()
+                
+                VStack(spacing: 20) {
+                    // 输入框
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("服务器地址")
+                            .font(.headline)
+                            .foregroundColor(colors.primaryText)
+                        
+                        TextField("http://localhost:8080", text: $url)
+                            .textFieldStyle(.plain)
+                            .keyboardType(.URL)
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled()
+                            .padding(12)
+                            .background(colors.cardBackground)
+                            .cornerRadius(10)
+                            .foregroundColor(colors.primaryText)
+                            .focused($isFocused)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10)
+                                    .stroke(isValid ? Color.clear : Color.red, lineWidth: 1)
+                            )
+                        
+                        if !isValid {
+                            Text("请输入有效的 URL 地址")
+                                .font(.caption)
+                                .foregroundColor(.red)
+                        }
+                    }
+                    .padding()
+                    .background(colors.cardBackground)
+                    .cornerRadius(12)
+                    
+                    // 常用地址
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("快捷设置")
+                            .font(.headline)
+                            .foregroundColor(colors.primaryText)
+                        
+                        ForEach(quickURLs, id: \.self) { quickURL in
+                            Button {
+                                url = quickURL
+                            } label: {
+                                HStack {
+                                    Text(quickURL)
+                                        .foregroundColor(colors.primaryText)
+                                    Spacer()
+                                    if url == quickURL {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(.green)
+                                    }
+                                }
+                                .padding(12)
+                                .background(colors.inputBackground)
+                                .cornerRadius(8)
+                            }
+                        }
+                    }
+                    .padding()
+                    .background(colors.cardBackground)
+                    .cornerRadius(12)
+                    
+                    Spacer()
+                }
+                .padding()
+            }
+            .navigationTitle("编辑服务器")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarBackground(colors.navigationBar, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("取消") {
+                        dismiss()
+                    }
+                    .foregroundColor(colors.primaryText)
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("保存") {
+                        if validateURL(url) {
+                            onSave(url)
+                        } else {
+                            isValid = false
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundColor(.green)
+                }
+            }
+            .onAppear {
+                isFocused = true
+            }
+            .onChange(of: url) { _, _ in
+                isValid = true
+            }
+        }
+    }
+    
+    private var quickURLs: [String] {
+        [
+            "http://localhost:8080",
+            "http://127.0.0.1:8080",
+            "http://192.168.1.100:8080"
+        ]
+    }
+    
+    private func validateURL(_ urlString: String) -> Bool {
+        guard let url = URL(string: urlString),
+              url.scheme == "http" || url.scheme == "https",
+              url.host != nil else {
+            return false
+        }
+        return true
     }
 }
 
