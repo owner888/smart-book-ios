@@ -3,7 +3,7 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
     @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:8080"
     @AppStorage("autoTTS") private var autoTTS = true
     @AppStorage("ttsRate") private var ttsRate = 1.0
@@ -87,7 +87,7 @@ struct SettingsView: View {
 
 // MARK: - 语音选择视图
 struct VoiceSelectionView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
     @State private var selectedVoiceId: String = ""
     
     var body: some View {
@@ -123,5 +123,5 @@ struct VoiceSelectionView: View {
 
 #Preview {
     SettingsView()
-        .environmentObject(AppState())
+        .environment(AppState())
 }

@@ -4,11 +4,11 @@ import Foundation
 import Speech
 import AVFoundation
 
-@MainActor
-class SpeechService: ObservableObject {
-    @Published var isRecording = false
-    @Published var transcript = ""
-    @Published var isAuthorized = false
+@Observable
+class SpeechService {
+    var isRecording = false
+    var transcript = ""
+    var isAuthorized = false
     
     private var recognizer: SFSpeechRecognizer?
     private var recognitionTask: SFSpeechRecognitionTask?
@@ -28,6 +28,7 @@ class SpeechService: ObservableObject {
     }
     
     // MARK: - 请求权限
+    @MainActor
     func requestAuthorization() async {
         let status = await withCheckedContinuation { continuation in
             SFSpeechRecognizer.requestAuthorization { status in
@@ -43,6 +44,7 @@ class SpeechService: ObservableObject {
     }
     
     // MARK: - 开始录音
+    @MainActor
     func startRecording(
         onInterim: @escaping (String) -> Void,
         onFinal: @escaping (String) -> Void
@@ -127,6 +129,7 @@ class SpeechService: ObservableObject {
     }
     
     // MARK: - 停止录音
+    @MainActor
     func stopRecording() {
         if audioEngine.isRunning {
             audioEngine.stop()

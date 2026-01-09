@@ -3,8 +3,8 @@
 import SwiftUI
 
 struct ChatView: View {
-    @EnvironmentObject var appState: AppState
-    @StateObject private var viewModel = ChatViewModel()
+    @Environment(AppState.self) var appState
+    @State private var viewModel = ChatViewModel()
     @State private var inputText = ""
     @State private var isConversationMode = false
     @FocusState private var isInputFocused: Bool
@@ -52,6 +52,7 @@ struct ChatView: View {
                         isConversationMode: $isConversationMode,
                         isFocused: $isInputFocused,
                         isLoading: viewModel.isLoading,
+                        speechService: appState.speechService,
                         onSend: sendMessage,
                         onVoice: toggleVoiceInput,
                         onConversation: toggleConversationMode
@@ -202,11 +203,10 @@ struct InputBar: View {
     @Binding var isConversationMode: Bool
     var isFocused: FocusState<Bool>.Binding
     let isLoading: Bool
+    let speechService: SpeechService
     let onSend: () -> Void
     let onVoice: () -> Void
     let onConversation: () -> Void
-    
-    @EnvironmentObject var appState: AppState
     
     var body: some View {
         HStack(spacing: 12) {
@@ -232,10 +232,10 @@ struct InputBar: View {
             // 语音/发送按钮
             if text.isEmpty {
                 Button(action: onVoice) {
-                    Image(systemName: appState.speechService.isRecording ? "stop.circle.fill" : "mic.circle")
+                    Image(systemName: speechService.isRecording ? "stop.circle.fill" : "mic.circle")
                         .font(.title2)
-                        .foregroundColor(appState.speechService.isRecording ? .red : .blue)
-                        .symbolEffect(.bounce, value: appState.speechService.isRecording)
+                        .foregroundColor(speechService.isRecording ? .red : .blue)
+                        .symbolEffect(.bounce, value: speechService.isRecording)
                 }
             } else {
                 Button(action: onSend) {
@@ -258,13 +258,14 @@ struct InputBar: View {
 }
 
 // MARK: - Chat ViewModel
-@MainActor
-class ChatViewModel: ObservableObject {
-    @Published var messages: [ChatMessage] = []
-    @Published var isLoading = false
+@Observable
+class ChatViewModel {
+    var messages: [ChatMessage] = []
+    var isLoading = false
     
     var appState: AppState?
     
+    @MainActor
     func sendMessage(_ text: String) async {
         guard let appState = appState else { return }
         
@@ -299,5 +300,5 @@ class ChatViewModel: ObservableObject {
 
 #Preview {
     ChatView()
-        .environmentObject(AppState())
+        .environment(AppState())
 }

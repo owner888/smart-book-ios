@@ -3,7 +3,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
     @State private var selectedTab = 0
     
     var body: some View {
@@ -35,7 +35,7 @@ struct ContentView: View {
 
 // MARK: - 书架视图
 struct BookshelfView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) var appState
     @State private var books: [Book] = []
     @State private var searchText = ""
     @State private var isLoading = false
@@ -168,5 +168,5 @@ extension Color {
 
 #Preview {
     ContentView()
-        .environmentObject(AppState())
+        .environment(AppState())
 }

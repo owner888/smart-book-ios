@@ -3,10 +3,10 @@
 import Foundation
 import AVFoundation
 
-@MainActor
-class TTSService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
-    @Published var isSpeaking = false
-    @Published var availableVoices: [AVSpeechSynthesisVoice] = []
+@Observable
+class TTSService: NSObject, AVSpeechSynthesizerDelegate {
+    var isSpeaking = false
+    var availableVoices: [AVSpeechSynthesisVoice] = []
     
     private let synthesizer = AVSpeechSynthesizer()
     private var onComplete: (() -> Void)?
@@ -37,6 +37,7 @@ class TTSService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
     
     // MARK: - 朗读文本
+    @MainActor
     func speak(_ text: String) async {
         // 清理文本（移除 Markdown 等）
         let cleanText = cleanMarkdown(text)
@@ -76,6 +77,7 @@ class TTSService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
     
     // MARK: - 停止朗读
+    @MainActor
     func stop() {
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
@@ -123,7 +125,7 @@ class TTSService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     }
     
     // MARK: - AVSpeechSynthesizerDelegate
-    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         Task { @MainActor in
             isSpeaking = false
             onComplete?()
@@ -132,7 +134,7 @@ class TTSService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
         }
     }
     
-    nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
+    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didCancel utterance: AVSpeechUtterance) {
         Task { @MainActor in
             isSpeaking = false
             onComplete?()

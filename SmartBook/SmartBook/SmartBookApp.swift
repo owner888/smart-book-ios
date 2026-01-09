@@ -5,23 +5,23 @@ import SwiftUI
 
 @main
 struct SmartBookApp: App {
-    @StateObject private var appState = AppState()
+    @State private var appState = AppState()
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(appState)
+                .environment(appState)
                 .preferredColorScheme(.dark)
         }
     }
 }
 
 // MARK: - App State (全局状态管理)
-@MainActor
-class AppState: ObservableObject {
-    @Published var selectedBook: Book?
-    @Published var isLoading = false
-    @Published var errorMessage: String?
+@Observable
+class AppState {
+    var selectedBook: Book?
+    var isLoading = false
+    var errorMessage: String?
     
     // 服务实例
     let chatService = ChatService()
