@@ -3,62 +3,62 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
+// Tab 枚举
+enum AppTab: String, CaseIterable {
+    case bookshelf = "书架"
+    case chat = "对话"
+    case settings = "设置"
+    case search = "搜索"
+    
+    var icon: String {
+        switch self {
+        case .bookshelf: return "books.vertical"
+        case .chat: return "bubble.left.and.bubble.right"
+        case .settings: return "gear"
+        case .search: return "magnifyingglass"
+        }
+    }
+}
+
 struct ContentView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
-    @State private var selectedTab = 0
-    @State private var previousTab = 0  // 记录上一个非搜索 Tab
-    
-    // Tab 信息
-    private let tabInfo: [(icon: String, name: String)] = [
-        ("books.vertical", "书架"),
-        ("bubble.left.and.bubble.right", "对话"),
-        ("gear", "设置"),
-        ("magnifyingglass", "搜索")
-    ]
+    @State private var selectedTab: AppTab = .bookshelf
+    @State private var previousTab: AppTab = .bookshelf
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // 书架
-            BookshelfView()
-                .tabItem {
-                    Label("书架", systemImage: "books.vertical")
-                }
-                .tag(0)
-            
-            // AI 对话
-            ChatView()
-                .tabItem {
-                    Label("对话", systemImage: "bubble.left.and.bubble.right")
-                }
-                .tag(1)
-            
-            // 设置
-            SettingsView()
-                .tabItem {
-                    Label("设置", systemImage: "gear")
-                }
-                .tag(2)
-            
-            // 搜索
-            SearchView(
-                previousTabIcon: tabInfo[previousTab].icon,
-                previousTabName: tabInfo[previousTab].name,
-                onBack: {
-                    selectedTab = previousTab
-                }
-            )
-            .tabItem {
-                Label("搜索", systemImage: "magnifyingglass")
+            // Primary Tabs
+            Tab(AppTab.bookshelf.rawValue, systemImage: AppTab.bookshelf.icon, value: .bookshelf) {
+                BookshelfView()
             }
-            .tag(3)
+            
+            Tab(AppTab.chat.rawValue, systemImage: AppTab.chat.icon, value: .chat) {
+                ChatView()
+            }
+            
+            Tab(AppTab.settings.rawValue, systemImage: AppTab.settings.icon, value: .settings) {
+                SettingsView()
+            }
+            
+            // Standalone Search Tab - 进入 Search Landing Page，TabBar 保留
+            Tab(value: .search, role: .search) {
+                SearchView(
+                    previousTabIcon: previousTab.icon,
+                    previousTabName: previousTab.rawValue,
+                    onBack: {
+                        selectedTab = previousTab
+                    }
+                )
+            }
         }
         .onChange(of: selectedTab) { oldValue, newValue in
-            // 如果新 Tab 不是搜索，更新 previousTab
-            if newValue != 3 {
+            // 记录上一个非搜索 Tab
+            if newValue != .search {
                 previousTab = newValue
             }
         }
+        .animation(.smooth(duration: 0.35), value: selectedTab)  // Tab 切换动画
     }
 }
 
