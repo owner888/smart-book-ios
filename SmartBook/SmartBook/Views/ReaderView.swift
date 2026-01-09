@@ -232,14 +232,14 @@ struct ReaderView: View {
             case .curl:
                 // 卷页翻页效果
                 PageCurlView(
-                    pages: pages,
+                    allPages: allPages,
                     currentPageIndex: $currentPageIndex,
                     pageWidth: pageWidth,
                     pageHeight: pageHeight,
                     backgroundColor: backgroundColor,
-                    pageContent: { index in
-                        pageView(text: pages[index], width: pageWidth, height: pageHeight, pageIndex: index)
-                    },
+                    textColor: textColor,
+                    currentFont: currentFont,
+                    settings: settings,
                     onPageChange: { saveProgress() },
                     onTapCenter: {
                         withAnimation(.easeInOut(duration: 0.2)) {
@@ -354,18 +354,26 @@ struct ReaderView: View {
     
     // MARK: - 页面视图（iOS Books 风格，顶部章节信息，底部页数）
     private func pageView(text: String, width: CGFloat, height: CGFloat, pageIndex: Int) -> some View {
-        VStack(spacing: 0) {
+        // 获取当前页面对应的章节信息
+        let pageChapterIndex = pageIndex < allPages.count ? allPages[pageIndex].chapterIndex : 0
+        let pageChapterTitle = pageIndex < allPages.count ? allPages[pageIndex].chapterTitle : ""
+        
+        // 计算当前章节剩余页数
+        let chapterLastPageIndex = allPages.lastIndex(where: { $0.chapterIndex == pageChapterIndex }) ?? pageIndex
+        let pagesUntilNextChapter = max(0, chapterLastPageIndex - pageIndex)
+        
+        return VStack(spacing: 0) {
             // 顶部信息栏
             HStack {
                 // 章节剩余页数
-                Text("\(max(0, pages.count - pageIndex - 1)) 页后翻页")
+                Text("\(pagesUntilNextChapter) 页后下一章")
                     .font(.caption)
                     .foregroundColor(textColor.opacity(0.5))
                 
                 Spacer()
                 
-                // 章节标题
-                Text(currentChapterTitle)
+                // 章节标题（使用当前页面对应的章节标题）
+                Text(pageChapterTitle)
                     .font(.caption)
                     .foregroundColor(textColor.opacity(0.5))
                     .lineLimit(1)
@@ -958,13 +966,15 @@ struct TOCView: View {
 }
 
 // MARK: - 真正的卷页效果视图（使用 UIPageViewController）
-struct PageCurlView<Content: View>: View {
-    let pages: [String]
+struct PageCurlView: View {
+    let allPages: [BookPage]
     @Binding var currentPageIndex: Int
     let pageWidth: CGFloat
     let pageHeight: CGFloat
     let backgroundColor: Color
-    let pageContent: (Int) -> Content
+    let textColor: Color
+    let currentFont: Font
+    let settings: ReaderSettings
     let onPageChange: () -> Void
     let onTapCenter: () -> Void
     
@@ -972,12 +982,14 @@ struct PageCurlView<Content: View>: View {
         ZStack {
             // 使用 UIPageViewController 实现真正的卷页效果
             PageCurlViewController(
-                pages: pages,
+                allPages: allPages,
                 currentPageIndex: $currentPageIndex,
+                pageWidth: pageWidth,
+                pageHeight: pageHeight,
                 backgroundColor: UIColor(backgroundColor),
-                pageContent: { index in
-                    AnyView(pageContent(index))
-                },
+                textColor: textColor,
+                currentFont: currentFont,
+                settings: settings,
                 onPageChange: onPageChange,
                 onTapCenter: onTapCenter
             )
@@ -988,10 +1000,14 @@ struct PageCurlView<Content: View>: View {
 
 // MARK: - UIPageViewController 包装器（真正的卷页效果）
 struct PageCurlViewController: UIViewControllerRepresentable {
-    let pages: [String]
+    let allPages: [BookPage]
     @Binding var currentPageIndex: Int
+    let pageWidth: CGFloat
+    let pageHeight: CGFloat
     let backgroundColor: UIColor
-    let pageContent: (Int) -> AnyView
+    let textColor: Color
+    let currentFont: Font
+    let settings: ReaderSettings
     let onPageChange: () -> Void
     let onTapCenter: () -> Void
     
@@ -1036,6 +1052,57 @@ struct PageCurlViewController: UIViewControllerRepresentable {
         }
     }
     
+    // 创建页面视图
+    func createPageView(for index: Int) -> some View {
+        let page = allPages[index]
+        let pageChapterIndex = page.chapterIndex
+        let pageChapterTitle = page.chapterTitle
+        
+        // 计算当前章节剩余页数
+        let chapterLastPageIndex = allPages.lastIndex(where: { $0.chapterIndex == pageChapterIndex }) ?? index
+        let pagesUntilNextChapter = max(0, chapterLastPageIndex - index)
+        
+        return VStack(spacing: 0) {
+            // 顶部信息栏
+            HStack {
+                // 章节剩余页数
+                Text("\(pagesUntilNextChapter) 页后下一章")
+                    .font(.caption)
+                    .foregroundColor(textColor.opacity(0.5))
+                
+                Spacer()
+                
+                // 章节标题
+                Text(pageChapterTitle)
+                    .font(.caption)
+                    .foregroundColor(textColor.opacity(0.5))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 12)
+            
+            // 正文内容
+            Text(page.content)
+                .font(currentFont)
+                .foregroundColor(textColor)
+                .lineSpacing(settings.lineSpacing)
+                .multilineTextAlignment(settings.textAlignment)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 16)
+            
+            // 底部页码
+            Text("\(index + 1) / \(allPages.count)")
+                .font(.caption)
+                .foregroundColor(textColor.opacity(0.5))
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+        }
+        .frame(width: pageWidth, height: pageHeight)
+        .background(Color(backgroundColor))
+        .clipped()
+    }
+    
     // MARK: - Coordinator
     class Coordinator: NSObject, UIPageViewControllerDelegate, UIPageViewControllerDataSource {
         var parent: PageCurlViewController
@@ -1046,14 +1113,15 @@ struct PageCurlViewController: UIViewControllerRepresentable {
         
         // 创建页面内容视图控制器
         func viewController(at index: Int) -> PageContentViewController? {
-            guard index >= 0 && index < parent.pages.count else { return nil }
+            guard index >= 0 && index < parent.allPages.count else { return nil }
             
             let vc = PageContentViewController()
             vc.pageIndex = index
             vc.view.backgroundColor = parent.backgroundColor
             
-            // 添加 SwiftUI 内容
-            let hostingController = UIHostingController(rootView: parent.pageContent(index))
+            // 添加 SwiftUI 内容 - 使用 parent 的 createPageView 方法
+            let pageView = parent.createPageView(for: index)
+            let hostingController = UIHostingController(rootView: AnyView(pageView))
             hostingController.view.backgroundColor = .clear
             hostingController.view.frame = vc.view.bounds
             hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -1098,7 +1166,7 @@ struct PageCurlViewController: UIViewControllerRepresentable {
                 }
             } else if location.x > width * 0.75 {
                 // 右侧点击 - 下一页
-                if parent.currentPageIndex < parent.pages.count - 1 {
+                if parent.currentPageIndex < parent.allPages.count - 1 {
                     parent.currentPageIndex += 1
                     parent.onPageChange()
                 }
