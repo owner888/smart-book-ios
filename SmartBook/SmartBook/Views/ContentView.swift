@@ -1,6 +1,7 @@
 // ContentView.swift - 主视图（Liquid Glass 风格）
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ContentView: View {
     @Environment(AppState.self) var appState
@@ -39,6 +40,11 @@ struct BookshelfView: View {
     @State private var books: [Book] = []
     @State private var searchText = ""
     @State private var isLoading = false
+    @State private var showingImporter = false
+    @State private var showingDeleteAlert = false
+    @State private var bookToDelete: Book?
+    @State private var importError: String?
+    @State private var showingError = false
     
     var body: some View {
         NavigationStack {
@@ -62,16 +68,28 @@ struct BookshelfView: View {
                     }
                 } else if books.isEmpty {
                     // 空状态
-                    VStack(spacing: 16) {
+                    VStack(spacing: 20) {
                         Image(systemName: "books.vertical")
                             .font(.system(size: 60))
                             .foregroundColor(.gray)
                         Text("暂无书籍")
                             .font(.headline)
                             .foregroundColor(.gray)
-                        Text("请在 Resources/Books 目录添加 epub 文件")
+                        Text("点击右上角 + 按钮导入 epub 书籍")
                             .font(.caption)
                             .foregroundColor(.gray.opacity(0.7))
+                        
+                        Button {
+                            showingImporter = true
+                        } label: {
+                            Label("导入书籍", systemImage: "plus.circle.fill")
+                                .font(.headline)
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 12)
+                                .background(Color.green.opacity(0.8))
+                                .foregroundColor(.white)
+                                .cornerRadius(25)
+                        }
                     }
                 } else {
                     ScrollView {
@@ -90,9 +108,19 @@ struct BookshelfView: View {
                             GridItem(.flexible())
                         ], spacing: 16) {
                             ForEach(filteredBooks) { book in
-                                BookCard(book: book)
+                                BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book))
                                     .onTapGesture {
                                         appState.selectedBook = book
+                                    }
+                                    .contextMenu {
+                                        if appState.bookService.isUserImportedBook(book) {
+                                            Button(role: .destructive) {
+                                                bookToDelete = book
+                                                showingDeleteAlert = true
+                                            } label: {
+                                                Label("删除", systemImage: "trash")
+                                            }
+                                        }
                                     }
                             }
                         }
@@ -101,12 +129,46 @@ struct BookshelfView: View {
                 }
             }
             .navigationTitle("书架")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingImporter = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .foregroundColor(.white)
+                    }
+                }
+            }
             .searchable(text: $searchText, prompt: "搜索书籍")
             .task {
                 await loadBooks()
             }
             .refreshable {
                 await loadBooks()
+            }
+            .fileImporter(
+                isPresented: $showingImporter,
+                allowedContentTypes: [UTType(filenameExtension: "epub") ?? .data],
+                allowsMultipleSelection: true
+            ) { result in
+                Task {
+                    await handleImport(result)
+                }
+            }
+            .alert("删除书籍", isPresented: $showingDeleteAlert) {
+                Button("取消", role: .cancel) { }
+                Button("删除", role: .destructive) {
+                    if let book = bookToDelete {
+                        deleteBook(book)
+                    }
+                }
+            } message: {
+                Text("确定要删除「\(bookToDelete?.title ?? "")」吗？此操作不可恢复。")
+            }
+            .alert("导入失败", isPresented: $showingError) {
+                Button("确定", role: .cancel) { }
+            } message: {
+                Text(importError ?? "未知错误")
             }
         }
     }
@@ -132,30 +194,77 @@ struct BookshelfView: View {
         }
         isLoading = false
     }
+    
+    func handleImport(_ result: Result<[URL], Error>) async {
+        switch result {
+        case .success(let urls):
+            var importedCount = 0
+            for url in urls {
+                do {
+                    _ = try appState.bookService.importBook(from: url)
+                    importedCount += 1
+                } catch {
+                    importError = "导入失败: \(error.localizedDescription)"
+                    showingError = true
+                }
+            }
+            if importedCount > 0 {
+                await loadBooks()
+            }
+        case .failure(let error):
+            importError = "选择文件失败: \(error.localizedDescription)"
+            showingError = true
+        }
+    }
+    
+    func deleteBook(_ book: Book) {
+        do {
+            try appState.bookService.deleteBook(book)
+            books.removeAll { $0.id == book.id }
+        } catch {
+            importError = "删除失败: \(error.localizedDescription)"
+            showingError = true
+        }
+    }
 }
 
 // MARK: - 书籍卡片（Liquid Glass 风格）
 struct BookCard: View {
     let book: Book
+    var isUserImported: Bool = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // 封面
-            AsyncImage(url: URL(string: book.coverURL ?? "")) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .overlay {
-                        Image(systemName: "book.closed")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                    }
+            ZStack(alignment: .topTrailing) {
+                AsyncImage(url: URL(string: book.coverURL ?? "")) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .overlay {
+                            Image(systemName: "book.closed")
+                                .font(.largeTitle)
+                                .foregroundColor(.gray)
+                        }
+                }
+                .frame(height: 180)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                
+                // 用户导入标识
+                if isUserImported {
+                    Text("已导入")
+                        .font(.caption2)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.green.opacity(0.9))
+                        .foregroundColor(.white)
+                        .cornerRadius(4)
+                        .padding(6)
+                }
             }
-            .frame(height: 180)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
             
             // 标题
             Text(book.title)

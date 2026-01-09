@@ -45,9 +45,22 @@ class ChatService {
 // MARK: - Book Service
 class BookService {
     
-    /// 获取书籍列表（优先从本地 Bundle 加载，失败则尝试 API）
+    /// 获取用户 Documents 目录中的 Books 文件夹路径
+    var userBooksDirectory: URL {
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let booksPath = documentsPath.appendingPathComponent("Books")
+        
+        // 确保目录存在
+        if !FileManager.default.fileExists(atPath: booksPath.path) {
+            try? FileManager.default.createDirectory(at: booksPath, withIntermediateDirectories: true)
+        }
+        
+        return booksPath
+    }
+    
+    /// 获取书籍列表（合并 Bundle 和用户导入的书籍）
     func fetchBooks() async throws -> [Book] {
-        // 首先尝试加载本地书籍
+        // 加载所有本地书籍（Bundle + 用户导入）
         let localBooks = loadLocalBooks()
         if !localBooks.isEmpty {
             return localBooks
@@ -57,8 +70,21 @@ class BookService {
         return try await fetchBooksFromAPI()
     }
     
-    /// 从本地 Bundle 加载 epub 书籍
+    /// 从本地加载所有 epub 书籍（Bundle + 用户导入）
     func loadLocalBooks() -> [Book] {
+        var books: [Book] = []
+        
+        // 1. 从 Bundle 加载预置书籍
+        books.append(contentsOf: loadBooksFromBundle())
+        
+        // 2. 从用户 Documents 目录加载导入的书籍
+        books.append(contentsOf: loadBooksFromUserDocuments())
+        
+        return books.sorted { $0.title < $1.title }
+    }
+    
+    /// 从 Bundle 加载预置书籍
+    private func loadBooksFromBundle() -> [Book] {
         var books: [Book] = []
         
         // 从 Bundle 中查找 epub 文件
@@ -80,16 +106,93 @@ class BookService {
             for file in files {
                 if file.hasSuffix(".epub") {
                     let filePath = (booksPath as NSString).appendingPathComponent(file)
+                    if var book = createBook(from: file, path: filePath) {
+                        book = Book(id: book.id, title: book.title, author: book.author, 
+                                   coverURL: book.coverURL, filePath: book.filePath, 
+                                   addedDate: book.addedDate)
+                        books.append(book)
+                    }
+                }
+            }
+        } catch {
+            print("Error loading bundle books: \(error)")
+        }
+        
+        return books
+    }
+    
+    /// 从用户 Documents 目录加载导入的书籍
+    private func loadBooksFromUserDocuments() -> [Book] {
+        var books: [Book] = []
+        let fileManager = FileManager.default
+        
+        do {
+            let files = try fileManager.contentsOfDirectory(atPath: userBooksDirectory.path)
+            for file in files {
+                if file.hasSuffix(".epub") {
+                    let filePath = userBooksDirectory.appendingPathComponent(file).path
                     if let book = createBook(from: file, path: filePath) {
                         books.append(book)
                     }
                 }
             }
         } catch {
-            print("Error loading local books: \(error)")
+            print("Error loading user books: \(error)")
         }
         
-        return books.sorted { $0.title < $1.title }
+        return books
+    }
+    
+    /// 导入书籍文件到用户 Documents 目录
+    func importBook(from sourceURL: URL) throws -> Book {
+        let fileManager = FileManager.default
+        let filename = sourceURL.lastPathComponent
+        let destinationURL = userBooksDirectory.appendingPathComponent(filename)
+        
+        // 如果文件已存在，先删除
+        if fileManager.fileExists(atPath: destinationURL.path) {
+            try fileManager.removeItem(at: destinationURL)
+        }
+        
+        // 开始访问安全作用域资源
+        guard sourceURL.startAccessingSecurityScopedResource() else {
+            throw APIError.custom("无法访问该文件")
+        }
+        defer { sourceURL.stopAccessingSecurityScopedResource() }
+        
+        // 复制文件到 Documents/Books 目录
+        try fileManager.copyItem(at: sourceURL, to: destinationURL)
+        
+        // 创建并返回 Book 对象
+        guard let book = createBook(from: filename, path: destinationURL.path) else {
+            throw APIError.custom("无法创建书籍")
+        }
+        
+        return book
+    }
+    
+    /// 删除用户导入的书籍
+    func deleteBook(_ book: Book) throws {
+        guard let filePath = book.filePath else {
+            throw APIError.custom("书籍路径不存在")
+        }
+        
+        // 只允许删除用户导入的书籍（在 Documents 目录中的）
+        let fileURL = URL(fileURLWithPath: filePath)
+        guard filePath.contains("Documents/Books") else {
+            throw APIError.custom("只能删除用户导入的书籍")
+        }
+        
+        let fileManager = FileManager.default
+        if fileManager.fileExists(atPath: filePath) {
+            try fileManager.removeItem(at: fileURL)
+        }
+    }
+    
+    /// 检查书籍是否为用户导入的（可删除）
+    func isUserImportedBook(_ book: Book) -> Bool {
+        guard let filePath = book.filePath else { return false }
+        return filePath.contains("Documents/Books")
     }
     
     /// 从 Bundle 根目录查找 epub 文件
