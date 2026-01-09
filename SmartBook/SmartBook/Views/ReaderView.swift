@@ -348,6 +348,13 @@ struct ReaderView: View {
     
     private func saveProgress() {
         ReadingProgress(bookId: book.id, chapterIndex: currentChapterIndex, pageIndex: currentPageIndex, scrollOffset: 0, lastReadDate: Date()).save()
+        hideControls()
+    }
+    
+    private func hideControls() {
+        if showControls {
+            withAnimation(.easeInOut(duration: 0.2)) { showControls = false }
+        }
     }
     
     private func toggleControls() {
