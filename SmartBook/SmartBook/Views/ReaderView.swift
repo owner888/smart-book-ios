@@ -910,66 +910,93 @@ struct PageCurlView<Content: View>: View {
     
     var body: some View {
         ZStack {
-            // 下一页（在当前页下方）
-            if currentPageIndex < pages.count - 1 {
+            // 背景层
+            backgroundColor
+            
+            // 下一页（在当前页下方，只在向左翻页时显示）
+            if currentPageIndex < pages.count - 1 && dragDirection == .left {
                 pageContent(currentPageIndex + 1)
                     .frame(width: pageWidth, height: pageHeight)
+                    .background(backgroundColor)
+                    .zIndex(0)
+            }
+            
+            // 上一页（在向右翻页时显示）
+            if currentPageIndex > 0 && dragDirection == .right {
+                pageContent(currentPageIndex - 1)
+                    .frame(width: pageWidth, height: pageHeight)
+                    .background(backgroundColor)
+                    .zIndex(0)
             }
             
             // 当前页（带翻页效果）
             if currentPageIndex < pages.count {
                 pageContent(currentPageIndex)
                     .frame(width: pageWidth, height: pageHeight)
+                    .background(backgroundColor)
                     .modifier(PageCurlModifier(
                         progress: dragProgress,
                         direction: dragDirection,
-                        pageWidth: pageWidth
+                        pageWidth: pageWidth,
+                        backgroundColor: backgroundColor
                     ))
-            }
-            
-            // 上一页（翻回时显示）
-            if currentPageIndex > 0 && dragDirection == .right && isDragging {
-                pageContent(currentPageIndex - 1)
-                    .frame(width: pageWidth, height: pageHeight)
-                    .modifier(PageCurlModifier(
-                        progress: 1 - dragProgress,
-                        direction: .left,
-                        pageWidth: pageWidth
-                    ))
+                    .zIndex(1)
             }
         }
+        .clipped()
         .gesture(
             DragGesture()
                 .onChanged { value in
                     isDragging = true
                     let translation = value.translation.width
                     
-                    if translation < 0 {
+                    if translation < 0 && currentPageIndex < pages.count - 1 {
                         // 向左拖动 - 下一页
                         dragDirection = .left
-                        dragProgress = min(1, abs(translation) / (pageWidth * 0.6))
-                    } else {
+                        dragProgress = min(1, abs(translation) / (pageWidth * 0.5))
+                    } else if translation > 0 && currentPageIndex > 0 {
                         // 向右拖动 - 上一页
                         dragDirection = .right
-                        dragProgress = min(1, translation / (pageWidth * 0.6))
+                        dragProgress = min(1, translation / (pageWidth * 0.5))
+                    } else {
+                        dragDirection = .none
+                        dragProgress = 0
                     }
                 }
                 .onEnded { value in
                     isDragging = false
-                    let threshold: CGFloat = 0.3
+                    let threshold: CGFloat = 0.25
                     
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        if dragProgress > threshold {
-                            if dragDirection == .left && currentPageIndex < pages.count - 1 {
+                    if dragProgress > threshold {
+                        if dragDirection == .left && currentPageIndex < pages.count - 1 {
+                            // 完成翻到下一页的动画
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                dragProgress = 1
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                 currentPageIndex += 1
+                                dragProgress = 0
+                                dragDirection = .none
                                 onPageChange()
-                            } else if dragDirection == .right && currentPageIndex > 0 {
+                            }
+                        } else if dragDirection == .right && currentPageIndex > 0 {
+                            // 完成翻到上一页的动画
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                dragProgress = 1
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                                 currentPageIndex -= 1
+                                dragProgress = 0
+                                dragDirection = .none
                                 onPageChange()
                             }
                         }
-                        dragProgress = 0
-                        dragDirection = .none
+                    } else {
+                        // 取消翻页，恢复原位
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            dragProgress = 0
+                            dragDirection = .none
+                        }
                     }
                 }
         )
@@ -981,22 +1008,27 @@ struct PageCurlModifier: ViewModifier {
     let progress: CGFloat
     let direction: PageDragDirection
     let pageWidth: CGFloat
+    let backgroundColor: Color
     
     func body(content: Content) -> some View {
-        content
-            .rotation3DEffect(
-                .degrees(direction == .left ? -Double(progress) * 90 : Double(progress) * 90),
-                axis: (x: 0, y: 1, z: 0),
-                anchor: direction == .left ? .trailing : .leading,
-                perspective: 0.5
-            )
-            .opacity(1 - Double(progress) * 0.3)
-            .shadow(
-                color: Color.black.opacity(Double(progress) * 0.3),
-                radius: CGFloat(progress) * 10,
-                x: direction == .left ? -CGFloat(progress) * 20 : CGFloat(progress) * 20,
-                y: 0
-            )
+        // 只有在有方向时才应用翻页效果
+        if direction == .none || progress == 0 {
+            content
+        } else {
+            content
+                .rotation3DEffect(
+                    .degrees(direction == .left ? -Double(progress) * 85 : Double(progress) * 85),
+                    axis: (x: 0, y: 1, z: 0),
+                    anchor: direction == .left ? .trailing : .leading,
+                    perspective: 0.4
+                )
+                .shadow(
+                    color: Color.black.opacity(Double(progress) * 0.4),
+                    radius: CGFloat(progress) * 15,
+                    x: direction == .left ? -CGFloat(progress) * 30 : CGFloat(progress) * 30,
+                    y: 0
+                )
+        }
     }
 }
 
