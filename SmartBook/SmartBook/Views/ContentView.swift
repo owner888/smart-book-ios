@@ -237,21 +237,9 @@ struct BookCard: View {
         VStack(alignment: .leading, spacing: 8) {
             // 封面
             ZStack(alignment: .topTrailing) {
-                AsyncImage(url: URL(string: book.coverURL ?? "")) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                        .overlay {
-                            Image(systemName: "book.closed")
-                                .font(.largeTitle)
-                                .foregroundColor(.gray)
-                        }
-                }
-                .frame(height: 180)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                coverImage
+                    .frame(height: 180)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 
                 // 用户导入标识
                 if isUserImported {
@@ -284,6 +272,46 @@ struct BookCard: View {
                 .fill(.ultraThinMaterial)
                 .shadow(color: .black.opacity(0.2), radius: 10, y: 5)
         }
+    }
+    
+    /// 封面图片视图
+    @ViewBuilder
+    var coverImage: some View {
+        if let coverURLString = book.coverURL,
+           let coverURL = URL(string: coverURLString) {
+            // 本地文件封面
+            if coverURL.isFileURL {
+                if let uiImage = UIImage(contentsOfFile: coverURL.path) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    placeholderCover
+                }
+            } else {
+                // 网络封面
+                AsyncImage(url: coverURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    placeholderCover
+                }
+            }
+        } else {
+            placeholderCover
+        }
+    }
+    
+    /// 占位封面
+    var placeholderCover: some View {
+        Rectangle()
+            .fill(Color.gray.opacity(0.3))
+            .overlay {
+                Image(systemName: "book.closed")
+                    .font(.largeTitle)
+                    .foregroundColor(.gray)
+            }
     }
 }
 

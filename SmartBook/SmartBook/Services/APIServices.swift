@@ -211,22 +211,34 @@ class BookService {
         return books.sorted { $0.title < $1.title }
     }
     
-    /// 根据文件名创建 Book 对象
+    /// 根据文件名创建 Book 对象（解析 EPUB 元数据）
     private func createBook(from filename: String, path: String) -> Book? {
-        // 从文件名提取书名（去除 .epub 扩展名）
-        let title = (filename as NSString).deletingPathExtension
-        
         // 为书籍生成唯一 ID
         let id = filename.data(using: .utf8)?.base64EncodedString() ?? UUID().uuidString
         
-        // 根据书名猜测作者（如果有）
-        let author = guessAuthor(for: title)
+        // 从文件名提取默认书名（去除 .epub 扩展名）
+        let defaultTitle = (filename as NSString).deletingPathExtension
+        
+        // 尝试解析 EPUB 元数据
+        let metadata = EPUBParser.parseMetadataForiOS(from: path)
+        
+        // 使用解析的元数据，如果没有则使用默认值
+        let title = metadata.title ?? defaultTitle
+        let author = metadata.author ?? guessAuthor(for: defaultTitle)
+        
+        // 提取并缓存封面图片
+        var coverURL: String? = nil
+        if let cachedCoverPath = EPUBParser.getCachedCoverPath(for: id) {
+            coverURL = cachedCoverPath.absoluteString
+        } else if let newCoverPath = EPUBParser.extractAndCacheCover(from: path, bookId: id) {
+            coverURL = newCoverPath.absoluteString
+        }
         
         return Book(
             id: id,
             title: title,
             author: author,
-            coverURL: nil,
+            coverURL: coverURL,
             filePath: path,
             addedDate: Date()
         )
