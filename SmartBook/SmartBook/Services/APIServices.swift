@@ -45,7 +45,131 @@ class ChatService {
 // MARK: - Book Service
 class BookService {
     
+    /// 获取书籍列表（优先从本地 Bundle 加载，失败则尝试 API）
     func fetchBooks() async throws -> [Book] {
+        // 首先尝试加载本地书籍
+        let localBooks = loadLocalBooks()
+        if !localBooks.isEmpty {
+            return localBooks
+        }
+        
+        // 如果本地没有书籍，尝试从 API 获取
+        return try await fetchBooksFromAPI()
+    }
+    
+    /// 从本地 Bundle 加载 epub 书籍
+    func loadLocalBooks() -> [Book] {
+        var books: [Book] = []
+        
+        // 从 Bundle 中查找 epub 文件
+        guard let resourcePath = Bundle.main.resourcePath else {
+            return books
+        }
+        
+        let booksPath = (resourcePath as NSString).appendingPathComponent("Books")
+        let fileManager = FileManager.default
+        
+        // 检查 Books 目录是否存在
+        guard fileManager.fileExists(atPath: booksPath) else {
+            // 尝试直接从 Bundle 根目录查找
+            return loadBooksFromBundleRoot()
+        }
+        
+        do {
+            let files = try fileManager.contentsOfDirectory(atPath: booksPath)
+            for file in files {
+                if file.hasSuffix(".epub") {
+                    let filePath = (booksPath as NSString).appendingPathComponent(file)
+                    if let book = createBook(from: file, path: filePath) {
+                        books.append(book)
+                    }
+                }
+            }
+        } catch {
+            print("Error loading local books: \(error)")
+        }
+        
+        return books.sorted { $0.title < $1.title }
+    }
+    
+    /// 从 Bundle 根目录查找 epub 文件
+    private func loadBooksFromBundleRoot() -> [Book] {
+        var books: [Book] = []
+        
+        if let urls = Bundle.main.urls(forResourcesWithExtension: "epub", subdirectory: nil) {
+            for url in urls {
+                let filename = url.lastPathComponent
+                if let book = createBook(from: filename, path: url.path) {
+                    books.append(book)
+                }
+            }
+        }
+        
+        return books.sorted { $0.title < $1.title }
+    }
+    
+    /// 根据文件名创建 Book 对象
+    private func createBook(from filename: String, path: String) -> Book? {
+        // 从文件名提取书名（去除 .epub 扩展名）
+        let title = (filename as NSString).deletingPathExtension
+        
+        // 为书籍生成唯一 ID
+        let id = filename.data(using: .utf8)?.base64EncodedString() ?? UUID().uuidString
+        
+        // 根据书名猜测作者（如果有）
+        let author = guessAuthor(for: title)
+        
+        return Book(
+            id: id,
+            title: title,
+            author: author,
+            coverURL: nil,
+            filePath: path,
+            addedDate: Date()
+        )
+    }
+    
+    /// 根据书名猜测作者
+    private func guessAuthor(for title: String) -> String {
+        // 四大名著及常见书籍的作者映射
+        let authorMap: [String: String] = [
+            // 四大名著（公版书）
+            "西游记": "吴承恩",
+            "三国演义": "罗贯中",
+            "水浒传": "施耐庵",
+            "红楼梦": "曹雪芹"
+        ]
+        
+        // 尝试精确匹配
+        if let author = authorMap[title] {
+            return author
+        }
+        
+        // 尝试部分匹配（处理带校注本等后缀的书名）
+        for (bookName, author) in authorMap {
+            if title.contains(bookName) {
+                return author
+            }
+        }
+        
+        // 尝试从文件名中提取作者（格式：书名(作者)）
+        if let range = title.range(of: "\\(([^)]+)\\)", options: .regularExpression) {
+            var authorPart = String(title[range])
+            authorPart = authorPart.replacingOccurrences(of: "(", with: "")
+            authorPart = authorPart.replacingOccurrences(of: ")", with: "")
+            // 清理作者名
+            if authorPart.contains("曹雪芹") { return "曹雪芹" }
+            if authorPart.contains("罗贯中") { return "罗贯中" }
+            if authorPart.contains("施耐庵") { return "施耐庵" }
+            if authorPart.contains("吴承恩") { return "吴承恩" }
+            return authorPart
+        }
+        
+        return "未知作者"
+    }
+    
+    /// 从 API 获取书籍列表
+    func fetchBooksFromAPI() async throws -> [Book] {
         let url = URL(string: "\(AppState.apiBaseURL)/api/books")!
         
         let (data, response) = try await URLSession.shared.data(from: url)

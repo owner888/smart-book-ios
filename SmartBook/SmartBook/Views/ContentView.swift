@@ -51,19 +51,53 @@ struct BookshelfView: View {
                 )
                 .ignoresSafeArea()
                 
-                ScrollView {
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: 16) {
-                        ForEach(filteredBooks) { book in
-                            BookCard(book: book)
-                                .onTapGesture {
-                                    appState.selectedBook = book
-                                }
-                        }
+                if isLoading {
+                    // 加载中状态
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .tint(.white)
+                        Text("正在加载书籍...")
+                            .foregroundColor(.gray)
                     }
-                    .padding()
+                } else if books.isEmpty {
+                    // 空状态
+                    VStack(spacing: 16) {
+                        Image(systemName: "books.vertical")
+                            .font(.system(size: 60))
+                            .foregroundColor(.gray)
+                        Text("暂无书籍")
+                            .font(.headline)
+                            .foregroundColor(.gray)
+                        Text("请在 Resources/Books 目录添加 epub 文件")
+                            .font(.caption)
+                            .foregroundColor(.gray.opacity(0.7))
+                    }
+                } else {
+                    ScrollView {
+                        // 书籍数量统计
+                        HStack {
+                            Text("共 \(filteredBooks.count) 本书")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 8)
+                        
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 16) {
+                            ForEach(filteredBooks) { book in
+                                BookCard(book: book)
+                                    .onTapGesture {
+                                        appState.selectedBook = book
+                                    }
+                            }
+                        }
+                        .padding()
+                    }
                 }
             }
             .navigationTitle("书架")
@@ -81,7 +115,10 @@ struct BookshelfView: View {
         if searchText.isEmpty {
             return books
         }
-        return books.filter { $0.title.localizedCaseInsensitiveContains(searchText) }
+        return books.filter { 
+            $0.title.localizedCaseInsensitiveContains(searchText) ||
+            $0.author.localizedCaseInsensitiveContains(searchText)
+        }
     }
     
     func loadBooks() async {
@@ -90,6 +127,8 @@ struct BookshelfView: View {
             books = try await appState.bookService.fetchBooks()
         } catch {
             appState.errorMessage = error.localizedDescription
+            // 如果 API 失败，尝试直接加载本地书籍
+            books = appState.bookService.loadLocalBooks()
         }
         isLoading = false
     }
