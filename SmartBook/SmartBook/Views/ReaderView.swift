@@ -229,7 +229,15 @@ struct ReaderView: View {
                     pageContent: { index in
                         pageView(text: pages[index], width: pageWidth, height: pageHeight)
                     },
-                    onPageChange: { saveProgress() }
+                    onPageChange: { saveProgress() },
+                    onTapCenter: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showControls.toggle()
+                        }
+                        if showControls {
+                            startControlsTimer()
+                        }
+                    }
                 )
                 
             case .fade:
@@ -240,6 +248,8 @@ struct ReaderView: View {
                         .id(currentPageIndex)
                         .animation(.easeInOut(duration: 0.4), value: currentPageIndex)
                 }
+                // 淡入模式的触摸区域
+                tapAreaOverlay(pageWidth: pageWidth, pageHeight: pageHeight)
                 
             case .slide:
                 // 滑动翻页效果
@@ -256,43 +266,6 @@ struct ReaderView: View {
                         saveProgress()
                     }
                 }
-            }
-            
-            // 触摸区域（用于点击翻页）- 仅在非滑动模式下使用
-            if settings.pageTurnStyle != .slide {
-                HStack(spacing: 0) {
-                    // 左侧点击区域（上一页）
-                    Color.clear
-                        .frame(width: pageWidth * 0.25)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            previousPage()
-                        }
-                    
-                    // 中间点击区域（显示/隐藏控制）
-                    Color.clear
-                        .frame(width: pageWidth * 0.5)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.2)) {
-                                showControls.toggle()
-                            }
-                            if showControls {
-                                startControlsTimer()
-                            }
-                        }
-                    
-                    // 右侧点击区域（下一页）
-                    Color.clear
-                        .frame(width: pageWidth * 0.25)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            nextPage()
-                        }
-                }
-                .frame(height: pageHeight)
-                .allowsHitTesting(!showControls)
-            } else {
                 // 滑动模式的中间点击区域
                 Color.clear
                     .frame(width: pageWidth, height: pageHeight)
@@ -308,7 +281,9 @@ struct ReaderView: View {
                     .allowsHitTesting(!showControls)
             }
         }
+        // 仅在淡入模式下添加滑动手势
         .gesture(
+            settings.pageTurnStyle == .fade ?
             DragGesture(minimumDistance: 50)
                 .onEnded { value in
                     let horizontalAmount = value.translation.width
@@ -325,7 +300,45 @@ struct ReaderView: View {
                         }
                     }
                 }
+            : nil
         )
+    }
+    
+    // 点击区域覆盖层（淡入模式使用）
+    @ViewBuilder
+    private func tapAreaOverlay(pageWidth: CGFloat, pageHeight: CGFloat) -> some View {
+        HStack(spacing: 0) {
+            // 左侧点击区域（上一页）
+            Color.clear
+                .frame(width: pageWidth * 0.25)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    previousPage()
+                }
+            
+            // 中间点击区域（显示/隐藏控制）
+            Color.clear
+                .frame(width: pageWidth * 0.5)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        showControls.toggle()
+                    }
+                    if showControls {
+                        startControlsTimer()
+                    }
+                }
+            
+            // 右侧点击区域（下一页）
+            Color.clear
+                .frame(width: pageWidth * 0.25)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    nextPage()
+                }
+        }
+        .frame(height: pageHeight)
+        .allowsHitTesting(!showControls)
     }
     
     // MARK: - 页面视图（固定一屏，不滚动）
@@ -902,6 +915,7 @@ struct PageCurlView<Content: View>: View {
     let backgroundColor: Color
     let pageContent: (Int) -> Content
     let onPageChange: () -> Void
+    let onTapCenter: () -> Void
     
     @State private var dragProgress: CGFloat = 0
     @State private var isDragging = false
@@ -913,7 +927,7 @@ struct PageCurlView<Content: View>: View {
             backgroundColor
             
             // 下一页（在当前页下方，只在向左翻页时显示）
-            if currentPageIndex < pages.count - 1 && dragDirection == .left {
+            if currentPageIndex < pages.count - 1 && dragDirection == .left && dragProgress > 0 {
                 pageContent(currentPageIndex + 1)
                     .frame(width: pageWidth, height: pageHeight)
                     .background(backgroundColor)
@@ -921,7 +935,7 @@ struct PageCurlView<Content: View>: View {
             }
             
             // 上一页（在向右翻页时显示）
-            if currentPageIndex > 0 && dragDirection == .right {
+            if currentPageIndex > 0 && dragDirection == .right && dragProgress > 0 {
                 pageContent(currentPageIndex - 1)
                     .frame(width: pageWidth, height: pageHeight)
                     .background(backgroundColor)
@@ -933,30 +947,66 @@ struct PageCurlView<Content: View>: View {
                 pageContent(currentPageIndex)
                     .frame(width: pageWidth, height: pageHeight)
                     .background(backgroundColor)
-                    .modifier(PageCurlModifier(
-                        progress: dragProgress,
-                        direction: dragDirection,
-                        pageWidth: pageWidth,
-                        backgroundColor: backgroundColor
-                    ))
+                    .rotation3DEffect(
+                        .degrees(rotationDegrees),
+                        axis: (x: 0, y: 1, z: 0),
+                        anchor: anchorPoint,
+                        perspective: 0.5
+                    )
+                    .shadow(
+                        color: Color.black.opacity(Double(dragProgress) * 0.5),
+                        radius: CGFloat(dragProgress) * 20,
+                        x: shadowX,
+                        y: 0
+                    )
                     .zIndex(1)
             }
+            
+            // 点击区域层
+            HStack(spacing: 0) {
+                // 左侧点击区域（上一页）
+                Color.clear
+                    .frame(width: pageWidth * 0.25, height: pageHeight)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        goToPreviousPage()
+                    }
+                
+                // 中间点击区域（显示/隐藏控制）
+                Color.clear
+                    .frame(width: pageWidth * 0.5, height: pageHeight)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        onTapCenter()
+                    }
+                
+                // 右侧点击区域（下一页）
+                Color.clear
+                    .frame(width: pageWidth * 0.25, height: pageHeight)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        goToNextPage()
+                    }
+            }
+            .zIndex(2)
         }
+        .frame(width: pageWidth, height: pageHeight)
         .clipped()
+        .contentShape(Rectangle())
         .gesture(
-            DragGesture()
+            DragGesture(minimumDistance: 10)
                 .onChanged { value in
                     isDragging = true
                     let translation = value.translation.width
                     
-                    if translation < 0 && currentPageIndex < pages.count - 1 {
+                    if translation < -10 && currentPageIndex < pages.count - 1 {
                         // 向左拖动 - 下一页
                         dragDirection = .left
-                        dragProgress = min(1, abs(translation) / (pageWidth * 0.5))
-                    } else if translation > 0 && currentPageIndex > 0 {
+                        dragProgress = min(1, abs(translation) / (pageWidth * 0.4))
+                    } else if translation > 10 && currentPageIndex > 0 {
                         // 向右拖动 - 上一页
                         dragDirection = .right
-                        dragProgress = min(1, translation / (pageWidth * 0.5))
+                        dragProgress = min(1, translation / (pageWidth * 0.4))
                     } else {
                         dragDirection = .none
                         dragProgress = 0
@@ -964,15 +1014,15 @@ struct PageCurlView<Content: View>: View {
                 }
                 .onEnded { value in
                     isDragging = false
-                    let threshold: CGFloat = 0.25
+                    let threshold: CGFloat = 0.2
                     
                     if dragProgress > threshold {
                         if dragDirection == .left && currentPageIndex < pages.count - 1 {
                             // 完成翻到下一页的动画
-                            withAnimation(.easeOut(duration: 0.3)) {
+                            withAnimation(.easeOut(duration: 0.25)) {
                                 dragProgress = 1
                             }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                                 currentPageIndex += 1
                                 dragProgress = 0
                                 dragDirection = .none
@@ -980,25 +1030,76 @@ struct PageCurlView<Content: View>: View {
                             }
                         } else if dragDirection == .right && currentPageIndex > 0 {
                             // 完成翻到上一页的动画
-                            withAnimation(.easeOut(duration: 0.3)) {
+                            withAnimation(.easeOut(duration: 0.25)) {
                                 dragProgress = 1
                             }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                                 currentPageIndex -= 1
                                 dragProgress = 0
                                 dragDirection = .none
                                 onPageChange()
                             }
+                        } else {
+                            resetDrag()
                         }
                     } else {
-                        // 取消翻页，恢复原位
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            dragProgress = 0
-                            dragDirection = .none
-                        }
+                        resetDrag()
                     }
                 }
         )
+    }
+    
+    // 计算属性
+    private var rotationDegrees: Double {
+        guard dragDirection != .none && dragProgress > 0 else { return 0 }
+        let degrees = Double(dragProgress) * 80
+        return dragDirection == .left ? -degrees : degrees
+    }
+    
+    private var anchorPoint: UnitPoint {
+        dragDirection == .left ? .trailing : .leading
+    }
+    
+    private var shadowX: CGFloat {
+        guard dragDirection != .none && dragProgress > 0 else { return 0 }
+        let offset = CGFloat(dragProgress) * 25
+        return dragDirection == .left ? -offset : offset
+    }
+    
+    // 方法
+    private func resetDrag() {
+        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
+            dragProgress = 0
+            dragDirection = .none
+        }
+    }
+    
+    private func goToNextPage() {
+        guard currentPageIndex < pages.count - 1 else { return }
+        dragDirection = .left
+        withAnimation(.easeOut(duration: 0.3)) {
+            dragProgress = 1
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            currentPageIndex += 1
+            dragProgress = 0
+            dragDirection = .none
+            onPageChange()
+        }
+    }
+    
+    private func goToPreviousPage() {
+        guard currentPageIndex > 0 else { return }
+        dragDirection = .right
+        withAnimation(.easeOut(duration: 0.3)) {
+            dragProgress = 1
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            currentPageIndex -= 1
+            dragProgress = 0
+            dragDirection = .none
+            onPageChange()
+        }
     }
 }
 
@@ -1009,25 +1110,34 @@ struct PageCurlModifier: ViewModifier {
     let pageWidth: CGFloat
     let backgroundColor: Color
     
+    private var rotationDegrees: Double {
+        guard direction != .none else { return 0 }
+        return direction == .left ? -Double(progress) * 85 : Double(progress) * 85
+    }
+    
+    private var anchorPoint: UnitPoint {
+        direction == .left ? .trailing : .leading
+    }
+    
+    private var shadowX: CGFloat {
+        guard direction != .none else { return 0 }
+        return direction == .left ? -CGFloat(progress) * 30 : CGFloat(progress) * 30
+    }
+    
     func body(content: Content) -> some View {
-        // 只有在有方向时才应用翻页效果
-        if direction == .none || progress == 0 {
-            content
-        } else {
-            content
-                .rotation3DEffect(
-                    .degrees(direction == .left ? -Double(progress) * 85 : Double(progress) * 85),
-                    axis: (x: 0, y: 1, z: 0),
-                    anchor: direction == .left ? .trailing : .leading,
-                    perspective: 0.4
-                )
-                .shadow(
-                    color: Color.black.opacity(Double(progress) * 0.4),
-                    radius: CGFloat(progress) * 15,
-                    x: direction == .left ? -CGFloat(progress) * 30 : CGFloat(progress) * 30,
-                    y: 0
-                )
-        }
+        content
+            .rotation3DEffect(
+                .degrees(rotationDegrees),
+                axis: (x: 0, y: 1, z: 0),
+                anchor: anchorPoint,
+                perspective: 0.4
+            )
+            .shadow(
+                color: Color.black.opacity(Double(progress) * 0.4),
+                radius: CGFloat(progress) * 15,
+                x: shadowX,
+                y: 0
+            )
     }
 }
 
