@@ -61,6 +61,11 @@ struct ChatView: View {
             }
             .navigationTitle("AI 对话")
             .navigationBarTitleDisplayMode(.inline)
+            .scrollDismissesKeyboard(.interactively)
+            .onTapGesture {
+                // 点击空白处收起键盘
+                isInputFocused = false
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
