@@ -6,12 +6,13 @@ internal import AVFAudio
 struct SettingsView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(\.colorScheme) var systemColorScheme
     @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:8080"
     @AppStorage("autoTTS") private var autoTTS = true
     @AppStorage("ttsRate") private var ttsRate = 1.0
     
     private var colors: ThemeColors {
-        themeManager.colors
+        themeManager.colors(for: systemColorScheme)
     }
     
     var body: some View {
@@ -171,10 +172,11 @@ struct SettingsRow<Content: View>: View {
 struct VoiceSelectionView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(\.colorScheme) var systemColorScheme
     @State private var selectedVoiceId: String = ""
     
     private var colors: ThemeColors {
-        themeManager.colors
+        themeManager.colors(for: systemColorScheme)
     }
     
     var body: some View {

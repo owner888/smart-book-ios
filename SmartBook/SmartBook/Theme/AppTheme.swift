@@ -101,12 +101,11 @@ class ThemeManager {
         }
     }
     
-    var colors: ThemeColors {
+    /// 根据系统当前颜色模式获取主题颜色
+    func colors(for systemColorScheme: ColorScheme) -> ThemeColors {
         switch themeMode {
         case .system:
-            // 系统模式下，根据当前系统外观返回对应颜色
-            // 这里简化处理，使用暗黑主题，实际会通过 @Environment(\.colorScheme) 判断
-            return .dark
+            return systemColorScheme == .dark ? .dark : .light
         case .dark:
             return .dark
         case .light:
@@ -139,12 +138,6 @@ extension EnvironmentValues {
 
 // MARK: - 视图扩展
 extension View {
-    func withAppTheme(_ themeManager: ThemeManager) -> some View {
-        self
-            .preferredColorScheme(themeManager.colorScheme)
-            .environment(\.themeColors, themeManager.colors)
-    }
-    
     func themedBackground(_ themeColors: ThemeColors) -> some View {
         self.background(themeColors.background.ignoresSafeArea())
     }

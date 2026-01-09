@@ -38,6 +38,7 @@ struct ContentView: View {
 struct BookshelfView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(\.colorScheme) var systemColorScheme
     @State private var books: [Book] = []
     @State private var searchText = ""
     @State private var isLoading = false
@@ -49,7 +50,7 @@ struct BookshelfView: View {
     @State private var selectedBookForReading: Book?
     
     private var colors: ThemeColors {
-        themeManager.colors
+        themeManager.colors(for: systemColorScheme)
     }
     
     var body: some View {

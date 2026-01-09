@@ -5,13 +5,14 @@ import SwiftUI
 struct ChatView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(\.colorScheme) var systemColorScheme
     @State private var viewModel = ChatViewModel()
     @State private var inputText = ""
     @State private var isConversationMode = false
     @FocusState private var isInputFocused: Bool
     
     private var colors: ThemeColors {
-        themeManager.colors
+        themeManager.colors(for: systemColorScheme)
     }
     
     var body: some View {
