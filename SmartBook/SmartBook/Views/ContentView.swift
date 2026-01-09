@@ -7,6 +7,15 @@ struct ContentView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
     @State private var selectedTab = 0
+    @State private var previousTab = 0  // 记录上一个非搜索 Tab
+    
+    // Tab 信息
+    private let tabInfo: [(icon: String, name: String)] = [
+        ("books.vertical", "书架"),
+        ("bubble.left.and.bubble.right", "对话"),
+        ("gear", "设置"),
+        ("magnifyingglass", "搜索")
+    ]
     
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -30,6 +39,25 @@ struct ContentView: View {
                     Label("设置", systemImage: "gear")
                 }
                 .tag(2)
+            
+            // 搜索
+            SearchView(
+                previousTabIcon: tabInfo[previousTab].icon,
+                previousTabName: tabInfo[previousTab].name,
+                onBack: {
+                    selectedTab = previousTab
+                }
+            )
+            .tabItem {
+                Label("搜索", systemImage: "magnifyingglass")
+            }
+            .tag(3)
+        }
+        .onChange(of: selectedTab) { oldValue, newValue in
+            // 如果新 Tab 不是搜索，更新 previousTab
+            if newValue != 3 {
+                previousTab = newValue
+            }
         }
     }
 }
@@ -40,7 +68,6 @@ struct BookshelfView: View {
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
     @State private var books: [Book] = []
-    @State private var searchText = ""
     @State private var isLoading = false
     @State private var showingImporter = false
     @State private var showingDeleteAlert = false
@@ -93,7 +120,7 @@ struct BookshelfView: View {
                 } else {
                     ScrollView {
                         HStack {
-                            Text("共 \(filteredBooks.count) 本书")
+                            Text("共 \(books.count) 本书")
                                 .font(.subheadline)
                                 .foregroundColor(colors.secondaryText)
                             Spacer()
@@ -105,7 +132,7 @@ struct BookshelfView: View {
                             GridItem(.flexible()),
                             GridItem(.flexible())
                         ], spacing: 16) {
-                            ForEach(filteredBooks) { book in
+                            ForEach(books) { book in
                                 BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book), colors: colors)
                                     .onTapGesture {
                                         if book.filePath != nil {
@@ -156,7 +183,6 @@ struct BookshelfView: View {
                     }
                 }
             }
-            .searchable(text: $searchText, prompt: "搜索书籍")
             .task {
                 await loadBooks()
             }
@@ -190,16 +216,6 @@ struct BookshelfView: View {
             .fullScreenCover(item: $selectedBookForReading) { book in
                 ReaderView(book: book)
             }
-        }
-    }
-    
-    var filteredBooks: [Book] {
-        if searchText.isEmpty {
-            return books
-        }
-        return books.filter { 
-            $0.title.localizedCaseInsensitiveContains(searchText) ||
-            $0.author.localizedCaseInsensitiveContains(searchText)
         }
     }
     

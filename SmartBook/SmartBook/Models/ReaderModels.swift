@@ -22,6 +22,7 @@ enum PageTurnStyle: Int, Codable, CaseIterable {
         case .curl: return "book.pages"
         case .fade: return "sparkles"
         }
+        
     }
     
     var description: String {
