@@ -1,4 +1,4 @@
-// EPUBParser.swift - EPUB 元数据解析器（纯 Swift 实现，iOS 兼容）
+// EPUBParser.swift - EPUB 解析器（纯 Swift 实现，iOS 兼容）
 
 import Foundation
 import UIKit
@@ -13,6 +13,30 @@ struct EPUBMetadata {
     var description: String?
     var coverImage: UIImage?
     var localCoverPath: String?
+}
+
+/// EPUB 章节
+struct EPUBChapter: Identifiable {
+    let id: String
+    let title: String
+    let href: String
+    var content: String
+    let order: Int
+    
+    init(id: String, title: String, href: String, content: String = "", order: Int) {
+        self.id = id
+        self.title = title
+        self.href = href
+        self.content = content
+        self.order = order
+    }
+}
+
+/// EPUB 内容（包含元数据和章节）
+struct EPUBContent {
+    var metadata: EPUBMetadata
+    var chapters: [EPUBChapter]
+    var spine: [String] // 按阅读顺序排列的章节ID
 }
 
 /// EPUB 解析器
@@ -136,7 +160,7 @@ class EPUBParser {
         var coverId: String?
         
         // 方法1: 查找 <meta name="cover" content="xxx"/>
-        let metaPattern = #"<meta\s+name\s*=\s*["']cover["'][^>]*content\s*=\s*["']([^"']+)["']"#
+        let metaPattern = "<meta\\s+name\\s*=\\s*[\"']cover[\"'][^>]*content\\s*=\\s*[\"']([^\"']+)[\"']"
         if let regex = try? NSRegularExpression(pattern: metaPattern, options: .caseInsensitive),
            let match = regex.firstMatch(in: xml, range: NSRange(xml.startIndex..., in: xml)),
            let range = Range(match.range(at: 1), in: xml) {
@@ -145,7 +169,7 @@ class EPUBParser {
         
         // 方法2: 查找 properties="cover-image" 的 item
         if coverId == nil {
-            let coverItemPattern = #"<item[^>]+properties\s*=\s*["'][^"']*cover-image[^"']*["'][^>]*href\s*=\s*["']([^"']+)["']"#
+            let coverItemPattern = "<item[^>]+properties\\s*=\\s*[\"'][^\"']*cover-image[^\"']*[\"'][^>]*href\\s*=\\s*[\"']([^\"']+)[\"']"
             if let regex = try? NSRegularExpression(pattern: coverItemPattern, options: .caseInsensitive),
                let match = regex.firstMatch(in: xml, range: NSRange(xml.startIndex..., in: xml)),
                let range = Range(match.range(at: 1), in: xml) {
@@ -153,7 +177,7 @@ class EPUBParser {
                 return opfDir.appendingPathComponent(href).path
             }
             
-            let coverItemPattern2 = #"<item[^>]+href\s*=\s*["']([^"']+)["'][^>]*properties\s*=\s*["'][^"']*cover-image[^"']*["']"#
+            let coverItemPattern2 = "<item[^>]+href\\s*=\\s*[\"']([^\"']+)[\"'][^>]*properties\\s*=\\s*[\"'][^\"']*cover-image[^\"']*[\"']"
             if let regex = try? NSRegularExpression(pattern: coverItemPattern2, options: .caseInsensitive),
                let match = regex.firstMatch(in: xml, range: NSRange(xml.startIndex..., in: xml)),
                let range = Range(match.range(at: 1), in: xml) {
@@ -240,6 +264,371 @@ class EPUBParser {
             return coverURL
         }
         return nil
+    }
+    
+    // MARK: - EPUB 内容解析
+    
+    /// 解析 EPUB 完整内容（元数据 + 章节）
+    static func parseContent(from epubPath: String) -> EPUBContent? {
+        guard FileManager.default.fileExists(atPath: epubPath) else {
+            print("EPUB file not found: \(epubPath)")
+            return nil
+        }
+        
+        guard let archive = ZIPArchive(url: URL(fileURLWithPath: epubPath)) else {
+            print("Failed to open EPUB archive")
+            return nil
+        }
+        
+        // 创建临时目录
+        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        defer {
+            try? FileManager.default.removeItem(at: tempDir)
+        }
+        
+        do {
+            // 解压所有文件
+            for entry in archive.entries {
+                if entry.isDirectory { continue }
+                
+                let destinationURL = tempDir.appendingPathComponent(entry.path)
+                try FileManager.default.createDirectory(at: destinationURL.deletingLastPathComponent(),
+                                                        withIntermediateDirectories: true)
+                try archive.extract(entry, to: destinationURL)
+            }
+            
+            // 读取 container.xml
+            let containerPath = tempDir.appendingPathComponent("META-INF/container.xml")
+            guard let opfRelativePath = parseContainerXML(at: containerPath) else {
+                return nil
+            }
+            
+            // 读取 OPF 文件
+            let opfPath = tempDir.appendingPathComponent(opfRelativePath)
+            let opfDir = opfPath.deletingLastPathComponent()
+            
+            guard let opfData = try? Data(contentsOf: opfPath),
+                  let opfXML = String(data: opfData, encoding: .utf8) else {
+                return nil
+            }
+            
+            // 解析元数据
+            let metadata = parseOPFFile(at: opfPath, opfDir: opfDir)
+            
+            // 解析 manifest（资源清单）
+            let manifest = parseManifest(from: opfXML)
+            
+            // 解析 spine（阅读顺序）
+            let spine = parseSpine(from: opfXML)
+            
+            // 解析 TOC（目录）
+            let tocMap = parseTOC(from: opfXML, manifest: manifest, opfDir: opfDir)
+            
+            // 加载章节内容
+            var chapters: [EPUBChapter] = []
+            for (index, itemRef) in spine.enumerated() {
+                guard let href = manifest[itemRef] else { continue }
+                
+                let chapterPath = opfDir.appendingPathComponent(href)
+                var content = ""
+                
+                if let htmlData = try? Data(contentsOf: chapterPath),
+                   let htmlString = String(data: htmlData, encoding: .utf8) {
+                    content = extractTextFromHTML(htmlString)
+                }
+                
+                // 获取章节标题
+                let title = tocMap[href] ?? tocMap[itemRef] ?? "第 \(index + 1) 章"
+                
+                let chapter = EPUBChapter(
+                    id: itemRef,
+                    title: title,
+                    href: href,
+                    content: content,
+                    order: index
+                )
+                chapters.append(chapter)
+            }
+            
+            return EPUBContent(metadata: metadata, chapters: chapters, spine: spine)
+            
+        } catch {
+            print("Error parsing EPUB content: \(error)")
+            return nil
+        }
+    }
+    
+    /// 解析 manifest（资源清单）
+    private static func parseManifest(from xml: String) -> [String: String] {
+        var manifest: [String: String] = [:]
+        
+        // 匹配 <item id="xxx" href="xxx" .../>
+        let itemPattern = #"<item[^>]+id\s*=\s*["']([^"']+)["'][^>]+href\s*=\s*["']([^"']+)["']"#
+        let itemPattern2 = #"<item[^>]+href\s*=\s*["']([^"']+)["'][^>]+id\s*=\s*["']([^"']+)["']"#
+        
+        if let regex = try? NSRegularExpression(pattern: itemPattern, options: .caseInsensitive) {
+            let matches = regex.matches(in: xml, range: NSRange(xml.startIndex..., in: xml))
+            for match in matches {
+                if let idRange = Range(match.range(at: 1), in: xml),
+                   let hrefRange = Range(match.range(at: 2), in: xml) {
+                    let id = String(xml[idRange])
+                    let href = String(xml[hrefRange]).removingPercentEncoding ?? String(xml[hrefRange])
+                    manifest[id] = href
+                }
+            }
+        }
+        
+        if let regex = try? NSRegularExpression(pattern: itemPattern2, options: .caseInsensitive) {
+            let matches = regex.matches(in: xml, range: NSRange(xml.startIndex..., in: xml))
+            for match in matches {
+                if let hrefRange = Range(match.range(at: 1), in: xml),
+                   let idRange = Range(match.range(at: 2), in: xml) {
+                    let id = String(xml[idRange])
+                    let href = String(xml[hrefRange]).removingPercentEncoding ?? String(xml[hrefRange])
+                    if manifest[id] == nil {
+                        manifest[id] = href
+                    }
+                }
+            }
+        }
+        
+        return manifest
+    }
+    
+    /// 解析 spine（阅读顺序）
+    private static func parseSpine(from xml: String) -> [String] {
+        var spine: [String] = []
+        
+        // 匹配 <itemref idref="xxx"/>
+        let itemRefPattern = #"<itemref[^>]+idref\s*=\s*["']([^"']+)["']"#
+        
+        if let regex = try? NSRegularExpression(pattern: itemRefPattern, options: .caseInsensitive) {
+            let matches = regex.matches(in: xml, range: NSRange(xml.startIndex..., in: xml))
+            for match in matches {
+                if let range = Range(match.range(at: 1), in: xml) {
+                    spine.append(String(xml[range]))
+                }
+            }
+        }
+        
+        return spine
+    }
+    
+    /// 解析 TOC（目录）
+    private static func parseTOC(from xml: String, manifest: [String: String], opfDir: URL) -> [String: String] {
+        var tocMap: [String: String] = [:]
+        
+        // 查找 NCX 文件
+        var ncxHref: String?
+        
+        // 方法1: 查找 spine 中的 toc 属性
+        let tocPattern = #"<spine[^>]+toc\s*=\s*["']([^"']+)["']"#
+        if let regex = try? NSRegularExpression(pattern: tocPattern, options: .caseInsensitive),
+           let match = regex.firstMatch(in: xml, range: NSRange(xml.startIndex..., in: xml)),
+           let range = Range(match.range(at: 1), in: xml) {
+            let tocId = String(xml[range])
+            ncxHref = manifest[tocId]
+        }
+        
+        // 方法2: 查找 media-type="application/x-dtbncx+xml" 的 item
+        if ncxHref == nil {
+            let ncxPattern = "<item[^>]+media-type\\s*=\\s*[\"']application/x-dtbncx\\+xml[\"'][^>]+href\\s*=\\s*[\"']([^\"']+)[\"']"
+            if let regex = try? NSRegularExpression(pattern: ncxPattern, options: .caseInsensitive),
+               let match = regex.firstMatch(in: xml, range: NSRange(xml.startIndex..., in: xml)),
+               let range = Range(match.range(at: 1), in: xml) {
+                ncxHref = String(xml[range])
+            }
+        }
+        
+        // 解析 NCX 文件
+        if let href = ncxHref {
+            let ncxPath = opfDir.appendingPathComponent(href)
+            if let ncxData = try? Data(contentsOf: ncxPath),
+               let ncxXML = String(data: ncxData, encoding: .utf8) {
+                tocMap = parseNCX(ncxXML)
+            }
+        }
+        
+        // 也尝试解析 EPUB3 的 nav 文件
+        let navPattern = "<item[^>]+properties\\s*=\\s*[\"'][^\"']*nav[^\"']*[\"'][^>]+href\\s*=\\s*[\"']([^\"']+)[\"']"
+        if let regex = try? NSRegularExpression(pattern: navPattern, options: .caseInsensitive),
+           let match = regex.firstMatch(in: xml, range: NSRange(xml.startIndex..., in: xml)),
+           let range = Range(match.range(at: 1), in: xml) {
+            let navHref = String(xml[range])
+            let navPath = opfDir.appendingPathComponent(navHref)
+            if let navData = try? Data(contentsOf: navPath),
+               let navHTML = String(data: navData, encoding: .utf8) {
+                let navToc = parseNav(navHTML)
+                for (key, value) in navToc {
+                    if tocMap[key] == nil {
+                        tocMap[key] = value
+                    }
+                }
+            }
+        }
+        
+        return tocMap
+    }
+    
+    /// 解析 NCX 文件
+    private static func parseNCX(_ xml: String) -> [String: String] {
+        var toc: [String: String] = [:]
+        
+        // 匹配 <navPoint>...</navPoint>
+        let navPointPattern = "<navPoint[^>]*>.*?<navLabel>\\s*<text>([^<]*)</text>\\s*</navLabel>\\s*<content\\s+src\\s*=\\s*[\"']([^\"']+)[\"']"
+        
+        if let regex = try? NSRegularExpression(pattern: navPointPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let matches = regex.matches(in: xml, range: NSRange(xml.startIndex..., in: xml))
+            for match in matches {
+                if let titleRange = Range(match.range(at: 1), in: xml),
+                   let srcRange = Range(match.range(at: 2), in: xml) {
+                    let title = String(xml[titleRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    var src = String(xml[srcRange])
+                    // 移除锚点
+                    if let hashIndex = src.firstIndex(of: "#") {
+                        src = String(src[..<hashIndex])
+                    }
+                    src = src.removingPercentEncoding ?? src
+                    if !title.isEmpty {
+                        toc[src] = title
+                    }
+                }
+            }
+        }
+        
+        return toc
+    }
+    
+    /// 解析 EPUB3 nav 文件
+    private static func parseNav(_ html: String) -> [String: String] {
+        var toc: [String: String] = [:]
+        
+        // 匹配 <a href="xxx">title</a>
+        let linkPattern = #"<a[^>]+href\s*=\s*["']([^"']+)["'][^>]*>([^<]+)</a>"#
+        
+        if let regex = try? NSRegularExpression(pattern: linkPattern, options: .caseInsensitive) {
+            let matches = regex.matches(in: html, range: NSRange(html.startIndex..., in: html))
+            for match in matches {
+                if let hrefRange = Range(match.range(at: 1), in: html),
+                   let titleRange = Range(match.range(at: 2), in: html) {
+                    var href = String(html[hrefRange])
+                    let title = String(html[titleRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    // 移除锚点
+                    if let hashIndex = href.firstIndex(of: "#") {
+                        href = String(href[..<hashIndex])
+                    }
+                    href = href.removingPercentEncoding ?? href
+                    if !title.isEmpty && !href.isEmpty {
+                        toc[href] = title
+                    }
+                }
+            }
+        }
+        
+        return toc
+    }
+    
+    /// 从 HTML 中提取纯文本
+    static func extractTextFromHTML(_ html: String) -> String {
+        var text = html
+        
+        // 移除 script 和 style 标签及其内容
+        let scriptPattern = #"<script[^>]*>[\s\S]*?</script>"#
+        let stylePattern = #"<style[^>]*>[\s\S]*?</style>"#
+        
+        if let regex = try? NSRegularExpression(pattern: scriptPattern, options: .caseInsensitive) {
+            text = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
+        }
+        if let regex = try? NSRegularExpression(pattern: stylePattern, options: .caseInsensitive) {
+            text = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
+        }
+        
+        // 处理段落和换行
+        text = text.replacingOccurrences(of: "</p>", with: "\n\n", options: .caseInsensitive)
+        text = text.replacingOccurrences(of: "<br>", with: "\n", options: .caseInsensitive)
+        text = text.replacingOccurrences(of: "<br/>", with: "\n", options: .caseInsensitive)
+        text = text.replacingOccurrences(of: "<br />", with: "\n", options: .caseInsensitive)
+        text = text.replacingOccurrences(of: "</div>", with: "\n", options: .caseInsensitive)
+        text = text.replacingOccurrences(of: "</h1>", with: "\n\n", options: .caseInsensitive)
+        text = text.replacingOccurrences(of: "</h2>", with: "\n\n", options: .caseInsensitive)
+        text = text.replacingOccurrences(of: "</h3>", with: "\n\n", options: .caseInsensitive)
+        text = text.replacingOccurrences(of: "</h4>", with: "\n\n", options: .caseInsensitive)
+        text = text.replacingOccurrences(of: "</li>", with: "\n", options: .caseInsensitive)
+        
+        // 移除所有 HTML 标签
+        let tagPattern = #"<[^>]+>"#
+        if let regex = try? NSRegularExpression(pattern: tagPattern) {
+            text = regex.stringByReplacingMatches(in: text, range: NSRange(text.startIndex..., in: text), withTemplate: "")
+        }
+        
+        // 解码 HTML 实体
+        text = decodeHTMLEntities(text)
+        
+        // 清理多余空白
+        text = text.replacingOccurrences(of: "\r\n", with: "\n")
+        text = text.replacingOccurrences(of: "\r", with: "\n")
+        
+        // 合并多个连续换行为两个
+        while text.contains("\n\n\n") {
+            text = text.replacingOccurrences(of: "\n\n\n", with: "\n\n")
+        }
+        
+        // 移除行首行尾空白
+        let lines = text.components(separatedBy: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
+        text = lines.joined(separator: "\n")
+        
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// 解码 HTML 实体
+    private static func decodeHTMLEntities(_ string: String) -> String {
+        var result = string
+        
+        let entities: [String: String] = [
+            "&nbsp;": " ",
+            "&amp;": "&",
+            "&lt;": "<",
+            "&gt;": ">",
+            "&quot;": "\"",
+            "&apos;": "'",
+            "&#39;": "'",
+            "&ldquo;": "\u{201C}",
+            "&rdquo;": "\u{201D}",
+            "&lsquo;": "\u{2018}",
+            "&rsquo;": "\u{2019}",
+            "&mdash;": "\u{2014}",
+            "&ndash;": "\u{2013}",
+            "&hellip;": "\u{2026}",
+            "&copy;": "\u{00A9}",
+            "&reg;": "\u{00AE}",
+            "&trade;": "\u{2122}",
+            "&#160;": " ",
+        ]
+        
+        for (entity, replacement) in entities {
+            result = result.replacingOccurrences(of: entity, with: replacement)
+        }
+        
+        // 处理数字实体 &#xxx;
+        let numericPattern = #"&#(\d+);"#
+        if let regex = try? NSRegularExpression(pattern: numericPattern) {
+            var searchRange = result.startIndex..<result.endIndex
+            while let match = regex.firstMatch(in: result, range: NSRange(searchRange, in: result)),
+                  let range = Range(match.range, in: result),
+                  let numRange = Range(match.range(at: 1), in: result) {
+                let numString = String(result[numRange])
+                if let num = Int(numString), let scalar = Unicode.Scalar(num) {
+                    let char = String(Character(scalar))
+                    result.replaceSubrange(range, with: char)
+                    searchRange = result.index(range.lowerBound, offsetBy: char.count)..<result.endIndex
+                } else {
+                    searchRange = range.upperBound..<result.endIndex
+                }
+            }
+        }
+        
+        return result
     }
 }
 

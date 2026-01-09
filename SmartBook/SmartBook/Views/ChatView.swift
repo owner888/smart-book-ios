@@ -171,7 +171,7 @@ struct MessageBubble: View {
     var body: some View {
         HStack {
             if message.role == .user {
-                Spacer()
+                Spacer(minLength: 60)
             }
             
             VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
@@ -193,10 +193,9 @@ struct MessageBubble: View {
                     .font(.caption2)
                     .foregroundColor(.gray)
             }
-            .frame(maxWidth: UIScreen.main.bounds.width * 0.75, alignment: message.role == .user ? .trailing : .leading)
             
             if message.role == .assistant {
-                Spacer()
+                Spacer(minLength: 60)
             }
         }
     }

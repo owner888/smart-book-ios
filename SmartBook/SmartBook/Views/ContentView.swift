@@ -45,6 +45,7 @@ struct BookshelfView: View {
     @State private var bookToDelete: Book?
     @State private var importError: String?
     @State private var showingError = false
+    @State private var selectedBookForReading: Book?
     
     var body: some View {
         NavigationStack {
@@ -110,9 +111,31 @@ struct BookshelfView: View {
                             ForEach(filteredBooks) { book in
                                 BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book))
                                     .onTapGesture {
-                                        appState.selectedBook = book
+                                        // 如果有文件路径，打开阅读器
+                                        if book.filePath != nil {
+                                            selectedBookForReading = book
+                                        } else {
+                                            appState.selectedBook = book
+                                        }
                                     }
                                     .contextMenu {
+                                        // 阅读
+                                        if book.filePath != nil {
+                                            Button {
+                                                selectedBookForReading = book
+                                            } label: {
+                                                Label("阅读", systemImage: "book")
+                                            }
+                                        }
+                                        
+                                        // AI 对话
+                                        Button {
+                                            appState.selectedBook = book
+                                        } label: {
+                                            Label("AI 对话", systemImage: "bubble.left.and.bubble.right")
+                                        }
+                                        
+                                        // 删除
                                         if appState.bookService.isUserImportedBook(book) {
                                             Button(role: .destructive) {
                                                 bookToDelete = book
@@ -169,6 +192,9 @@ struct BookshelfView: View {
                 Button("确定", role: .cancel) { }
             } message: {
                 Text(importError ?? "未知错误")
+            }
+            .fullScreenCover(item: $selectedBookForReading) { book in
+                ReaderView(book: book)
             }
         }
     }
