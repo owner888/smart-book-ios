@@ -118,15 +118,21 @@ struct ReadingProgress: Codable {
     }
 }
 
+// MARK: - 全书页面结构
+struct BookPage {
+    let content: String
+    let chapterIndex: Int
+    let chapterTitle: String
+}
+
 // MARK: - 主阅读器视图
 struct ReaderView: View {
     let book: Book
     @Environment(\.dismiss) private var dismiss
     @State private var epubContent: EPUBContent?
     @State private var isLoading = true
-    @State private var currentChapterIndex = 0
     @State private var currentPageIndex = 0
-    @State private var pages: [String] = []
+    @State private var allPages: [BookPage] = []  // 整本书的所有页面
     @State private var showSettings = false
     @State private var showTOC = false
     @State private var showControls = true
@@ -197,11 +203,15 @@ struct ReaderView: View {
             }
         }
         .onChange(of: settings.fontSize) { _, _ in
-            paginateCurrentChapter()
+            let savedPage = currentPageIndex
+            paginateEntireBook()
+            currentPageIndex = min(savedPage, allPages.count - 1)
             settings.save()
         }
         .onChange(of: settings.lineSpacing) { _, _ in
-            paginateCurrentChapter()
+            let savedPage = currentPageIndex
+            paginateEntireBook()
+            currentPageIndex = min(savedPage, allPages.count - 1)
             settings.save()
         }
         .onChange(of: settings.backgroundColor) { _, _ in
@@ -550,6 +560,16 @@ struct ReaderView: View {
         return content.chapters[currentChapterIndex].title
     }
     
+    // MARK: - 计算属性（页面相关）
+    private var pages: [String] {
+        allPages.map { $0.content }
+    }
+    
+    private var currentChapterIndex: Int {
+        guard currentPageIndex < allPages.count else { return 0 }
+        return allPages[currentPageIndex].chapterIndex
+    }
+    
     // MARK: - 方法
     private func loadBook() {
         isLoading = true
@@ -566,35 +586,39 @@ struct ReaderView: View {
             
             DispatchQueue.main.async {
                 epubContent = content
+                paginateEntireBook()
                 
                 // 恢复阅读进度
                 if let progress = ReadingProgress.load(for: book.id) {
-                    currentChapterIndex = min(progress.chapterIndex, (content?.chapters.count ?? 1) - 1)
+                    currentPageIndex = min(progress.pageIndex, allPages.count - 1)
                 }
                 
-                paginateCurrentChapter()
                 isLoading = false
             }
         }
     }
     
-    private func paginateCurrentChapter() {
-        guard let content = epubContent,
-              currentChapterIndex < content.chapters.count else {
-            pages = []
+    // 将整本书分页
+    private func paginateEntireBook() {
+        guard let content = epubContent else {
+            allPages = []
             return
         }
         
-        let chapter = content.chapters[currentChapterIndex]
-        pages = paginateText(chapter.content)
+        var newPages: [BookPage] = []
         
-        // 恢复页面位置
-        if let progress = ReadingProgress.load(for: book.id),
-           progress.chapterIndex == currentChapterIndex {
-            currentPageIndex = min(progress.pageIndex, pages.count - 1)
-        } else {
-            currentPageIndex = 0
+        for (chapterIndex, chapter) in content.chapters.enumerated() {
+            let chapterPages = paginateText(chapter.content)
+            for pageContent in chapterPages {
+                newPages.append(BookPage(
+                    content: pageContent,
+                    chapterIndex: chapterIndex,
+                    chapterTitle: chapter.title
+                ))
+            }
         }
+        
+        allPages = newPages.isEmpty ? [BookPage(content: "", chapterIndex: 0, chapterTitle: "")] : newPages
     }
     
     private func paginateText(_ text: String) -> [String] {
@@ -633,15 +657,12 @@ struct ReaderView: View {
     }
     
     private func nextPage() {
-        if currentPageIndex < pages.count - 1 {
+        if currentPageIndex < allPages.count - 1 {
             withAnimation(.easeInOut(duration: 0.25)) {
                 currentPageIndex += 1
             }
-        } else {
-            // 下一章
-            nextChapter()
+            saveProgress()
         }
-        saveProgress()
     }
     
     private func previousPage() {
@@ -649,44 +670,49 @@ struct ReaderView: View {
             withAnimation(.easeInOut(duration: 0.25)) {
                 currentPageIndex -= 1
             }
-        } else {
-            // 上一章的最后一页
-            if currentChapterIndex > 0 {
-                currentChapterIndex -= 1
-                paginateCurrentChapter()
-                currentPageIndex = max(0, pages.count - 1)
-            }
+            saveProgress()
         }
-        saveProgress()
     }
     
     private func nextChapter() {
-        guard let content = epubContent,
-              currentChapterIndex < content.chapters.count - 1 else { return }
+        guard let content = epubContent else { return }
         
-        currentChapterIndex += 1
-        paginateCurrentChapter()
-        currentPageIndex = 0
-        saveProgress()
+        // 找到下一章的第一页
+        let nextChapterIndex = currentChapterIndex + 1
+        if nextChapterIndex < content.chapters.count {
+            if let pageIndex = allPages.firstIndex(where: { $0.chapterIndex == nextChapterIndex }) {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    currentPageIndex = pageIndex
+                }
+                saveProgress()
+            }
+        }
     }
     
     private func previousChapter() {
-        guard currentChapterIndex > 0 else { return }
-        
-        currentChapterIndex -= 1
-        paginateCurrentChapter()
-        currentPageIndex = 0
-        saveProgress()
+        // 找到上一章的第一页
+        let prevChapterIndex = currentChapterIndex - 1
+        if prevChapterIndex >= 0 {
+            if let pageIndex = allPages.firstIndex(where: { $0.chapterIndex == prevChapterIndex }) {
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    currentPageIndex = pageIndex
+                }
+                saveProgress()
+            }
+        }
     }
     
     private func goToChapter(_ index: Int) {
         guard let content = epubContent,
               index >= 0 && index < content.chapters.count else { return }
         
-        currentChapterIndex = index
-        paginateCurrentChapter()
-        currentPageIndex = 0
-        saveProgress()
+        // 找到该章节的第一页
+        if let pageIndex = allPages.firstIndex(where: { $0.chapterIndex == index }) {
+            withAnimation(.easeInOut(duration: 0.25)) {
+                currentPageIndex = pageIndex
+            }
+            saveProgress()
+        }
     }
     
     private func saveProgress() {
