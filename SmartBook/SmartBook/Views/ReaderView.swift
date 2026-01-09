@@ -901,12 +901,7 @@ struct TOCView: View {
     }
 }
 
-// MARK: - 翻页方向枚举
-enum PageDragDirection {
-    case none, left, right
-}
-
-// MARK: - 卷页翻页视图（3D书本翻页效果）
+// MARK: - 真正的卷页效果视图（使用 UIPageViewController）
 struct PageCurlView<Content: View>: View {
     let pages: [String]
     @Binding var currentPageIndex: Int
@@ -917,228 +912,151 @@ struct PageCurlView<Content: View>: View {
     let onPageChange: () -> Void
     let onTapCenter: () -> Void
     
-    @State private var dragProgress: CGFloat = 0
-    @State private var isDragging = false
-    @State private var dragDirection: PageDragDirection = .none
-    
     var body: some View {
         ZStack {
-            // 背景层
-            backgroundColor
-            
-            // 下一页（在当前页下方，只在向左翻页时显示）
-            if currentPageIndex < pages.count - 1 && dragDirection == .left && dragProgress > 0 {
-                pageContent(currentPageIndex + 1)
-                    .frame(width: pageWidth, height: pageHeight)
-                    .background(backgroundColor)
-                    .zIndex(0)
-            }
-            
-            // 上一页（在向右翻页时显示）
-            if currentPageIndex > 0 && dragDirection == .right && dragProgress > 0 {
-                pageContent(currentPageIndex - 1)
-                    .frame(width: pageWidth, height: pageHeight)
-                    .background(backgroundColor)
-                    .zIndex(0)
-            }
-            
-            // 当前页（带翻页效果）
-            if currentPageIndex < pages.count {
-                pageContent(currentPageIndex)
-                    .frame(width: pageWidth, height: pageHeight)
-                    .background(backgroundColor)
-                    .rotation3DEffect(
-                        .degrees(rotationDegrees),
-                        axis: (x: 0, y: 1, z: 0),
-                        anchor: anchorPoint,
-                        perspective: 0.5
-                    )
-                    .shadow(
-                        color: Color.black.opacity(Double(dragProgress) * 0.5),
-                        radius: CGFloat(dragProgress) * 20,
-                        x: shadowX,
-                        y: 0
-                    )
-                    .zIndex(1)
-            }
-            
-            // 点击区域层
-            HStack(spacing: 0) {
-                // 左侧点击区域（上一页）
-                Color.clear
-                    .frame(width: pageWidth * 0.25, height: pageHeight)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        goToPreviousPage()
-                    }
-                
-                // 中间点击区域（显示/隐藏控制）
-                Color.clear
-                    .frame(width: pageWidth * 0.5, height: pageHeight)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        onTapCenter()
-                    }
-                
-                // 右侧点击区域（下一页）
-                Color.clear
-                    .frame(width: pageWidth * 0.25, height: pageHeight)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        goToNextPage()
-                    }
-            }
-            .zIndex(2)
-        }
-        .frame(width: pageWidth, height: pageHeight)
-        .clipped()
-        .contentShape(Rectangle())
-        .gesture(
-            DragGesture(minimumDistance: 10)
-                .onChanged { value in
-                    isDragging = true
-                    let translation = value.translation.width
-                    
-                    if translation < -10 && currentPageIndex < pages.count - 1 {
-                        // 向左拖动 - 下一页
-                        dragDirection = .left
-                        dragProgress = min(1, abs(translation) / (pageWidth * 0.4))
-                    } else if translation > 10 && currentPageIndex > 0 {
-                        // 向右拖动 - 上一页
-                        dragDirection = .right
-                        dragProgress = min(1, translation / (pageWidth * 0.4))
-                    } else {
-                        dragDirection = .none
-                        dragProgress = 0
-                    }
-                }
-                .onEnded { value in
-                    isDragging = false
-                    let threshold: CGFloat = 0.2
-                    
-                    if dragProgress > threshold {
-                        if dragDirection == .left && currentPageIndex < pages.count - 1 {
-                            // 完成翻到下一页的动画
-                            withAnimation(.easeOut(duration: 0.25)) {
-                                dragProgress = 1
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                currentPageIndex += 1
-                                dragProgress = 0
-                                dragDirection = .none
-                                onPageChange()
-                            }
-                        } else if dragDirection == .right && currentPageIndex > 0 {
-                            // 完成翻到上一页的动画
-                            withAnimation(.easeOut(duration: 0.25)) {
-                                dragProgress = 1
-                            }
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                currentPageIndex -= 1
-                                dragProgress = 0
-                                dragDirection = .none
-                                onPageChange()
-                            }
-                        } else {
-                            resetDrag()
-                        }
-                    } else {
-                        resetDrag()
-                    }
-                }
-        )
-    }
-    
-    // 计算属性
-    private var rotationDegrees: Double {
-        guard dragDirection != .none && dragProgress > 0 else { return 0 }
-        let degrees = Double(dragProgress) * 80
-        return dragDirection == .left ? -degrees : degrees
-    }
-    
-    private var anchorPoint: UnitPoint {
-        dragDirection == .left ? .trailing : .leading
-    }
-    
-    private var shadowX: CGFloat {
-        guard dragDirection != .none && dragProgress > 0 else { return 0 }
-        let offset = CGFloat(dragProgress) * 25
-        return dragDirection == .left ? -offset : offset
-    }
-    
-    // 方法
-    private func resetDrag() {
-        withAnimation(.spring(response: 0.25, dampingFraction: 0.8)) {
-            dragProgress = 0
-            dragDirection = .none
-        }
-    }
-    
-    private func goToNextPage() {
-        guard currentPageIndex < pages.count - 1 else { return }
-        dragDirection = .left
-        withAnimation(.easeOut(duration: 0.3)) {
-            dragProgress = 1
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            currentPageIndex += 1
-            dragProgress = 0
-            dragDirection = .none
-            onPageChange()
-        }
-    }
-    
-    private func goToPreviousPage() {
-        guard currentPageIndex > 0 else { return }
-        dragDirection = .right
-        withAnimation(.easeOut(duration: 0.3)) {
-            dragProgress = 1
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            currentPageIndex -= 1
-            dragProgress = 0
-            dragDirection = .none
-            onPageChange()
+            // 使用 UIPageViewController 实现真正的卷页效果
+            PageCurlViewController(
+                pages: pages,
+                currentPageIndex: $currentPageIndex,
+                backgroundColor: UIColor(backgroundColor),
+                pageContent: { index in
+                    AnyView(pageContent(index))
+                },
+                onPageChange: onPageChange,
+                onTapCenter: onTapCenter
+            )
+            .frame(width: pageWidth, height: pageHeight)
         }
     }
 }
 
-// MARK: - 卷页效果修饰器
-struct PageCurlModifier: ViewModifier {
-    let progress: CGFloat
-    let direction: PageDragDirection
-    let pageWidth: CGFloat
-    let backgroundColor: Color
+// MARK: - UIPageViewController 包装器（真正的卷页效果）
+struct PageCurlViewController: UIViewControllerRepresentable {
+    let pages: [String]
+    @Binding var currentPageIndex: Int
+    let backgroundColor: UIColor
+    let pageContent: (Int) -> AnyView
+    let onPageChange: () -> Void
+    let onTapCenter: () -> Void
     
-    private var rotationDegrees: Double {
-        guard direction != .none else { return 0 }
-        return direction == .left ? -Double(progress) * 85 : Double(progress) * 85
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
     }
     
-    private var anchorPoint: UnitPoint {
-        direction == .left ? .trailing : .leading
+    func makeUIViewController(context: Context) -> UIPageViewController {
+        let pageViewController = UIPageViewController(
+            transitionStyle: .pageCurl,  // 真正的卷页效果
+            navigationOrientation: .horizontal,
+            options: [.spineLocation: NSNumber(value: UIPageViewController.SpineLocation.min.rawValue)]
+        )
+        
+        pageViewController.delegate = context.coordinator
+        pageViewController.dataSource = context.coordinator
+        pageViewController.view.backgroundColor = backgroundColor
+        
+        // 设置初始页面
+        if let initialVC = context.coordinator.viewController(at: currentPageIndex) {
+            pageViewController.setViewControllers([initialVC], direction: .forward, animated: false)
+        }
+        
+        // 添加点击手势
+        let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
+        pageViewController.view.addGestureRecognizer(tapGesture)
+        
+        return pageViewController
     }
     
-    private var shadowX: CGFloat {
-        guard direction != .none else { return 0 }
-        return direction == .left ? -CGFloat(progress) * 30 : CGFloat(progress) * 30
+    func updateUIViewController(_ pageViewController: UIPageViewController, context: Context) {
+        // 更新当前页面索引
+        context.coordinator.parent = self
+        
+        // 如果页面索引发生变化，更新显示
+        if let currentVC = pageViewController.viewControllers?.first as? PageContentViewController,
+           currentVC.pageIndex != currentPageIndex {
+            if let newVC = context.coordinator.viewController(at: currentPageIndex) {
+                let direction: UIPageViewController.NavigationDirection = currentVC.pageIndex < currentPageIndex ? .forward : .reverse
+                pageViewController.setViewControllers([newVC], direction: direction, animated: true)
+            }
+        }
     }
     
-    func body(content: Content) -> some View {
-        content
-            .rotation3DEffect(
-                .degrees(rotationDegrees),
-                axis: (x: 0, y: 1, z: 0),
-                anchor: anchorPoint,
-                perspective: 0.4
-            )
-            .shadow(
-                color: Color.black.opacity(Double(progress) * 0.4),
-                radius: CGFloat(progress) * 15,
-                x: shadowX,
-                y: 0
-            )
+    // MARK: - Coordinator
+    class Coordinator: NSObject, UIPageViewControllerDelegate, UIPageViewControllerDataSource {
+        var parent: PageCurlViewController
+        
+        init(_ parent: PageCurlViewController) {
+            self.parent = parent
+        }
+        
+        // 创建页面内容视图控制器
+        func viewController(at index: Int) -> PageContentViewController? {
+            guard index >= 0 && index < parent.pages.count else { return nil }
+            
+            let vc = PageContentViewController()
+            vc.pageIndex = index
+            vc.view.backgroundColor = parent.backgroundColor
+            
+            // 添加 SwiftUI 内容
+            let hostingController = UIHostingController(rootView: parent.pageContent(index))
+            hostingController.view.backgroundColor = .clear
+            hostingController.view.frame = vc.view.bounds
+            hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+            
+            vc.addChild(hostingController)
+            vc.view.addSubview(hostingController.view)
+            hostingController.didMove(toParent: vc)
+            
+            return vc
+        }
+        
+        // MARK: - UIPageViewControllerDataSource
+        func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
+            guard let vc = viewController as? PageContentViewController else { return nil }
+            return self.viewController(at: vc.pageIndex - 1)
+        }
+        
+        func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
+            guard let vc = viewController as? PageContentViewController else { return nil }
+            return self.viewController(at: vc.pageIndex + 1)
+        }
+        
+        // MARK: - UIPageViewControllerDelegate
+        func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+            if completed,
+               let currentVC = pageViewController.viewControllers?.first as? PageContentViewController {
+                parent.currentPageIndex = currentVC.pageIndex
+                parent.onPageChange()
+            }
+        }
+        
+        // MARK: - 手势处理
+        @objc func handleTap(_ gesture: UITapGestureRecognizer) {
+            let location = gesture.location(in: gesture.view)
+            let width = gesture.view?.bounds.width ?? 0
+            
+            if location.x < width * 0.25 {
+                // 左侧点击 - 上一页
+                if parent.currentPageIndex > 0 {
+                    parent.currentPageIndex -= 1
+                    parent.onPageChange()
+                }
+            } else if location.x > width * 0.75 {
+                // 右侧点击 - 下一页
+                if parent.currentPageIndex < parent.pages.count - 1 {
+                    parent.currentPageIndex += 1
+                    parent.onPageChange()
+                }
+            } else {
+                // 中间点击 - 显示/隐藏控制栏
+                parent.onTapCenter()
+            }
+        }
     }
+}
+
+// MARK: - 页面内容视图控制器
+class PageContentViewController: UIViewController {
+    var pageIndex: Int = 0
 }
 
 // MARK: - 预览
