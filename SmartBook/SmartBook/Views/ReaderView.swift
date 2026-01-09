@@ -228,7 +228,7 @@ struct ReaderView: View {
                     pageHeight: pageHeight,
                     backgroundColor: backgroundColor,
                     pageContent: { index in
-                        pageView(text: pages[index], width: pageWidth, height: pageHeight)
+                        pageView(text: pages[index], width: pageWidth, height: pageHeight, pageIndex: index)
                     },
                     onPageChange: { saveProgress() },
                     onTapCenter: {
@@ -244,7 +244,7 @@ struct ReaderView: View {
             case .fade:
                 // 淡入淡出效果
                 if !pages.isEmpty && currentPageIndex < pages.count {
-                    pageView(text: pages[currentPageIndex], width: pageWidth, height: pageHeight)
+                    pageView(text: pages[currentPageIndex], width: pageWidth, height: pageHeight, pageIndex: currentPageIndex)
                         .transition(.opacity)
                         .id(currentPageIndex)
                         .animation(.easeInOut(duration: 0.4), value: currentPageIndex)
@@ -257,7 +257,7 @@ struct ReaderView: View {
                 if !pages.isEmpty {
                     TabView(selection: $currentPageIndex) {
                         ForEach(Array(pages.enumerated()), id: \.offset) { index, pageText in
-                            pageView(text: pageText, width: pageWidth, height: pageHeight)
+                            pageView(text: pageText, width: pageWidth, height: pageHeight, pageIndex: index)
                                 .tag(index)
                         }
                     }
@@ -343,12 +343,12 @@ struct ReaderView: View {
     }
     
     // MARK: - 页面视图（iOS Books 风格，顶部章节信息，底部页数）
-    private func pageView(text: String, width: CGFloat, height: CGFloat) -> some View {
+    private func pageView(text: String, width: CGFloat, height: CGFloat, pageIndex: Int) -> some View {
         VStack(spacing: 0) {
             // 顶部信息栏
             HStack {
                 // 章节剩余页数
-                Text("\(pagesLeftInChapter) 页后翻页")
+                Text("\(max(0, pages.count - pageIndex - 1)) 页后翻页")
                     .font(.caption)
                     .foregroundColor(textColor.opacity(0.5))
                 
@@ -374,7 +374,7 @@ struct ReaderView: View {
                 .padding(.horizontal, 16)
             
             // 底部页码
-            Text("\(currentPageIndex + 1) / \(pages.count)")
+            Text("\(pageIndex + 1) / \(pages.count)")
                 .font(.caption)
                 .foregroundColor(textColor.opacity(0.5))
                 .padding(.top, 12)
@@ -383,11 +383,6 @@ struct ReaderView: View {
         .frame(width: width, height: height)
         .background(backgroundColor)
         .clipped()
-    }
-    
-    // 章节剩余页数
-    private var pagesLeftInChapter: Int {
-        max(0, pages.count - currentPageIndex - 1)
     }
     
     // MARK: - 控制层覆盖
