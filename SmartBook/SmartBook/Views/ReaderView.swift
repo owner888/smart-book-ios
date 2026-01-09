@@ -979,22 +979,20 @@ struct PageCurlView: View {
     let onTapCenter: () -> Void
     
     var body: some View {
-        ZStack {
-            // 使用 UIPageViewController 实现真正的卷页效果
-            PageCurlViewController(
-                allPages: allPages,
-                currentPageIndex: $currentPageIndex,
-                pageWidth: pageWidth,
-                pageHeight: pageHeight,
-                backgroundColor: UIColor(backgroundColor),
-                textColor: textColor,
-                currentFont: currentFont,
-                settings: settings,
-                onPageChange: onPageChange,
-                onTapCenter: onTapCenter
-            )
-            .frame(width: pageWidth, height: pageHeight)
-        }
+        // 使用 UIPageViewController 实现真正的卷页效果（全屏翻页）
+        PageCurlViewController(
+            allPages: allPages,
+            currentPageIndex: $currentPageIndex,
+            pageWidth: pageWidth,
+            pageHeight: pageHeight,
+            backgroundColor: UIColor(backgroundColor),
+            textColor: textColor,
+            currentFont: currentFont,
+            settings: settings,
+            onPageChange: onPageChange,
+            onTapCenter: onTapCenter
+        )
+        .ignoresSafeArea()
     }
 }
 
