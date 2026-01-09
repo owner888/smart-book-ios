@@ -213,7 +213,8 @@ struct ReaderView: View {
     @ViewBuilder
     private func readerContent(geometry: GeometryProxy) -> some View {
         let pageWidth = geometry.size.width
-        let pageHeight = geometry.size.height - geometry.safeAreaInsets.top - geometry.safeAreaInsets.bottom - 60
+        // 完全全屏高度
+        let pageHeight = geometry.size.height
         
         ZStack {
             // 根据翻页样式选择不同的视图
@@ -341,18 +342,52 @@ struct ReaderView: View {
         .allowsHitTesting(!showControls)
     }
     
-    // MARK: - 页面视图（固定一屏，不滚动）
+    // MARK: - 页面视图（iOS Books 风格，顶部章节信息，底部页数）
     private func pageView(text: String, width: CGFloat, height: CGFloat) -> some View {
-        Text(text)
-            .font(currentFont)
-            .foregroundColor(textColor)
-            .lineSpacing(settings.lineSpacing)
-            .multilineTextAlignment(settings.textAlignment)
-            .frame(width: width - 40, height: height - 60, alignment: .topLeading)
-            .padding(.horizontal, 20)
-            .padding(.vertical, 30)
-            .background(backgroundColor)
-            .clipped()
+        VStack(spacing: 0) {
+            // 顶部信息栏
+            HStack {
+                // 章节剩余页数
+                Text("\(pagesLeftInChapter) 页后翻页")
+                    .font(.caption)
+                    .foregroundColor(textColor.opacity(0.5))
+                
+                Spacer()
+                
+                // 章节标题
+                Text(currentChapterTitle)
+                    .font(.caption)
+                    .foregroundColor(textColor.opacity(0.5))
+                    .lineLimit(1)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 12)
+            
+            // 正文内容
+            Text(text)
+                .font(currentFont)
+                .foregroundColor(textColor)
+                .lineSpacing(settings.lineSpacing)
+                .multilineTextAlignment(settings.textAlignment)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .padding(.horizontal, 16)
+            
+            // 底部页码
+            Text("\(currentPageIndex + 1) / \(pages.count)")
+                .font(.caption)
+                .foregroundColor(textColor.opacity(0.5))
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+        }
+        .frame(width: width, height: height)
+        .background(backgroundColor)
+        .clipped()
+    }
+    
+    // 章节剩余页数
+    private var pagesLeftInChapter: Int {
+        max(0, pages.count - currentPageIndex - 1)
     }
     
     // MARK: - 控制层覆盖
