@@ -1,6 +1,7 @@
 // SettingsView.swift - 设置视图
 
 import SwiftUI
+internal import AVFAudio
 
 struct SettingsView: View {
     @Environment(AppState.self) var appState
