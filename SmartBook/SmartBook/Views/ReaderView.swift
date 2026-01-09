@@ -366,7 +366,7 @@ struct ReaderView: View {
             // 顶部信息栏
             HStack {
                 // 章节剩余页数
-                Text("\(pagesUntilNextChapter) 页后下一章")
+                Text(pagesUntilNextChapter == 0 ? "马上下一章" : "\(pagesUntilNextChapter) 页后下一章")
                     .font(.caption)
                     .foregroundColor(textColor.opacity(0.5))
                 
@@ -1066,7 +1066,7 @@ struct PageCurlViewController: UIViewControllerRepresentable {
             // 顶部信息栏
             HStack {
                 // 章节剩余页数
-                Text("\(pagesUntilNextChapter) 页后下一章")
+                Text(pagesUntilNextChapter == 0 ? "马上下一章" : "\(pagesUntilNextChapter) 页后下一章")
                     .font(.caption)
                     .foregroundColor(textColor.opacity(0.5))
                 
