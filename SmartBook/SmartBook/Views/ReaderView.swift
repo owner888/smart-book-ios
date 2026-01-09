@@ -328,19 +328,18 @@ struct ReaderView: View {
         )
     }
     
-    // MARK: - 页面视图
+    // MARK: - 页面视图（固定一屏，不滚动）
     private func pageView(text: String, width: CGFloat, height: CGFloat) -> some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            Text(text)
-                .font(currentFont)
-                .foregroundColor(textColor)
-                .lineSpacing(settings.lineSpacing)
-                .multilineTextAlignment(settings.textAlignment)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 30)
-        }
-        .frame(width: width, height: height)
+        Text(text)
+            .font(currentFont)
+            .foregroundColor(textColor)
+            .lineSpacing(settings.lineSpacing)
+            .multilineTextAlignment(settings.textAlignment)
+            .frame(width: width - 40, height: height - 60, alignment: .topLeading)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 30)
+            .background(backgroundColor)
+            .clipped()
     }
     
     // MARK: - 控制层覆盖
