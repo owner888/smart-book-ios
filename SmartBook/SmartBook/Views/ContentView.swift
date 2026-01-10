@@ -67,6 +67,7 @@ struct BookshelfView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @State private var books: [Book] = []
     @State private var isLoading = false
     @State private var showingImporter = false
@@ -128,10 +129,7 @@ struct BookshelfView: View {
                         .padding(.horizontal)
                         .padding(.top, 8)
                         
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: 16) {
+                        LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 20 : 16) {
                             ForEach(books) { book in
                                 BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book), colors: colors)
                                     .onTapGesture {
@@ -167,7 +165,8 @@ struct BookshelfView: View {
                                     }
                             }
                         }
-                        .padding()
+                        .padding(.horizontal, horizontalSizeClass == .regular ? 24 : 16)
+                        .padding(.vertical)
                     }
                 }
             }
@@ -259,6 +258,17 @@ struct BookshelfView: View {
         } catch {
             importError = "删除失败: \(error.localizedDescription)"
             showingError = true
+        }
+    }
+    
+    // iPad 6列, iPhone 2列 - 类似 Apple Books Library
+    private var gridColumns: [GridItem] {
+        if horizontalSizeClass == .regular {
+            // iPad - 6 列
+            return Array(repeating: GridItem(.flexible(), spacing: 16), count: 6)
+        } else {
+            // iPhone - 2 列
+            return Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
         }
     }
 }
