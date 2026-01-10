@@ -129,7 +129,7 @@ struct BookshelfView: View {
                         .padding(.horizontal)
                         .padding(.top, 8)
                         
-                        LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 20 : 16) {
+                        LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 32) {
                             ForEach(books) { book in
                                 BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book), colors: colors)
                                     .onTapGesture {
@@ -165,7 +165,7 @@ struct BookshelfView: View {
                                     }
                             }
                         }
-                        .padding(.horizontal, horizontalSizeClass == .regular ? 24 : 16)
+                        .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 24)
                         .padding(.vertical)
                     }
                 }
@@ -261,14 +261,14 @@ struct BookshelfView: View {
         }
     }
     
-    // iPad 6列, iPhone 2列 - 类似 Apple Books Library
+    // iPad 6列, iPhone 2列 - Apple Books 风格
     private var gridColumns: [GridItem] {
         if horizontalSizeClass == .regular {
-            // iPad - 6 列
-            return Array(repeating: GridItem(.flexible(), spacing: 16), count: 6)
+            // iPad - 6 列，间距 28
+            return Array(repeating: GridItem(.flexible(), spacing: 28), count: 6)
         } else {
-            // iPhone - 2 列
-            return Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
+            // iPhone - 2 列，间距 44pt（Apple Books 风格宽间隙）
+            return Array(repeating: GridItem(.flexible(), spacing: 44), count: 2)
         }
     }
 }
@@ -284,24 +284,30 @@ struct BookCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // 封面 - 无 padding，直接铺满
-            ZStack(alignment: .topTrailing) {
-                coverImage
-                    .aspectRatio(coverAspectRatio, contentMode: .fit)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+            // 封面容器 - 使用 GeometryReader 获取卡片宽度，按 2:3 比例设置高度
+            GeometryReader { geometry in
+                let width = geometry.size.width
+                let height = width / coverAspectRatio  // 宽度 / (2/3) = 高度
                 
-                if isUserImported {
-                    Text("已导入")
-                        .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.green.opacity(0.9))
-                        .foregroundColor(.white)
-                        .cornerRadius(4)
-                        .padding(4)
+                ZStack(alignment: .topTrailing) {
+                    coverImage
+                        .frame(width: width, height: height)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                    
+                    if isUserImported {
+                        Text("已导入")
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.green.opacity(0.9))
+                            .foregroundColor(.white)
+                            .cornerRadius(4)
+                            .padding(4)
+                    }
                 }
             }
+            .aspectRatio(coverAspectRatio, contentMode: .fit)  // 让 GeometryReader 保持 2:3 比例
             
             // 标题和作者
             Text(book.title)
