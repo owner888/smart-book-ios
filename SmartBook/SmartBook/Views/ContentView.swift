@@ -129,7 +129,7 @@ struct BookshelfView: View {
                         .padding(.horizontal)
                         .padding(.top, 8)
                         
-                        LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 32) {
+                        LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 24) {
                             ForEach(books) { book in
                                 BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book), colors: colors)
                                     .onTapGesture {
@@ -267,8 +267,8 @@ struct BookshelfView: View {
             // iPad - 6 列，间距 28
             return Array(repeating: GridItem(.flexible(), spacing: 28), count: 6)
         } else {
-            // iPhone - 2 列，间距 44pt（Apple Books 风格宽间隙）
-            return Array(repeating: GridItem(.flexible(), spacing: 44), count: 2)
+            // iPhone - 2 列，间距 24pt
+            return Array(repeating: GridItem(.flexible(), spacing: 24), count: 2)
         }
     }
 }
