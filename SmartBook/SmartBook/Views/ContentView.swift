@@ -273,18 +273,23 @@ struct BookshelfView: View {
     }
 }
 
-// MARK: - 书籍卡片
+// MARK: - 书籍卡片（Apple Books 风格）
 struct BookCard: View {
     let book: Book
     var isUserImported: Bool = false
     var colors: ThemeColors = .dark
     
+    // 书籍封面比例 2:3（Apple Books 标准）
+    private let coverAspectRatio: CGFloat = 2.0 / 3.0
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
+            // 封面 - 无 padding，直接铺满
             ZStack(alignment: .topTrailing) {
                 coverImage
-                    .frame(height: 180)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .aspectRatio(coverAspectRatio, contentMode: .fit)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
                 
                 if isUserImported {
                     Text("已导入")
@@ -294,23 +299,21 @@ struct BookCard: View {
                         .background(Color.green.opacity(0.9))
                         .foregroundColor(.white)
                         .cornerRadius(4)
-                        .padding(6)
+                        .padding(4)
                 }
             }
             
+            // 标题和作者
             Text(book.title)
-                .font(.headline)
+                .font(.subheadline)
+                .fontWeight(.medium)
                 .lineLimit(2)
                 .foregroundColor(colors.primaryText)
             
             Text(book.author)
                 .font(.caption)
                 .foregroundColor(colors.secondaryText)
-        }
-        .padding(12)
-        .background {
-            RoundedRectangle(cornerRadius: 16)
-                .fill(colors.cardBackground)
+                .lineLimit(1)
         }
     }
     
@@ -342,11 +345,25 @@ struct BookCard: View {
     
     var placeholderCover: some View {
         Rectangle()
-            .fill(colors.inputBackground)
+            .fill(
+                LinearGradient(
+                    colors: [colors.inputBackground, colors.inputBackground.opacity(0.7)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
             .overlay {
-                Image(systemName: "book.closed")
-                    .font(.largeTitle)
-                    .foregroundColor(colors.secondaryText)
+                VStack(spacing: 8) {
+                    Image(systemName: "book.closed.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(colors.secondaryText.opacity(0.5))
+                    Text(book.title)
+                        .font(.caption2)
+                        .foregroundColor(colors.secondaryText.opacity(0.7))
+                        .multilineTextAlignment(.center)
+                        .lineLimit(3)
+                        .padding(.horizontal, 8)
+                }
             }
     }
 }
