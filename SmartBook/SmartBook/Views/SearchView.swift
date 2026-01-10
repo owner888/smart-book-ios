@@ -12,6 +12,7 @@ struct SearchView: View {
     @State private var selectedBookForReading: Book?
     @State private var recentSearches: [String] = []
     @FocusState private var isSearchFocused: Bool
+    @State private var isPresented = false
     
     // 来源页面信息
     var previousTabIcon: String = "books.vertical"
@@ -68,22 +69,7 @@ struct SearchView: View {
     var mainContent: some View {
         ScrollView {
             if searchText.isEmpty {
-                // 显示分类卡片
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: 12),
-                    GridItem(.flexible(), spacing: 12)
-                ], spacing: 12) {
-                    ForEach(categories, id: \.name) { category in
-                        CategoryCard(name: category.name, color: category.color, icon: category.icon)
-                            .onTapGesture {
-                                searchText = category.name
-                            }
-                    }
-                }
-                .padding()
-                
-                // 最近搜索
-                if !recentSearches.isEmpty {
+                if isPresented {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Text("最近搜索")
@@ -105,7 +91,22 @@ struct SearchView: View {
                         }
                     }
                     .padding(.top)
+                } else {
+                    // 显示分类卡片
+                    LazyVGrid(columns: [
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
+                    ], spacing: 12) {
+                        ForEach(categories, id: \.name) { category in
+                            CategoryCard(name: category.name, color: category.color, icon: category.icon)
+                                .onTapGesture {
+                                    searchText = category.name
+                                }
+                        }
+                    }
+                    .padding()
                 }
+            
             } else {
                 // 搜索结果
                 VStack(alignment: .leading, spacing: 12) {
