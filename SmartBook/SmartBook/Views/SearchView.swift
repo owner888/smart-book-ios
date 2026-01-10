@@ -48,11 +48,7 @@ struct SearchView: View {
                 colors.background.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // 主内容区域
                     mainContent
-                    
-                    // 底部搜索栏（固定）- 替代 TabBar
-                    bottomSearchBar
                 }
             }
             .navigationTitle("搜索")
@@ -64,9 +60,7 @@ struct SearchView: View {
             .fullScreenCover(item: $selectedBookForReading) { book in
                 ReaderView(book: book)
             }
-        }
-        .toolbarVisibility(.hidden, for: .tabBar)  // 隐藏 TabBar
-        .animation(.easeInOut(duration: 0.3), value: searchText)  // 搜索内容切换动画
+        }.searchable(text: $searchText, prompt: Text("书名、作者"))
     }
     
     // MARK: - 主内容
