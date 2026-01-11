@@ -81,6 +81,12 @@
 "reader.textAlignment.center" = "居中";
 "reader.textAlignment.trailing" = "右對齊";
 "reader.pageTurnStyle" = "翻頁效果";
+"reader.pageTurnStyle.slide" = "滾動";
+"reader.pageTurnStyle.slide.desc" = "左右滑動切換頁面";
+"reader.pageTurnStyle.curl" = "翻頁";
+"reader.pageTurnStyle.curl.desc" = "模擬真實書本翻頁效果，帶3D動畫";
+"reader.pageTurnStyle.fade" = "淡入";
+"reader.pageTurnStyle.fade.desc" = "頁面淡入淡出切換，簡潔優雅";
 "reader.previewText" = "這是一段預覽文字，用於展示當前的閱讀設置效果。";
 "settings.appearance" = "外觀";
 "settings.reading" = "閱讀";
@@ -100,6 +106,9 @@
 "chat.noResults" = "未找到相關內容";
 "chat.error.network" = "網路錯誤，請檢查網路連線";
 "chat.error.api" = "服務暫時不可用";
+"chat.readingBook" = "正在閱讀: %@";
+"chat.selectBook" = "選擇書籍";
+"chat.deselectBook" = "取消選擇";
 
 /* AI */
 "ai.analysis" = "AI 分析";

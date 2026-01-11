@@ -10,9 +10,9 @@ enum PageTurnStyle: Int, Codable, CaseIterable {
     
     var name: String {
         switch self {
-        case .slide: return "滑动"
-        case .curl: return "翻页"
-        case .fade: return "淡入"
+        case .slide: return L("reader.pageTurnStyle.slide")
+        case .curl: return L("reader.pageTurnStyle.curl")
+        case .fade: return L("reader.pageTurnStyle.fade")
         }
     }
     
@@ -27,9 +27,9 @@ enum PageTurnStyle: Int, Codable, CaseIterable {
     
     var description: String {
         switch self {
-        case .slide: return "左右滑动切换页面，流畅自然"
-        case .curl: return "模拟真实书本翻页效果，带3D动画"
-        case .fade: return "页面淡入淡出切换，简洁优雅"
+        case .slide: return L("reader.pageTurnStyle.slide.desc")
+        case .curl: return L("reader.pageTurnStyle.curl.desc")
+        case .fade: return L("reader.pageTurnStyle.fade.desc")
         }
     }
 }

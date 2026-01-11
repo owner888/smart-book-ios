@@ -81,6 +81,12 @@
 "reader.textAlignment.center" = "Center";
 "reader.textAlignment.trailing" = "Right";
 "reader.pageTurnStyle" = "Page Turn Style";
+"reader.pageTurnStyle.slide" = "Scroll";
+"reader.pageTurnStyle.slide.desc" = "Swipe left or right to change pages";
+"reader.pageTurnStyle.curl" = "Page Curl";
+"reader.pageTurnStyle.curl.desc" = "Simulates real book page turning with 3D animation";
+"reader.pageTurnStyle.fade" = "Fade";
+"reader.pageTurnStyle.fade.desc" = "Pages fade in and out for a clean look";
 "reader.previewText" = "This is a preview text to demonstrate the current reading settings effect.";
 "settings.appearance" = "Appearance";
 "settings.reading" = "Reading";
@@ -100,6 +106,9 @@
 "chat.noResults" = "No relevant content found";
 "chat.error.network" = "Network error. Please check your connection.";
 "chat.error.api" = "Service temporarily unavailable";
+"chat.readingBook" = "Reading: %@";
+"chat.selectBook" = "Select Book";
+"chat.deselectBook" = "Deselect Book";
 
 /* AI */
 "ai.analysis" = "AI Analysis";

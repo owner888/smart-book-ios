@@ -1,4 +1,4 @@
-// ChatView.swift - AI 对话视图（支持主题切换）
+// ChatView.swift - AI 对话视图（支持多语言）
 
 import SwiftUI
 
@@ -22,17 +22,14 @@ struct ChatView: View {
                 colors.background.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // 当前书籍提示
                     if let book = appState.selectedBook {
                         BookContextBar(book: book, colors: colors) {
-                            // 清除选择的书籍
                             withAnimation {
                                 appState.selectedBook = nil
                             }
                         }
                     }
                     
-                    // 消息列表
                     ScrollViewReader { proxy in
                         ScrollView {
                             LazyVStack(spacing: 12) {
@@ -52,7 +49,6 @@ struct ChatView: View {
                         }
                     }
                     
-                    // 输入区域
                     InputBar(
                         text: $inputText,
                         isConversationMode: $isConversationMode,
@@ -66,7 +62,7 @@ struct ChatView: View {
                     )
                 }
             }
-            .navigationTitle("AI 对话")
+            .navigationTitle(L("chat.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(colors.navigationBar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
@@ -77,12 +73,12 @@ struct ChatView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button("选择书籍", systemImage: "book") {
+                        Button(L("chat.selectBook"), systemImage: "book") {
                             showBookPicker = true
                         }
                         
                         if appState.selectedBook != nil {
-                            Button("取消选择书籍", systemImage: "book.closed") {
+                            Button(L("chat.deselectBook"), systemImage: "book.closed") {
                                 withAnimation {
                                     appState.selectedBook = nil
                                 }
@@ -91,7 +87,7 @@ struct ChatView: View {
                         
                         Divider()
                         
-                        Button("清空对话", systemImage: "trash", role: .destructive) {
+                        Button(L("chat.clearHistory"), systemImage: "trash", role: .destructive) {
                             viewModel.clearMessages()
                         }
                     } label: {
@@ -161,7 +157,6 @@ struct ChatView: View {
     }
 }
 
-// MARK: - 书籍上下文栏
 struct BookContextBar: View {
     let book: Book
     var colors: ThemeColors = .dark
@@ -172,7 +167,7 @@ struct BookContextBar: View {
             Image(systemName: "book.fill")
                 .foregroundColor(.green)
             
-            Text("正在阅读: \(book.title)")
+            Text(String(format: L("chat.readingBook"), book.title))
                 .font(.caption)
                 .foregroundColor(colors.primaryText.opacity(0.8))
                 .lineLimit(1)
@@ -190,7 +185,6 @@ struct BookContextBar: View {
     }
 }
 
-// MARK: - 消息气泡
 struct MessageBubble: View {
     let message: ChatMessage
     var colors: ThemeColors = .dark
@@ -227,7 +221,6 @@ struct MessageBubble: View {
     }
 }
 
-// MARK: - 输入栏
 struct InputBar: View {
     @Binding var text: String
     @Binding var isConversationMode: Bool
@@ -241,7 +234,6 @@ struct InputBar: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // 对话模式按钮
             Button(action: onConversation) {
                 Image(systemName: isConversationMode ? "waveform.circle.fill" : "plus.circle")
                     .font(.title2)
@@ -249,8 +241,7 @@ struct InputBar: View {
                     .symbolEffect(.pulse, isActive: isConversationMode)
             }
             
-            // 输入框
-            TextField("输入消息...", text: $text, axis: .vertical)
+            TextField(L("chat.placeholder"), text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
                 .padding(12)
                 .background {
@@ -261,7 +252,6 @@ struct InputBar: View {
                 .focused(isFocused)
                 .lineLimit(1...5)
             
-            // 语音/发送按钮
             if text.isEmpty {
                 Button(action: onVoice) {
                     Image(systemName: speechService.isRecording ? "stop.circle.fill" : "mic.circle")
@@ -289,7 +279,6 @@ struct InputBar: View {
     }
 }
 
-// MARK: - Chat ViewModel
 @Observable
 class ChatViewModel {
     var messages: [ChatMessage] = []
@@ -317,7 +306,7 @@ class ChatViewModel {
             messages.append(assistantMessage)
             
         } catch {
-            let errorMessage = ChatMessage(role: .assistant, content: "抱歉，发生了错误: \(error.localizedDescription)")
+            let errorMessage = ChatMessage(role: .assistant, content: L("chat.error.api"))
             messages.append(errorMessage)
         }
         

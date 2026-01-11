@@ -81,6 +81,12 @@
 "reader.textAlignment.center" = "居中";
 "reader.textAlignment.trailing" = "右对齐";
 "reader.pageTurnStyle" = "翻页效果";
+"reader.pageTurnStyle.slide" = "滚动";
+"reader.pageTurnStyle.slide.desc" = "左右滑动切换页面";
+"reader.pageTurnStyle.curl" = "翻页";
+"reader.pageTurnStyle.curl.desc" = "模拟真实书本翻页效果，带3D动画";
+"reader.pageTurnStyle.fade" = "淡入";
+"reader.pageTurnStyle.fade.desc" = "页面淡入淡出切换，简洁优雅";
 "reader.previewText" = "这是一段预览文字，用于展示当前的阅读设置效果。";
 "settings.appearance" = "外观";
 "settings.reading" = "阅读";
@@ -100,6 +106,9 @@
 "chat.noResults" = "未找到相关内容";
 "chat.error.network" = "网络错误，请检查网络连接";
 "chat.error.api" = "服务暂时不可用";
+"chat.readingBook" = "正在阅读: %@";
+"chat.selectBook" = "选择书籍";
+"chat.deselectBook" = "取消选择";
 
 /* AI */
 "ai.analysis" = "AI 分析";
