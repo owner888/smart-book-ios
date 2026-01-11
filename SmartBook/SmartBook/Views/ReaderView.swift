@@ -1,4 +1,4 @@
-// ReaderView.swift - 书籍阅读器主视图
+// ReaderView.swift - 书籍阅读器主视图（支持多语言）
 
 import SwiftUI
 
@@ -15,7 +15,6 @@ struct ReaderView: View {
     @State private var settings = ReaderSettings.load()
     @State private var controlsTimer: Timer?
     
-    // MARK: - 计算属性
     private var pages: [String] { allPages.map { $0.content } }
     
     private var currentChapterIndex: Int {
@@ -28,7 +27,6 @@ struct ReaderView: View {
         return content.chapters[currentChapterIndex].title
     }
     
-    // MARK: - Body
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -68,25 +66,22 @@ struct ReaderView: View {
         .onChange(of: settings.backgroundColor) { _, _ in settings.save() }
     }
     
-    // MARK: - 加载中视图
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView().scaleEffect(1.5).tint(settings.txtColor)
-            Text("正在加载书籍...").foregroundColor(settings.txtColor.opacity(0.7))
+            Text(L("common.loading")).foregroundColor(settings.txtColor.opacity(0.7))
         }
     }
     
-    // MARK: - 错误视图
     private var errorView: some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 50)).foregroundColor(.orange)
-            Text("无法加载书籍内容").foregroundColor(settings.txtColor)
-            Button("返回") { dismiss() }.buttonStyle(.bordered)
+            Text(L("error.loading")).foregroundColor(settings.txtColor)
+            Button(L("common.back")) { dismiss() }.buttonStyle(.bordered)
         }
     }
     
-    // MARK: - 阅读内容
     @ViewBuilder
     private func readerContent(geometry: GeometryProxy) -> some View {
         let pageWidth = geometry.size.width
@@ -132,7 +127,6 @@ struct ReaderView: View {
         .gesture(settings.pageTurnStyle == .fade ? swipeGesture : nil)
     }
     
-    // MARK: - 手势
     private var swipeGesture: some Gesture {
         DragGesture(minimumDistance: 50)
             .onEnded { value in
@@ -145,7 +139,6 @@ struct ReaderView: View {
             }
     }
     
-    // MARK: - 点击区域
     @ViewBuilder
     private func tapAreaOverlay(pageWidth: CGFloat, pageHeight: CGFloat) -> some View {
         HStack(spacing: 0) {
@@ -168,7 +161,6 @@ struct ReaderView: View {
             .allowsHitTesting(!showControls)
     }
     
-    // MARK: - 控制层
     private var controlsOverlay: some View {
         VStack(spacing: 0) {
             topBar
@@ -206,7 +198,8 @@ struct ReaderView: View {
                     HStack {
                         Text(currentChapterTitle).font(.caption).foregroundColor(.white.opacity(0.8))
                         Spacer()
-                        Text("\(currentPageIndex + 1) / \(pages.count)").font(.caption).foregroundColor(.white.opacity(0.8))
+                        Text(String(format: L("reader.pageIndicator"), currentPageIndex + 1, pages.count))
+                            .font(.caption).foregroundColor(.white.opacity(0.8))
                     }
                 }
                 .padding(.horizontal)
@@ -216,7 +209,7 @@ struct ReaderView: View {
                 Button { previousChapter() } label: {
                     VStack(spacing: 4) {
                         Image(systemName: "chevron.left.2").font(.title2)
-                        Text("上一章").font(.caption2)
+                        Text(L("reader.previousPage")).font(.caption2)
                     }.foregroundColor(.white)
                 }
                 .disabled(currentChapterIndex == 0)
@@ -225,14 +218,14 @@ struct ReaderView: View {
                 Button { showSettings = true } label: {
                     VStack(spacing: 4) {
                         Image(systemName: "textformat.size").font(.title2)
-                        Text("设置").font(.caption2)
+                        Text(L("settings.title")).font(.caption2)
                     }.foregroundColor(.white)
                 }
                 
                 Button { nextChapter() } label: {
                     VStack(spacing: 4) {
                         Image(systemName: "chevron.right.2").font(.title2)
-                        Text("下一章").font(.caption2)
+                        Text(L("reader.lastPage")).font(.caption2)
                     }.foregroundColor(.white)
                 }
                 .disabled(currentChapterIndex >= (epubContent?.chapters.count ?? 1) - 1)
@@ -244,7 +237,6 @@ struct ReaderView: View {
         .background(LinearGradient(colors: [Color.clear, Color.black.opacity(0.7)], startPoint: .top, endPoint: .bottom))
     }
     
-    // MARK: - 方法
     private func loadBook() {
         isLoading = true
         DispatchQueue.global(qos: .userInitiated).async {
@@ -370,7 +362,6 @@ struct ReaderView: View {
     }
 }
 
-// MARK: - 预览
 #Preview {
-    ReaderView(book: Book(id: "preview", title: "预览书籍", author: "作者", coverURL: nil, filePath: nil, addedDate: nil))
+    ReaderView(book: Book(id: "preview", title: "Preview Book", author: "Author", coverURL: nil, filePath: nil, addedDate: nil))
 }

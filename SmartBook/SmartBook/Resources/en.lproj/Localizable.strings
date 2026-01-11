@@ -73,6 +73,16 @@
 "reader.goToPage" = "Go to Page";
 "reader.firstPage" = "First Page";
 "reader.lastPage" = "Last Page";
+"reader.fontFamily" = "Font";
+"reader.textAlignment" = "Text Alignment";
+"reader.textAlignment.leading" = "Left";
+"reader.textAlignment.center" = "Center";
+"reader.textAlignment.trailing" = "Right";
+"reader.pageTurnStyle" = "Page Turn Style";
+"reader.previewText" = "This is a preview text to demonstrate the current reading settings effect.";
+"settings.appearance" = "Appearance";
+"settings.reading" = "Reading";
+"settings.preview" = "Preview";
 
 /* Chat */
 "chat.title" = "AI Chat";

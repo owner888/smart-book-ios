@@ -1,14 +1,14 @@
-// ContentView.swift - 主视图（支持主题切换）
+// ContentView.swift - 主视图（支持主题切换和多语言）
 
 import SwiftUI
 import UniformTypeIdentifiers
 
 // Tab 枚举
 enum AppTab: String, CaseIterable {
-    case bookshelf = "书架"
-    case chat = "对话"
-    case settings = "设置"
-    case search = "搜索"
+    case bookshelf = "tab.library"
+    case chat = "tab.chat"
+    case settings = "tab.settings"
+    case search = "tab.search"
     
     var icon: String {
         switch self {
@@ -28,20 +28,18 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
-            // Primary Tabs
-            Tab(AppTab.bookshelf.rawValue, systemImage: AppTab.bookshelf.icon, value: .bookshelf) {
+            Tab(L(AppTab.bookshelf.rawValue), systemImage: AppTab.bookshelf.icon, value: .bookshelf) {
                 BookshelfView()
             }
             
-            Tab(AppTab.chat.rawValue, systemImage: AppTab.chat.icon, value: .chat) {
+            Tab(L(AppTab.chat.rawValue), systemImage: AppTab.chat.icon, value: .chat) {
                 ChatView()
             }
             
-            Tab(AppTab.settings.rawValue, systemImage: AppTab.settings.icon, value: .settings) {
+            Tab(L(AppTab.settings.rawValue), systemImage: AppTab.settings.icon, value: .settings) {
                 SettingsView()
             }
             
-            // Standalone Search Tab - 进入 Search Landing Page，TabBar 保留
             Tab(value: .search, role: .search) {
                 SearchView(
                     previousTabIcon: previousTab.icon,
@@ -52,13 +50,12 @@ struct ContentView: View {
                 )
             }
         }
-        .onChange(of: selectedTab) { oldValue, newValue in
-            // 记录上一个非搜索 Tab
+        .onChange(of: selectedTab) { _, newValue in
             if newValue != .search {
                 previousTab = newValue
             }
         }
-        .animation(.smooth(duration: 0.35), value: selectedTab)  // Tab 切换动画
+        .animation(.smooth(duration: 0.35), value: selectedTab)
     }
 }
 
@@ -91,7 +88,7 @@ struct BookshelfView: View {
                         ProgressView()
                             .scaleEffect(1.5)
                             .tint(colors.primaryText)
-                        Text("正在加载书籍...")
+                        Text(L("common.loading"))
                             .foregroundColor(colors.secondaryText)
                     }
                 } else if books.isEmpty {
@@ -99,17 +96,17 @@ struct BookshelfView: View {
                         Image(systemName: "books.vertical")
                             .font(.system(size: 60))
                             .foregroundColor(colors.secondaryText)
-                        Text("暂无书籍")
+                        Text(L("library.empty"))
                             .font(.headline)
                             .foregroundColor(colors.secondaryText)
-                        Text("点击右上角 + 按钮导入 epub 书籍")
+                        Text(L("library.empty.tip"))
                             .font(.caption)
                             .foregroundColor(colors.secondaryText.opacity(0.7))
                         
                         Button {
                             showingImporter = true
                         } label: {
-                            Label("导入书籍", systemImage: "plus.circle.fill")
+                            Label(L("library.import"), systemImage: "plus.circle.fill")
                                 .font(.headline)
                                 .padding(.horizontal, 24)
                                 .padding(.vertical, 12)
@@ -121,7 +118,7 @@ struct BookshelfView: View {
                 } else {
                     ScrollView {
                         HStack {
-                            Text("共 \(books.count) 本书")
+                            Text(String(format: L("library.bookCount"), books.count))
                                 .font(.subheadline)
                                 .foregroundColor(colors.secondaryText)
                             Spacer()
@@ -144,14 +141,14 @@ struct BookshelfView: View {
                                             Button {
                                                 selectedBookForReading = book
                                             } label: {
-                                                Label("阅读", systemImage: "book")
+                                                Label(L("reader.title"), systemImage: "book")
                                             }
                                         }
                                         
                                         Button {
                                             appState.selectedBook = book
                                         } label: {
-                                            Label("AI 对话", systemImage: "bubble.left.and.bubble.right")
+                                            Label(L("chat.title"), systemImage: "bubble.left.and.bubble.right")
                                         }
                                         
                                         if appState.bookService.isUserImportedBook(book) {
@@ -159,7 +156,7 @@ struct BookshelfView: View {
                                                 bookToDelete = book
                                                 showingDeleteAlert = true
                                             } label: {
-                                                Label("删除", systemImage: "trash")
+                                                Label(L("common.delete"), systemImage: "trash")
                                             }
                                         }
                                     }
@@ -170,7 +167,7 @@ struct BookshelfView: View {
                     }
                 }
             }
-            .navigationTitle("书架")
+            .navigationTitle(L("library.title"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -197,20 +194,20 @@ struct BookshelfView: View {
                     await handleImport(result)
                 }
             }
-            .alert("删除书籍", isPresented: $showingDeleteAlert) {
-                Button("取消", role: .cancel) { }
-                Button("删除", role: .destructive) {
+            .alert(L("library.delete.title"), isPresented: $showingDeleteAlert) {
+                Button(L("common.cancel"), role: .cancel) { }
+                Button(L("common.delete"), role: .destructive) {
                     if let book = bookToDelete {
                         deleteBook(book)
                     }
                 }
             } message: {
-                Text("确定要删除「\(bookToDelete?.title ?? "")」吗？此操作不可恢复。")
+                Text(L("library.delete.message"))
             }
-            .alert("导入失败", isPresented: $showingError) {
-                Button("确定", role: .cancel) { }
+            .alert(L("library.import.failed"), isPresented: $showingError) {
+                Button(L("common.ok"), role: .cancel) { }
             } message: {
-                Text(importError ?? "未知错误")
+                Text(importError ?? L("error.generic"))
             }
             .fullScreenCover(item: $selectedBookForReading) { book in
                 ReaderView(book: book)
@@ -238,7 +235,7 @@ struct BookshelfView: View {
                     _ = try appState.bookService.importBook(from: url)
                     importedCount += 1
                 } catch {
-                    importError = "导入失败: \(error.localizedDescription)"
+                    importError = L("library.import.failed") + ": \(error.localizedDescription)"
                     showingError = true
                 }
             }
@@ -246,7 +243,7 @@ struct BookshelfView: View {
                 await loadBooks()
             }
         case .failure(let error):
-            importError = "选择文件失败: \(error.localizedDescription)"
+            importError = L("error.fileNotFound") + ": \(error.localizedDescription)"
             showingError = true
         }
     }
@@ -256,18 +253,15 @@ struct BookshelfView: View {
             try appState.bookService.deleteBook(book)
             books.removeAll { $0.id == book.id }
         } catch {
-            importError = "删除失败: \(error.localizedDescription)"
+            importError = L("common.error") + ": \(error.localizedDescription)"
             showingError = true
         }
     }
     
-    // iPad 6列, iPhone 2列 - Apple Books 风格
     private var gridColumns: [GridItem] {
         if horizontalSizeClass == .regular {
-            // iPad - 6 列，间距 28
             return Array(repeating: GridItem(.flexible(), spacing: 28), count: 6)
         } else {
-            // iPhone - 2 列，间距 24pt
             return Array(repeating: GridItem(.flexible(), spacing: 24), count: 2)
         }
     }
@@ -279,15 +273,13 @@ struct BookCard: View {
     var isUserImported: Bool = false
     var colors: ThemeColors = .dark
     
-    // 书籍封面比例 2:3（Apple Books 标准）
     private let coverAspectRatio: CGFloat = 2.0 / 3.0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            // 封面容器 - 使用 GeometryReader 获取卡片宽度，按 2:3 比例设置高度
             GeometryReader { geometry in
                 let width = geometry.size.width
-                let height = width / coverAspectRatio  // 宽度 / (2/3) = 高度
+                let height = width / coverAspectRatio
                 
                 ZStack(alignment: .topTrailing) {
                     coverImage
@@ -296,7 +288,7 @@ struct BookCard: View {
                         .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
                     
                     if isUserImported {
-                        Text("已导入")
+                        Text(L("library.import.success"))
                             .font(.caption2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -307,9 +299,8 @@ struct BookCard: View {
                     }
                 }
             }
-            .aspectRatio(coverAspectRatio, contentMode: .fit)  // 让 GeometryReader 保持 2:3 比例
+            .aspectRatio(coverAspectRatio, contentMode: .fit)
             
-            // 标题和作者
             Text(book.title)
                 .font(.subheadline)
                 .fontWeight(.medium)

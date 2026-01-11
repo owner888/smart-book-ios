@@ -73,6 +73,16 @@
 "reader.goToPage" = "跳转页面";
 "reader.firstPage" = "首页";
 "reader.lastPage" = "末页";
+"reader.fontFamily" = "字体";
+"reader.textAlignment" = "文字对齐";
+"reader.textAlignment.leading" = "左对齐";
+"reader.textAlignment.center" = "居中";
+"reader.textAlignment.trailing" = "右对齐";
+"reader.pageTurnStyle" = "翻页效果";
+"reader.previewText" = "这是一段预览文字，用于展示当前的阅读设置效果。";
+"settings.appearance" = "外观";
+"settings.reading" = "阅读";
+"settings.preview" = "预览";
 
 /* Chat */
 "chat.title" = "智能对话";

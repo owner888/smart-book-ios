@@ -1,4 +1,4 @@
-// TOCView.swift - 目录视图
+// TOCView.swift - 目录视图（支持多语言）
 
 import SwiftUI
 
@@ -30,11 +30,11 @@ struct TOCView: View {
                     }
                 }
             }
-            .navigationTitle("目录")
+            .navigationTitle(L("reader.toc"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("关闭") {
+                    Button(L("common.close")) {
                         dismiss()
                     }
                 }

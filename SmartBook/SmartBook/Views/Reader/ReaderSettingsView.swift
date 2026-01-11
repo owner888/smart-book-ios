@@ -1,4 +1,4 @@
-// ReaderSettingsView.swift - 阅读器设置视图（iOS 深色系统设置风格）
+// ReaderSettingsView.swift - 阅读器设置视图（支持多语言）
 
 import SwiftUI
 
@@ -11,16 +11,13 @@ struct ReaderSettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                // MARK: - 显示设置
                 Section {
-                    // 字体大小
-                    SettingsRow(icon: "textformat.size", iconColor: .teal, title: "字体大小") {
+                    SettingsRow(icon: "textformat.size", iconColor: .teal, title: L("reader.fontSize")) {
                         Stepper("\(Int(settings.fontSize))", value: $settings.fontSize, in: 14...28, step: 1)
                             .labelsHidden()
                     }
                     
-                    // 字体
-                    SettingsRow(icon: "character", iconColor: .purple, title: "字体") {
+                    SettingsRow(icon: "character", iconColor: .purple, title: L("reader.fontFamily")) {
                         Picker("", selection: $settings.fontFamily) {
                             ForEach(fontFamilies, id: \.self) { family in
                                 Text(family).tag(family)
@@ -30,23 +27,21 @@ struct ReaderSettingsView: View {
                         .tint(.gray)
                     }
                     
-                    // 行间距
-                    SettingsRow(icon: "text.alignleft", iconColor: .green, title: "行间距") {
+                    SettingsRow(icon: "text.alignleft", iconColor: .green, title: L("reader.lineSpacing")) {
                         Stepper("\(Int(settings.lineSpacing))", value: $settings.lineSpacing, in: 4...16, step: 2)
                             .labelsHidden()
                     }
                 } header: {
-                    Text("显示")
+                    Text(L("settings.appearance"))
                         .foregroundColor(.gray)
                 }
                 .listRowBackground(Color(white: 0.11))
                 
-                // MARK: - 主题设置
                 Section {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "paintpalette", color: .orange)
-                            Text("背景色")
+                            Text(L("reader.theme"))
                                 .foregroundColor(.white)
                         }
                         
@@ -64,26 +59,23 @@ struct ReaderSettingsView: View {
                     }
                     .padding(.vertical, 4)
                 } header: {
-                    Text("主题")
+                    Text(L("reader.theme"))
                         .foregroundColor(.gray)
                 }
                 .listRowBackground(Color(white: 0.11))
                 
-                // MARK: - 排版设置
                 Section {
-                    // 文字对齐
-                    SettingsRow(icon: "text.justify.left", iconColor: .cyan, title: "文字对齐") {
+                    SettingsRow(icon: "text.justify.left", iconColor: .cyan, title: L("reader.textAlignment")) {
                         Picker("", selection: $settings.textAlignment) {
-                            Text("左对齐").tag(TextAlignment.leading)
-                            Text("居中").tag(TextAlignment.center)
-                            Text("右对齐").tag(TextAlignment.trailing)
+                            Text(L("reader.textAlignment.leading")).tag(TextAlignment.leading)
+                            Text(L("reader.textAlignment.center")).tag(TextAlignment.center)
+                            Text(L("reader.textAlignment.trailing")).tag(TextAlignment.trailing)
                         }
                         .labelsHidden()
                         .tint(.gray)
                     }
                     
-                    // 翻页效果
-                    SettingsRow(icon: "book.pages", iconColor: .pink, title: "翻页效果") {
+                    SettingsRow(icon: "book.pages", iconColor: .pink, title: L("reader.pageTurnStyle")) {
                         Picker("", selection: $settings.pageTurnStyle) {
                             ForEach(PageTurnStyle.allCases, id: \.self) { style in
                                 Text(style.name).tag(style)
@@ -93,7 +85,7 @@ struct ReaderSettingsView: View {
                         .tint(.gray)
                     }
                 } header: {
-                    Text("排版")
+                    Text(L("settings.reading"))
                         .foregroundColor(.gray)
                 } footer: {
                     Text(settings.pageTurnStyle.description)
@@ -101,14 +93,13 @@ struct ReaderSettingsView: View {
                 }
                 .listRowBackground(Color(white: 0.11))
                 
-                // MARK: - 预览
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("预览效果")
+                        Text(L("settings.preview"))
                             .font(.caption)
                             .foregroundColor(.gray)
                         
-                        Text("这是一段预览文字，用于展示当前的阅读设置效果。")
+                        Text(L("reader.previewText"))
                             .font(settings.font)
                             .lineSpacing(settings.lineSpacing)
                             .multilineTextAlignment(settings.textAlignment)
@@ -120,7 +111,7 @@ struct ReaderSettingsView: View {
                     }
                     .padding(.vertical, 4)
                 } header: {
-                    Text("预览")
+                    Text(L("settings.preview"))
                         .foregroundColor(.gray)
                 }
                 .listRowBackground(Color(white: 0.11))
@@ -128,13 +119,13 @@ struct ReaderSettingsView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(Color.black)
-            .navigationTitle("阅读设置")
+            .navigationTitle(L("settings.title"))
             .navigationBarTitleDisplayMode(.large)
             .toolbarBackground(Color.black, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("完成") {
+                    Button(L("common.done")) {
                         settings.save()
                         dismiss()
                     }
@@ -154,7 +145,6 @@ struct ReaderSettingsView: View {
     }
 }
 
-// MARK: - 背景色选项
 enum BackgroundOption: String, CaseIterable {
     case dark = "dark"
     case sepia = "sepia"
@@ -170,9 +160,9 @@ enum BackgroundOption: String, CaseIterable {
     
     var name: String {
         switch self {
-        case .dark: return "深色"
-        case .sepia: return "护眼"
-        case .light: return "浅色"
+        case .dark: return L("reader.theme.dark")
+        case .sepia: return L("reader.theme.sepia")
+        case .light: return L("reader.theme.light")
         }
     }
     
@@ -193,7 +183,6 @@ enum BackgroundOption: String, CaseIterable {
     }
 }
 
-// MARK: - 背景色按钮
 struct BackgroundColorButton: View {
     let option: BackgroundOption
     let isSelected: Bool

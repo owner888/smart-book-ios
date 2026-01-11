@@ -73,6 +73,16 @@
 "reader.goToPage" = "跳轉頁面";
 "reader.firstPage" = "首頁";
 "reader.lastPage" = "末頁";
+"reader.fontFamily" = "字體";
+"reader.textAlignment" = "文字對齊";
+"reader.textAlignment.leading" = "左對齊";
+"reader.textAlignment.center" = "居中";
+"reader.textAlignment.trailing" = "右對齊";
+"reader.pageTurnStyle" = "翻頁效果";
+"reader.previewText" = "這是一段預覽文字，用於展示當前的閱讀設置效果。";
+"settings.appearance" = "外觀";
+"settings.reading" = "閱讀";
+"settings.preview" = "預覽";
 
 /* Chat */
 "chat.title" = "智慧對話";
