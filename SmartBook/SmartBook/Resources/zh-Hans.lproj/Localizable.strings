@@ -49,6 +49,8 @@
 "library.allBooks" = "全部书籍";
 "library.search.placeholder" = "搜索书籍...";
 "library.bookCount" = "共 %d 本书";
+"library.loadingBooks" = "加载书籍中...";
+"library.searchBooks" = "搜索书籍...";
 
 /* Reader */
 "reader.title" = "阅读器";
@@ -75,6 +77,8 @@
 "reader.lastPage" = "末页";
 "reader.previousPage" = "上一页";
 "reader.nextChapter" = "下一章";
+"reader.nextChapter.now" = "马上下一章";
+"reader.nextChapter.inPages" = "%d 页后下一章";
 "reader.fontFamily" = "字体";
 "reader.textAlignment" = "文字对齐";
 "reader.textAlignment.leading" = "左对齐";

@@ -1,4 +1,4 @@
-// BookPickerView.swift - 书籍选择器视图
+// BookPickerView.swift - 书籍选择器视图（支持多语言）
 
 import SwiftUI
 
@@ -37,7 +37,7 @@ struct BookPickerView: View {
                         ProgressView()
                             .scaleEffect(1.2)
                             .tint(themeColors.primaryText)
-                        Text("加载书籍...")
+                        Text(L("library.loadingBooks"))
                             .foregroundColor(themeColors.secondaryText)
                     }
                 } else if books.isEmpty {
@@ -45,9 +45,9 @@ struct BookPickerView: View {
                         Image(systemName: "books.vertical")
                             .font(.system(size: 50))
                             .foregroundColor(themeColors.secondaryText)
-                        Text("暂无书籍")
+                        Text(L("picker.noBooks"))
                             .foregroundColor(themeColors.secondaryText)
-                        Text("请先在书架中导入书籍")
+                        Text(L("picker.importFirst"))
                             .font(.caption)
                             .foregroundColor(themeColors.secondaryText.opacity(0.7))
                     }
@@ -66,14 +66,14 @@ struct BookPickerView: View {
                     .scrollContentBackground(.hidden)
                 }
             }
-            .navigationTitle("选择书籍")
+            .navigationTitle(L("picker.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(themeColors.navigationBar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .searchable(text: $searchText, prompt: "搜索书籍")
+            .searchable(text: $searchText, prompt: L("library.searchBooks"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
+                    Button(L("common.cancel")) {
                         dismiss()
                     }
                     .foregroundColor(themeColors.primaryText)
@@ -96,7 +96,6 @@ struct BookPickerView: View {
     }
 }
 
-// MARK: - 书籍选择行
 struct BookPickerRow: View {
     let book: Book
     var colors: ThemeColors
@@ -104,12 +103,10 @@ struct BookPickerRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // 封面缩略图
             bookCover
                 .frame(width: 50, height: 70)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             
-            // 书籍信息
             VStack(alignment: .leading, spacing: 4) {
                 Text(book.title)
                     .font(.headline)
@@ -123,7 +120,6 @@ struct BookPickerRow: View {
             
             Spacer()
             
-            // 选中标识
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title2)

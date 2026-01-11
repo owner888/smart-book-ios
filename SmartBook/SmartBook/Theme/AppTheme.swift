@@ -10,9 +10,9 @@ enum AppThemeMode: Int, CaseIterable, Codable {
     
     var name: String {
         switch self {
-        case .system: return "跟随系统"
-        case .dark: return "暗黑模式"
-        case .light: return "浅色模式"
+        case .system: return L("settings.theme.system")
+        case .dark: return L("settings.theme.dark")
+        case .light: return L("settings.theme.light")
         }
     }
     

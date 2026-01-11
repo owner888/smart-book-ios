@@ -49,6 +49,8 @@
 "library.allBooks" = "All Books";
 "library.search.placeholder" = "Search books...";
 "library.bookCount" = "%d books";
+"library.loadingBooks" = "Loading books...";
+"library.searchBooks" = "Search books...";
 
 /* Reader */
 "reader.title" = "Reader";
@@ -75,6 +77,8 @@
 "reader.lastPage" = "Last Page";
 "reader.previousPage" = "Previous";
 "reader.nextChapter" = "Next Chapter";
+"reader.nextChapter.now" = "Next chapter now";
+"reader.nextChapter.inPages" = "%d pages to next chapter";
 "reader.fontFamily" = "Font";
 "reader.textAlignment" = "Text Alignment";
 "reader.textAlignment.leading" = "Left";

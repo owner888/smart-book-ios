@@ -49,6 +49,8 @@
 "library.allBooks" = "全部書籍";
 "library.search.placeholder" = "搜尋書籍...";
 "library.bookCount" = "共 %d 本書";
+"library.loadingBooks" = "載入書籍中...";
+"library.searchBooks" = "搜尋書籍...";
 
 /* Reader */
 "reader.title" = "閱讀器";
@@ -75,6 +77,8 @@
 "reader.lastPage" = "末頁";
 "reader.previousPage" = "上一頁";
 "reader.nextChapter" = "下一章";
+"reader.nextChapter.now" = "馬上下一章";
+"reader.nextChapter.inPages" = "%d 頁後下一章";
 "reader.fontFamily" = "字體";
 "reader.textAlignment" = "文字對齊";
 "reader.textAlignment.leading" = "左對齊";

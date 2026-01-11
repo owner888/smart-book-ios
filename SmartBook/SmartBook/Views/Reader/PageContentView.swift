@@ -20,7 +20,11 @@ struct PageContentView: View {
     
     // 剩余页数文本
     private var remainingPagesText: String {
-        pagesUntilNextChapter == 0 ? "马上下一章" : "\(pagesUntilNextChapter) 页后下一章"
+        if pagesUntilNextChapter == 0 {
+            return L("reader.nextChapter.now")
+        } else {
+            return String(format: L("reader.nextChapter.inPages"), pagesUntilNextChapter)
+        }
     }
     
     var body: some View {
