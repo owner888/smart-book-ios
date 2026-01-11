@@ -127,6 +127,22 @@
 "settings.clearCache" = "清除缓存";
 "settings.cacheCleared" = "缓存已清除";
 
+/* Server */
+"server.title" = "服务器";
+"server.address" = "服务器地址";
+"server.address.placeholder" = "http://localhost:8080";
+"server.quickSet" = "快捷设置";
+"server.edit" = "编辑服务器";
+"server.url.invalid" = "请输入有效的 URL 地址";
+"server.description" = "PHP 后端服务器地址，用于 AI 对话和书籍搜索";
+
+/* Voice */
+"voice.title" = "语音";
+"voice.select" = "选择语音";
+"voice.autoPlay" = "自动朗读 AI 回复";
+"voice.rate" = "语速";
+"voice.rate.value" = "%.1fx";
+
 /* Book Picker */
 "picker.title" = "选择书籍";
 "picker.noBooks" = "暂无可用书籍";

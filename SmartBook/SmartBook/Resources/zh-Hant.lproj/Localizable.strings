@@ -127,6 +127,22 @@
 "settings.clearCache" = "清除快取";
 "settings.cacheCleared" = "快取已清除";
 
+/* Server */
+"server.title" = "伺服器";
+"server.address" = "伺服器位址";
+"server.address.placeholder" = "http://localhost:8080";
+"server.quickSet" = "快速設定";
+"server.edit" = "編輯伺服器";
+"server.url.invalid" = "請輸入有效的 URL 位址";
+"server.description" = "PHP 後端伺服器位址，用於 AI 對話和書籍搜尋";
+
+/* Voice */
+"voice.title" = "語音";
+"voice.select" = "選擇語音";
+"voice.autoPlay" = "自動朗讀 AI 回覆";
+"voice.rate" = "語速";
+"voice.rate.value" = "%.1fx";
+
 /* Book Picker */
 "picker.title" = "選擇書籍";
 "picker.noBooks" = "暫無可用書籍";

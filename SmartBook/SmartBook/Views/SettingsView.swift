@@ -52,7 +52,7 @@ struct SettingsView: View {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "server.rack", color: .teal)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("服务器地址")
+                                Text(L("server.address"))
                                     .foregroundColor(colors.primaryText)
                                 Text(apiBaseURL)
                                     .font(.caption)
@@ -66,10 +66,10 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("服务器")
+                    Text(L("server.title"))
                         .foregroundColor(colors.secondaryText)
                 } footer: {
-                    Text("PHP 后端服务器地址，用于 AI 对话和书籍搜索")
+                    Text(L("server.description"))
                         .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
@@ -79,7 +79,7 @@ struct SettingsView: View {
                     // 自动朗读
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "speaker.wave.2", color: .orange)
-                        Text("自动朗读 AI 回复")
+                        Text(L("voice.autoPlay"))
                             .foregroundColor(colors.primaryText)
                         Spacer()
                         Toggle("", isOn: $autoTTS)
@@ -90,10 +90,10 @@ struct SettingsView: View {
                     VStack(spacing: 8) {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "speedometer", color: .green)
-                            Text("语速")
+                            Text(L("voice.rate"))
                                 .foregroundColor(colors.primaryText)
                             Spacer()
-                            Text(String(format: "%.1fx", ttsRate))
+                            Text(String(format: L("voice.rate.value"), ttsRate))
                                 .foregroundColor(colors.secondaryText)
                         }
                         Slider(value: $ttsRate, in: 0.5...2.0, step: 0.1)
@@ -106,12 +106,12 @@ struct SettingsView: View {
                     } label: {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "waveform", color: .purple)
-                            Text("选择语音")
+                            Text(L("voice.select"))
                                 .foregroundColor(colors.primaryText)
                         }
                     }
                 } header: {
-                    Text("语音")
+                    Text(L("voice.title"))
                         .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
@@ -175,7 +175,7 @@ struct ServerEditorView: View {
                 VStack(spacing: 20) {
                     // 输入框
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("服务器地址")
+                        Text(L("server.address"))
                             .font(.headline)
                             .foregroundColor(colors.primaryText)
                         
@@ -195,7 +195,7 @@ struct ServerEditorView: View {
                             )
                         
                         if !isValid {
-                            Text("请输入有效的 URL 地址")
+                            Text(L("server.url.invalid"))
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
@@ -206,7 +206,7 @@ struct ServerEditorView: View {
                     
                     // 常用地址
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("快捷设置")
+                        Text(L("server.quickSet"))
                             .font(.headline)
                             .foregroundColor(colors.primaryText)
                         
@@ -237,20 +237,20 @@ struct ServerEditorView: View {
                 }
                 .padding()
             }
-            .navigationTitle("编辑服务器")
+            .navigationTitle(L("server.edit"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(colors.navigationBar, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("取消") {
+                    Button(L("common.cancel")) {
                         dismiss()
                     }
                     .foregroundColor(colors.primaryText)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("保存") {
+                    Button(L("common.save")) {
                         if validateURL(url) {
                             onSave(url)
                         } else {
@@ -362,7 +362,7 @@ struct VoiceSelectionView: View {
         .listStyle(.insetGrouped)
         .scrollContentBackground(.hidden)
         .background(colors.background.ignoresSafeArea())
-        .navigationTitle("选择语音")
+        .navigationTitle(L("voice.select"))
         .toolbarBackground(colors.navigationBar, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .onAppear {

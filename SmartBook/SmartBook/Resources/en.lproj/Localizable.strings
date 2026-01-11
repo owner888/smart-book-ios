@@ -127,6 +127,22 @@
 "settings.clearCache" = "Clear Cache";
 "settings.cacheCleared" = "Cache cleared";
 
+/* Server */
+"server.title" = "Server";
+"server.address" = "Server Address";
+"server.address.placeholder" = "http://localhost:8080";
+"server.quickSet" = "Quick Settings";
+"server.edit" = "Edit Server";
+"server.url.invalid" = "Please enter a valid URL";
+"server.description" = "PHP backend server address for AI chat and book search";
+
+/* Voice */
+"voice.title" = "Voice";
+"voice.select" = "Select Voice";
+"voice.autoPlay" = "Auto-play AI Response";
+"voice.rate" = "Speech Rate";
+"voice.rate.value" = "%.1fx";
+
 /* Book Picker */
 "picker.title" = "Select Book";
 "picker.noBooks" = "No books available";
