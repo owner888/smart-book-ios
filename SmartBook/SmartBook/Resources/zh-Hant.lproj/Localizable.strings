@@ -73,6 +73,8 @@
 "reader.goToPage" = "跳轉頁面";
 "reader.firstPage" = "首頁";
 "reader.lastPage" = "末頁";
+"reader.previousPage" = "上一頁";
+"reader.nextChapter" = "下一章";
 "reader.fontFamily" = "字體";
 "reader.textAlignment" = "文字對齊";
 "reader.textAlignment.leading" = "左對齊";

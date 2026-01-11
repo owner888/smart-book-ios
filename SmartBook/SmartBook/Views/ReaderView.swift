@@ -225,7 +225,7 @@ struct ReaderView: View {
                 Button { nextChapter() } label: {
                     VStack(spacing: 4) {
                         Image(systemName: "chevron.right.2").font(.title2)
-                        Text(L("reader.lastPage")).font(.caption2)
+                        Text(L("reader.nextChapter")).font(.caption2)
                     }.foregroundColor(.white)
                 }
                 .disabled(currentChapterIndex >= (epubContent?.chapters.count ?? 1) - 1)

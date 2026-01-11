@@ -73,6 +73,8 @@
 "reader.goToPage" = "跳转页面";
 "reader.firstPage" = "首页";
 "reader.lastPage" = "末页";
+"reader.previousPage" = "上一页";
+"reader.nextChapter" = "下一章";
 "reader.fontFamily" = "字体";
 "reader.textAlignment" = "文字对齐";
 "reader.textAlignment.leading" = "左对齐";
