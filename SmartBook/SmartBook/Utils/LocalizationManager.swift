@@ -1,28 +1,24 @@
-// LocalizationManager.swift - 多语言管理器
+// LocalizationManager.swift - 多语言管理器（纯 Swift 实现，无需 Combine）
 
 import Foundation
 import SwiftUI
-internal import Combine
+import Combine
 
 /// 支持的语言
 enum Language: String, CaseIterable, Identifiable {
-    case system = "system"  // 跟随系统
-    case english = "en"     // 英文
-    case simplifiedChinese = "zh-Hans"  // 简体中文
-    case traditionalChinese = "zh-Hant" // 繁体中文
+    case system = "system"
+    case english = "en"
+    case simplifiedChinese = "zh-Hans"
+    case traditionalChinese = "zh-Hant"
     
     var id: String { rawValue }
     
     var displayName: String {
         switch self {
-        case .system:
-            return "系统"
-        case .english:
-            return "English"
-        case .simplifiedChinese:
-            return "简体中文"
-        case .traditionalChinese:
-            return "繁體中文"
+        case .system: return "系统"
+        case .english: return "English"
+        case .simplifiedChinese: return "简体中文"
+        case .traditionalChinese: return "繁體中文"
         }
     }
     
@@ -30,7 +26,6 @@ enum Language: String, CaseIterable, Identifiable {
     var bundle: Bundle {
         switch self {
         case .system:
-            // 跟随系统语言
             let preferred = Locale.preferredLanguages.first ?? "en"
             if preferred.hasPrefix("zh-Hant") {
                 return zhHantBundle
@@ -39,12 +34,9 @@ enum Language: String, CaseIterable, Identifiable {
             } else {
                 return enBundle
             }
-        case .english:
-            return enBundle
-        case .simplifiedChinese:
-            return zhHansBundle
-        case .traditionalChinese:
-            return zhHantBundle
+        case .english: return enBundle
+        case .simplifiedChinese: return zhHansBundle
+        case .traditionalChinese: return zhHantBundle
         }
     }
     
@@ -61,22 +53,22 @@ enum Language: String, CaseIterable, Identifiable {
     }
 }
 
-/// 多语言管理器
-class LocalizationManager: ObservableObject {
+/// 简单的 observable 对象，不使用 @Published
+final class LocalizationManager: ObservableObject {
     static let shared = LocalizationManager()
     
-    @Published var currentLanguage: Language {
+    var currentLanguage: Language {
         didSet {
-            saveLanguagePreference()
-            // 通知视图语言已更改
-            NotificationCenter.default.post(name: .languageDidChange, object: nil)
+            UserDefaults.standard.set(currentLanguage.rawValue, forKey: userDefaultsKey)
+            objectWillChange.send()
         }
     }
+    
+    let objectWillChange = ObservableObjectPublisher()
     
     private let userDefaultsKey = "app_language"
     
     private init() {
-        // 从用户设置加载保存的语言
         if let savedLanguage = UserDefaults.standard.string(forKey: userDefaultsKey),
            let language = Language(rawValue: savedLanguage) {
             self.currentLanguage = language
@@ -85,53 +77,41 @@ class LocalizationManager: ObservableObject {
         }
     }
     
-    /// 保存语言偏好设置
-    private func saveLanguagePreference() {
-        UserDefaults.standard.set(currentLanguage.rawValue, forKey: userDefaultsKey)
-    }
-    
     /// 根据当前语言获取本地化字符串
     func localize(_ key: String) -> String {
         currentLanguage.bundle.localizedString(forKey: key, value: key, table: nil)
     }
+}
+
+/// 便捷本地化视图 - 自动响应语言变化
+struct LocalizedText: View {
+    let key: String
+    @EnvironmentObject var localizationManager: LocalizationManager
     
-    /// 带参数的本地化字符串
-    func localize(_ key: String, args: CVarArg...) -> String {
-        let format = localize(key)
-        return String(format: format, arguments: args)
+    var body: some View {
+        Text(localizationManager.localize(key))
     }
 }
 
-/// 语言切换通知
-extension Notification.Name {
-    static let languageDidChange = Notification.Name("languageDidChange")
-}
-
-/// 本地化视图扩展
-extension View {
-    /// 根据当前语言获取文本
-    func localeText(_ zh: String, _ en: String) -> some View {
-        let language = LocalizationManager.shared.currentLanguage
-        let text: String
-        switch language {
-        case .system:
-            text = Locale.current.language.languageCode?.identifier == "zh" ? zh : en
-        case .english:
-            text = en
-        case .simplifiedChinese, .traditionalChinese:
-            text = zh
-        }
-        return Text(text)
-    }
-}
-
-/// 便捷本地化函数 - 根据当前语言获取字符串
+/// 便捷全局函数
 func L(_ key: String) -> String {
     LocalizationManager.shared.localize(key)
 }
 
-/// 带参数的本地化字符串
 func L(_ key: String, _ args: CVarArg...) -> String {
-    let format = L(key)
+    let format = LocalizationManager.shared.localize(key)
     return String(format: format, arguments: args)
+}
+
+/// 根据当前语言获取文本
+func localeText(_ zh: String, _ en: String) -> String {
+    let language = LocalizationManager.shared.currentLanguage
+    switch language {
+    case .system:
+        return Locale.current.language.languageCode?.identifier == "zh" ? zh : en
+    case .english:
+        return en
+    case .simplifiedChinese, .traditionalChinese:
+        return zh
+    }
 }
