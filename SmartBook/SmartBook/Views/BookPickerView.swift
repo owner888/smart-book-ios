@@ -171,7 +171,7 @@ struct BookPickerRow: View {
 
 #Preview {
     BookPickerView(colors: .dark) { book in
-        print("Selected: \(book.title)")
+        Logger.info("Selected: \(book.title)")
     }
     .environment(AppState())
     .environment(ThemeManager.shared)

@@ -47,12 +47,12 @@ class EPUBParser {
         var metadata = EPUBMetadata()
         
         guard FileManager.default.fileExists(atPath: epubPath) else {
-            print("EPUB file not found: \(epubPath)")
+            Logger.warn("EPUB file not found: \(epubPath)")
             return metadata
         }
         
         guard let archive = ZIPArchive(url: URL(fileURLWithPath: epubPath)) else {
-            print("Failed to open EPUB archive")
+            Logger.error("Failed to open EPUB archive")
             return metadata
         }
         
@@ -86,7 +86,7 @@ class EPUBParser {
             metadata = parseOPFFile(at: opfPath, opfDir: opfDir)
             
         } catch {
-            print("Error extracting EPUB: \(error)")
+            Logger.error("Error extracting EPUB: \(error)")
         }
         
         return metadata
@@ -248,7 +248,7 @@ class EPUBParser {
             try imageData.write(to: coverURL)
             return coverURL
         } catch {
-            print("Failed to save cover image: \(error)")
+            Logger.error("Failed to save cover image: \(error)")
             return nil
         }
     }
@@ -271,12 +271,12 @@ class EPUBParser {
     /// 解析 EPUB 完整内容（元数据 + 章节）
     static func parseContent(from epubPath: String) -> EPUBContent? {
         guard FileManager.default.fileExists(atPath: epubPath) else {
-            print("EPUB file not found: \(epubPath)")
+            Logger.warn("EPUB file not found: \(epubPath)")
             return nil
         }
         
         guard let archive = ZIPArchive(url: URL(fileURLWithPath: epubPath)) else {
-            print("Failed to open EPUB archive")
+            Logger.error("Failed to open EPUB archive")
             return nil
         }
         
@@ -354,7 +354,7 @@ class EPUBParser {
             return EPUBContent(metadata: metadata, chapters: chapters, spine: spine)
             
         } catch {
-            print("Error parsing EPUB content: \(error)")
+            Logger.error("Error parsing EPUB content: \(error)")
             return nil
         }
     }
@@ -654,7 +654,7 @@ class ZIPArchive {
             fileHandle = try FileHandle(forReadingFrom: url)
             try parseEntries()
         } catch {
-            print("Failed to open archive: \(error)")
+            Logger.error("Failed to open archive: \(error)")
             return nil
         }
     }

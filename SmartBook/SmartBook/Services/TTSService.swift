@@ -32,8 +32,8 @@ class TTSService: NSObject, AVSpeechSynthesizerDelegate {
             ?? availableVoices.first { $0.language == "zh-CN" }
             ?? availableVoices.first
         
-        print("🔊 可用中文语音: \(availableVoices.map { $0.name })")
-        print("🔊 选择语音: \(selectedVoice?.name ?? "无")")
+        Logger.info("可用中文语音: \(availableVoices.map { $0.name })")
+        Logger.info("选择语音: \(selectedVoice?.name ?? "无")")
     }
     
     // MARK: - 朗读文本
@@ -52,7 +52,7 @@ class TTSService: NSObject, AVSpeechSynthesizerDelegate {
             try audioSession.setCategory(.playback, mode: .default, options: .duckOthers)
             try audioSession.setActive(true)
         } catch {
-            print("❌ 音频会话配置失败: \(error)")
+            Logger.error("音频会话配置失败: \(error)")
         }
         
         // 创建语音请求
@@ -130,7 +130,7 @@ class TTSService: NSObject, AVSpeechSynthesizerDelegate {
             isSpeaking = false
             onComplete?()
             onComplete = nil
-            print("🔊 朗读完成")
+            Logger.info("朗读完成")
         }
     }
     

@@ -39,7 +39,7 @@ class SpeechService {
         isAuthorized = (status == .authorized)
         
         if !isAuthorized {
-            print("⚠️ 语音识别权限未授权")
+            Logger.warn("语音识别权限未授权")
         }
     }
     
@@ -50,12 +50,12 @@ class SpeechService {
         onFinal: @escaping (String) -> Void
     ) {
         guard isAuthorized else {
-            print("⚠️ 语音识别未授权")
+            Logger.warn("语音识别未授权")
             return
         }
         
         guard let recognizer = recognizer, recognizer.isAvailable else {
-            print("⚠️ 语音识别不可用")
+            Logger.warn("语音识别不可用")
             return
         }
         
@@ -72,7 +72,7 @@ class SpeechService {
             try audioSession.setCategory(.record, mode: .measurement, options: .duckOthers)
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
-            print("❌ 音频会话配置失败: \(error)")
+            Logger.error("音频会话配置失败: \(error)")
             return
         }
         
@@ -110,7 +110,7 @@ class SpeechService {
             }
             
             if let error = error {
-                print("❌ 识别错误: \(error)")
+                Logger.error("识别错误: \(error)")
                 Task { @MainActor in
                     self.stopRecording()
                 }
@@ -122,9 +122,9 @@ class SpeechService {
         do {
             try audioEngine.start()
             isRecording = true
-            print("🎤 开始录音")
+            Logger.info("开始录音")
         } catch {
-            print("❌ 音频引擎启动失败: \(error)")
+            Logger.error("音频引擎启动失败: \(error)")
         }
     }
     
@@ -143,7 +143,7 @@ class SpeechService {
         recognitionTask = nil
         
         isRecording = false
-        print("🎤 停止录音")
+        Logger.info("停止录音")
     }
     
     // MARK: - 切换语言

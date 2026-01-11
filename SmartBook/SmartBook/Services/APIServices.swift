@@ -115,7 +115,7 @@ class BookService {
                 }
             }
         } catch {
-            print("Error loading bundle books: \(error)")
+            Logger.error("Error loading bundle books: \(error)")
         }
         
         return books
@@ -137,7 +137,7 @@ class BookService {
                 }
             }
         } catch {
-            print("Error loading user books: \(error)")
+            Logger.error("Error loading user books: \(error)")
         }
         
         return books
