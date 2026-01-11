@@ -23,6 +23,7 @@ enum AppTab: String, CaseIterable {
 struct ContentView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @EnvironmentObject var localizationManager: LocalizationManager
     @State private var selectedTab: AppTab = .bookshelf
     @State private var previousTab: AppTab = .bookshelf
     
@@ -66,6 +67,7 @@ struct ContentView: View {
 struct BookshelfView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @EnvironmentObject var localizationManager: LocalizationManager
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @State private var books: [Book] = []
@@ -405,4 +407,5 @@ extension Color {
     ContentView()
         .environment(AppState())
         .environment(ThemeManager.shared)
+        .environmentObject(LocalizationManager.shared)
 }

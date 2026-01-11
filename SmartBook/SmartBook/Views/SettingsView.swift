@@ -15,6 +15,7 @@ struct SettingsView: View {
     @State private var showServerEditor = false
     @State private var editingURL = ""
     @State private var selectedLanguage: Language = .system
+    @State private var refreshID = UUID()  // 用于刷新视图
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -38,6 +39,11 @@ struct SettingsView: View {
                         }
                         .labelsHidden()
                         .tint(colors.secondaryText)
+                    }
+                    .onChange(of: selectedLanguage) { _, newValue in
+                        if newValue != localizationManager.currentLanguage {
+                            localizationManager.currentLanguage = newValue
+                        }
                     }
                     
                     // 主题选择
@@ -160,6 +166,7 @@ struct SettingsView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(colors.background.ignoresSafeArea())
+            .id(refreshID)  // 强制视图刷新
             .navigationTitle(L("settings.title"))
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showServerEditor) {
@@ -171,9 +178,6 @@ struct SettingsView: View {
         }
         .onChange(of: ttsRate) { _, newValue in
             appState.ttsService.rate = Float(newValue)
-        }
-        .onChange(of: selectedLanguage) { _, newValue in
-            localizationManager.currentLanguage = newValue
         }
         .onAppear {
             selectedLanguage = localizationManager.currentLanguage

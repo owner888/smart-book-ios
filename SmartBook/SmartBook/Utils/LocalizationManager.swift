@@ -2,7 +2,7 @@
 
 import Foundation
 import SwiftUI
-import Combine
+internal import Combine
 
 /// 支持的语言
 enum Language: String, CaseIterable, Identifiable {
@@ -16,7 +16,7 @@ enum Language: String, CaseIterable, Identifiable {
     var displayName: String {
         switch self {
         case .system:
-            return "System Default"
+            return "系统"
         case .english:
             return "English"
         case .simplifiedChinese:
@@ -26,31 +26,38 @@ enum Language: String, CaseIterable, Identifiable {
         }
     }
     
-    var locale: Locale {
+    /// 获取语言对应的 bundle
+    var bundle: Bundle {
         switch self {
         case .system:
-            return Locale.current
+            // 跟随系统语言
+            let preferred = Locale.preferredLanguages.first ?? "en"
+            if preferred.hasPrefix("zh-Hant") {
+                return zhHantBundle
+            } else if preferred.hasPrefix("zh") {
+                return zhHansBundle
+            } else {
+                return enBundle
+            }
         case .english:
-            return Locale(identifier: "en")
+            return enBundle
         case .simplifiedChinese:
-            return Locale(identifier: "zh-Hans")
+            return zhHansBundle
         case .traditionalChinese:
-            return Locale(identifier: "zh-Hant")
+            return zhHantBundle
         }
     }
     
-    /// 获取当前语言的首选语言数组
-    var preferredLanguages: [String] {
-        switch self {
-        case .system:
-            return Locale.preferredLanguages
-        case .english:
-            return ["en"]
-        case .simplifiedChinese:
-            return ["zh-Hans", "zh-Hans-CN", "zh"]
-        case .traditionalChinese:
-            return ["zh-Hant", "zh-Hant-TW", "zh-Hant-HK", "zh"]
-        }
+    private var enBundle: Bundle {
+        Bundle.main.path(forResource: "en", ofType: "lproj").flatMap { Bundle(path: $0) } ?? .main
+    }
+    
+    private var zhHansBundle: Bundle {
+        Bundle.main.path(forResource: "zh-Hans", ofType: "lproj").flatMap { Bundle(path: $0) } ?? .main
+    }
+    
+    private var zhHantBundle: Bundle {
+        Bundle.main.path(forResource: "zh-Hant", ofType: "lproj").flatMap { Bundle(path: $0) } ?? .main
     }
 }
 
@@ -61,7 +68,8 @@ class LocalizationManager: ObservableObject {
     @Published var currentLanguage: Language {
         didSet {
             saveLanguagePreference()
-            applyLanguage()
+            // 通知视图语言已更改
+            NotificationCenter.default.post(name: .languageDidChange, object: nil)
         }
     }
     
@@ -75,9 +83,6 @@ class LocalizationManager: ObservableObject {
         } else {
             self.currentLanguage = .system
         }
-        
-        // 应用语言
-        applyLanguage()
     }
     
     /// 保存语言偏好设置
@@ -85,39 +90,26 @@ class LocalizationManager: ObservableObject {
         UserDefaults.standard.set(currentLanguage.rawValue, forKey: userDefaultsKey)
     }
     
-    /// 应用语言设置
-    private func applyLanguage() {
-        // 设置 SwiftUI 的本地化环境
-        // 注意：SwiftUI 会自动根据 currentLanguage 环境的改变来更新视图
-        
-        // 对于日期、数字等格式化，使用当前语言的 locale
-        if currentLanguage != .system {
-            UserDefaults.standard.set([currentLanguage.rawValue], forKey: "AppleLanguages")
-        } else {
-            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
-        }
-    }
-    
-    /// 获取本地化字符串
+    /// 根据当前语言获取本地化字符串
     func localize(_ key: String) -> String {
-        NSLocalizedString(key, comment: "")
+        currentLanguage.bundle.localizedString(forKey: key, value: key, table: nil)
     }
     
-    /// 获取带参数的本地化字符串
+    /// 带参数的本地化字符串
     func localize(_ key: String, args: CVarArg...) -> String {
         let format = localize(key)
         return String(format: format, arguments: args)
     }
 }
 
+/// 语言切换通知
+extension Notification.Name {
+    static let languageDidChange = Notification.Name("languageDidChange")
+}
+
 /// 本地化视图扩展
 extension View {
-    /// 使用本地化字符串
-    func localized(_ key: String) -> some View {
-        Text(LocalizationManager.shared.localize(key))
-    }
-    
-    /// 根据语言环境获取文本
+    /// 根据当前语言获取文本
     func localeText(_ zh: String, _ en: String) -> some View {
         let language = LocalizationManager.shared.currentLanguage
         let text: String
@@ -133,13 +125,13 @@ extension View {
     }
 }
 
-/// 便捷本地化字符串
+/// 便捷本地化函数 - 根据当前语言获取字符串
 func L(_ key: String) -> String {
-    NSLocalizedString(key, comment: "")
+    LocalizationManager.shared.localize(key)
 }
 
 /// 带参数的本地化字符串
 func L(_ key: String, _ args: CVarArg...) -> String {
-    let format = NSLocalizedString(key, comment: "")
+    let format = L(key)
     return String(format: format, arguments: args)
 }
