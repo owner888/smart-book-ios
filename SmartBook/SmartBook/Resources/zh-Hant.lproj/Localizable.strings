@@ -1,0 +1,156 @@
+// Localizable.strings - 繁體中文本地化
+
+/* App */
+"app.name" = "智慧閱讀";
+"app.description" = "您的智慧閱讀助手";
+
+/* Common */
+"common.ok" = "確定";
+"common.cancel" = "取消";
+"common.save" = "儲存";
+"common.delete" = "刪除";
+"common.edit" = "編輯";
+"common.done" = "完成";
+"common.loading" = "載入中...";
+"common.error" = "錯誤";
+"common.success" = "成功";
+"common.retry" = "重試";
+"common.close" = "關閉";
+"common.back" = "返回";
+"common.next" = "下一步";
+"common.previous" = "上一步";
+"common.search" = "搜尋";
+"common.settings" = "設定";
+"common.help" = "說明";
+"common.about" = "關於";
+"common.version" = "版本";
+"common.confirm" = "確認";
+"common.warning" = "警告";
+"common.tips" = "提示";
+
+/* Main Tab */
+"tab.home" = "首頁";
+"tab.library" = "書架";
+"tab.reader" = "閱讀";
+"tab.chat" = "對話";
+"tab.settings" = "我的";
+
+/* Library */
+"library.title" = "我的書架";
+"library.empty" = "書架為空";
+"library.empty.tip" = "快去匯入一些書籍吧";
+"library.import" = "匯入書籍";
+"library.importing" = "匯入中...";
+"library.import.success" = "書籍匯入成功";
+"library.import.failed" = "書籍匯入失敗";
+"library.delete.title" = "刪除書籍";
+"library.delete.message" = "確定要刪除這本書嗎？";
+"library.recentlyAdded" = "最近新增";
+"library.allBooks" = "全部書籍";
+"library.search.placeholder" = "搜尋書籍...";
+"library.bookCount" = "共 %d 本書";
+
+/* Reader */
+"reader.title" = "閱讀器";
+"reader.pageIndicator" = "第 %d 頁，共 %d 頁";
+"reader.chapterIndicator" = "第 %d 章，共 %d 章";
+"reader.fontSize" = "字體大小";
+"reader.fontSize.small" = "小";
+"reader.fontSize.medium" = "中";
+"reader.fontSize.large" = "大";
+"reader.fontSize.extraLarge" = "特大";
+"reader.theme" = "閱讀主題";
+"reader.theme.light" = "淺色";
+"reader.theme.dark" = "深色";
+"reader.theme.sepia" = "護眼";
+"reader.lineSpacing" = "行距";
+"reader.toc" = "目錄";
+"reader.bookmark" = "書籤";
+"reader.bookmarks" = "我的書籤";
+"reader.addBookmark" = "新增書籤";
+"reader.removeBookmark" = "移除書籤";
+"reader.progress" = "閱讀進度";
+"reader.goToPage" = "跳轉頁面";
+"reader.firstPage" = "首頁";
+"reader.lastPage" = "末頁";
+
+/* Chat */
+"chat.title" = "智慧對話";
+"chat.placeholder" = "詢問關於書籍的問題...";
+"chat.send" = "傳送";
+"chat.listening" = "正在聆聽...";
+"chat.speak" = "語音輸入";
+"chat.stopSpeaking" = "停止朗讀";
+"chat.clearHistory" = "清除對話";
+"chat.historyCleared" = "對話已清除";
+"chat.searching" = "搜尋中...";
+"chat.searchResults" = "搜尋結果";
+"chat.noResults" = "未找到相關內容";
+"chat.error.network" = "網路錯誤，請檢查網路連線";
+"chat.error.api" = "服務暫時不可用";
+
+/* AI */
+"ai.analysis" = "AI 分析";
+"ai.summary" = "內容摘要";
+"ai.characters" = "人物分析";
+"ai.themes" = "主題探討";
+"ai.quote" = "名句查詢";
+"ai.ask" = "問問 AI";
+
+/* Settings */
+"settings.title" = "設定";
+"settings.general" = "通用";
+"settings.language" = "語言";
+"settings.language.system" = "跟隨系統";
+"settings.language.english" = "English";
+"settings.language.simplifiedChinese" = "簡體中文";
+"settings.language.traditionalChinese" = "繁體中文";
+"settings.appearance" = "外觀";
+"settings.theme" = "主題";
+"settings.theme.system" = "跟隨系統";
+"settings.theme.light" = "淺色";
+"settings.theme.dark" = "深色";
+"settings.reading" = "閱讀";
+"settings.defaultFontSize" = "預設字體大小";
+"settings.defaultLineSpacing" = "預設行距";
+"settings.autoSave" = "自動儲存閱讀位置";
+"settings.audio" = "音訊";
+"settings.tts" = "語音朗讀";
+"settings.tts.voice" = "語音選擇";
+"settings.tts.rate" = "朗讀語速";
+"settings.tts.enableAutoPlay" = "朗讀完畢後自動播放下一句";
+"settings.about" = "關於";
+"settings.version" = "版本";
+"settings.privacyPolicy" = "隱私權政策";
+"settings.termsOfService" = "服務條款";
+"settings.feedback" = "意見回饋";
+"settings.clearCache" = "清除快取";
+"settings.cacheCleared" = "快取已清除";
+
+/* Book Picker */
+"picker.title" = "選擇書籍";
+"picker.noBooks" = "暫無可用書籍";
+"picker.importFirst" = "請先匯入書籍";
+
+/* Search */
+"search.title" = "搜尋";
+"search.placeholder" = "在書中搜尋...";
+"search.results" = "搜尋結果";
+"search.noResults" = "未找到結果";
+"search.clear" = "清除搜尋";
+"search.inChapter" = "所在章節";
+"search.relevance" = "相關度";
+
+/* Notifications */
+"notification.importComplete" = "匯入完成";
+"notification.downloadComplete" = "下載完成";
+"notification.syncComplete" = "同步完成";
+
+/* Errors */
+"error.generic" = "出了點問題";
+"error.network" = "網路連線錯誤";
+"error.fileNotFound" = "檔案未找到";
+"error.invalidFormat" = "檔案格式無效";
+"error.permissionDenied" = "權限被拒絕";
+"error.storageFull" = "儲存空間不足";
+"error.loading" = "載入失敗";

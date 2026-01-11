@@ -1,5 +1,5 @@
 // SmartBook iOS App - 主入口
-// iOS 18+ / SwiftUI / 支持暗黑/浅色主题
+// iOS 18+ / SwiftUI / 支持多语言 / 支持暗黑/浅色主题
 
 import SwiftUI
 
@@ -7,12 +7,14 @@ import SwiftUI
 struct SmartBookApp: App {
     @State private var appState = AppState()
     @State private var themeManager = ThemeManager.shared
+    @State private var localizationManager = LocalizationManager.shared
     
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environment(appState)
                 .environment(themeManager)
+                .environmentObject(localizationManager)
                 .preferredColorScheme(themeManager.colorScheme)
         }
     }

@@ -1,0 +1,156 @@
+// Localizable.strings - English Localization
+
+/* App */
+"app.name" = "Smart Book";
+"app.description" = "Your intelligent reading companion";
+
+/* Common */
+"common.ok" = "OK";
+"common.cancel" = "Cancel";
+"common.save" = "Save";
+"common.delete" = "Delete";
+"common.edit" = "Edit";
+"common.done" = "Done";
+"common.loading" = "Loading...";
+"common.error" = "Error";
+"common.success" = "Success";
+"common.retry" = "Retry";
+"common.close" = "Close";
+"common.back" = "Back";
+"common.next" = "Next";
+"common.previous" = "Previous";
+"common.search" = "Search";
+"common.settings" = "Settings";
+"common.help" = "Help";
+"common.about" = "About";
+"common.version" = "Version";
+"common.confirm" = "Confirm";
+"common.warning" = "Warning";
+"common.tips" = "Tips";
+
+/* Main Tab */
+"tab.home" = "Home";
+"tab.library" = "Library";
+"tab.reader" = "Reader";
+"tab.chat" = "Chat";
+"tab.settings" = "Settings";
+
+/* Library */
+"library.title" = "My Library";
+"library.empty" = "No books yet";
+"library.empty.tip" = "Import books to get started";
+"library.import" = "Import Book";
+"library.importing" = "Importing...";
+"library.import.success" = "Book imported successfully";
+"library.import.failed" = "Failed to import book";
+"library.delete.title" = "Delete Book";
+"library.delete.message" = "Are you sure you want to delete this book?";
+"library.recentlyAdded" = "Recently Added";
+"library.allBooks" = "All Books";
+"library.search.placeholder" = "Search books...";
+"library.bookCount" = "%d books";
+
+/* Reader */
+"reader.title" = "Reader";
+"reader.pageIndicator" = "Page %d of %d";
+"reader.chapterIndicator" = "Chapter %d of %d";
+"reader.fontSize" = "Font Size";
+"reader.fontSize.small" = "Small";
+"reader.fontSize.medium" = "Medium";
+"reader.fontSize.large" = "Large";
+"reader.fontSize.extraLarge" = "Extra Large";
+"reader.theme" = "Theme";
+"reader.theme.light" = "Light";
+"reader.theme.dark" = "Dark";
+"reader.theme.sepia" = "Sepia";
+"reader.lineSpacing" = "Line Spacing";
+"reader.toc" = "Table of Contents";
+"reader.bookmark" = "Bookmark";
+"reader.bookmarks" = "Bookmarks";
+"reader.addBookmark" = "Add Bookmark";
+"reader.removeBookmark" = "Remove Bookmark";
+"reader.progress" = "Reading Progress";
+"reader.goToPage" = "Go to Page";
+"reader.firstPage" = "First Page";
+"reader.lastPage" = "Last Page";
+
+/* Chat */
+"chat.title" = "AI Chat";
+"chat.placeholder" = "Ask about the book...";
+"chat.send" = "Send";
+"chat.listening" = "Listening...";
+"chat.speak" = "Speak";
+"chat.stopSpeaking" = "Stop Speaking";
+"chat.clearHistory" = "Clear History";
+"chat.historyCleared" = "Chat history cleared";
+"chat.searching" = "Searching...";
+"chat.searchResults" = "Search Results";
+"chat.noResults" = "No relevant content found";
+"chat.error.network" = "Network error. Please check your connection.";
+"chat.error.api" = "Service temporarily unavailable";
+
+/* AI */
+"ai.analysis" = "AI Analysis";
+"ai.summary" = "Summary";
+"ai.characters" = "Characters";
+"ai.themes" = "Themes";
+"ai.quote" = "Quotes";
+"ai.ask" = "Ask AI";
+
+/* Settings */
+"settings.title" = "Settings";
+"settings.general" = "General";
+"settings.language" = "Language";
+"settings.language.system" = "System Default";
+"settings.language.english" = "English";
+"settings.language.simplifiedChinese" = "简体中文";
+"settings.language.traditionalChinese" = "繁體中文";
+"settings.appearance" = "Appearance";
+"settings.theme" = "Theme";
+"settings.theme.system" = "Follow System";
+"settings.theme.light" = "Light";
+"settings.theme.dark" = "Dark";
+"settings.reading" = "Reading";
+"settings.defaultFontSize" = "Default Font Size";
+"settings.defaultLineSpacing" = "Default Line Spacing";
+"settings.autoSave" = "Auto Save Reading Position";
+"settings.audio" = "Audio";
+"settings.tts" = "Text-to-Speech";
+"settings.tts.voice" = "Voice";
+"settings.tts.rate" = "Speech Rate";
+"settings.tts.enableAutoPlay" = "Auto-play on Sentence End";
+"settings.about" = "About";
+"settings.version" = "Version";
+"settings.privacyPolicy" = "Privacy Policy";
+"settings.termsOfService" = "Terms of Service";
+"settings.feedback" = "Send Feedback";
+"settings.clearCache" = "Clear Cache";
+"settings.cacheCleared" = "Cache cleared";
+
+/* Book Picker */
+"picker.title" = "Select Book";
+"picker.noBooks" = "No books available";
+"picker.importFirst" = "Please import books first";
+
+/* Search */
+"search.title" = "Search";
+"search.placeholder" = "Search in book...";
+"search.results" = "Results";
+"search.noResults" = "No results found";
+"search.clear" = "Clear Search";
+"search.inChapter" = "In Chapter";
+"search.relevance" = "Relevance";
+
+/* Notifications */
+"notification.importComplete" = "Import Complete";
+"notification.downloadComplete" = "Download Complete";
+"notification.syncComplete" = "Sync Complete";
+
+/* Errors */
+"error.generic" = "Something went wrong";
+"error.network" = "Network connection error";
+"error.fileNotFound" = "File not found";
+"error.invalidFormat" = "Invalid file format";
+"error.permissionDenied" = "Permission denied";
+"error.storageFull" = "Storage is full";
+"error.loading" = "Failed to load";

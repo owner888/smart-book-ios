@@ -1,4 +1,4 @@
-// SettingsView.swift - 设置视图（支持主题切换）
+// SettingsView.swift - 设置视图（支持主题切换和多语言）
 
 import SwiftUI
 internal import AVFAudio
@@ -6,6 +6,7 @@ internal import AVFAudio
 struct SettingsView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @EnvironmentObject var localizationManager: LocalizationManager
     @Environment(\.colorScheme) var systemColorScheme
     @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:8080"
     @AppStorage("autoTTS") private var autoTTS = true
@@ -13,6 +14,7 @@ struct SettingsView: View {
     
     @State private var showServerEditor = false
     @State private var editingURL = ""
+    @State private var selectedLanguage: Language = .system
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -21,12 +23,27 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             List {
-                // 外观设置
+                // 通用设置
                 Section {
+                    // 语言选择
+                    HStack(spacing: 12) {
+                        SettingsIcon(icon: "globe", color: .blue)
+                        Text(L("settings.language"))
+                            .foregroundColor(colors.primaryText)
+                        Spacer()
+                        Picker("", selection: $selectedLanguage) {
+                            ForEach(Language.allCases) { language in
+                                Text(language.displayName).tag(language)
+                            }
+                        }
+                        .labelsHidden()
+                        .tint(colors.secondaryText)
+                    }
+                    
                     // 主题选择
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "paintbrush", color: .purple)
-                        Text("外观")
+                        Text(L("settings.theme"))
                             .foregroundColor(colors.primaryText)
                         Spacer()
                         Picker("", selection: Bindable(themeManager).themeMode) {
@@ -38,7 +55,7 @@ struct SettingsView: View {
                         .tint(colors.secondaryText)
                     }
                 } header: {
-                    Text("外观")
+                    Text(L("settings.general"))
                         .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
@@ -118,7 +135,7 @@ struct SettingsView: View {
                 
                 // 关于
                 Section {
-                    SettingsRow(icon: "info.circle", iconColor: .cyan, title: "版本", colors: colors) {
+                    SettingsRow(icon: "info.circle", iconColor: .cyan, title: L("settings.version"), colors: colors) {
                         Text("1.0.0")
                             .foregroundColor(colors.secondaryText)
                     }
@@ -135,7 +152,7 @@ struct SettingsView: View {
                         }
                     }
                 } header: {
-                    Text("关于")
+                    Text(L("settings.about"))
                         .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
@@ -143,7 +160,7 @@ struct SettingsView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(colors.background.ignoresSafeArea())
-            .navigationTitle("设置")
+            .navigationTitle(L("settings.title"))
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showServerEditor) {
                 ServerEditorView(url: $editingURL, colors: colors) { newURL in
@@ -154,6 +171,12 @@ struct SettingsView: View {
         }
         .onChange(of: ttsRate) { _, newValue in
             appState.ttsService.rate = Float(newValue)
+        }
+        .onChange(of: selectedLanguage) { _, newValue in
+            localizationManager.currentLanguage = newValue
+        }
+        .onAppear {
+            selectedLanguage = localizationManager.currentLanguage
         }
     }
 }
@@ -375,4 +398,5 @@ struct VoiceSelectionView: View {
     SettingsView()
         .environment(AppState())
         .environment(ThemeManager.shared)
+        .environmentObject(LocalizationManager.shared)
 }
