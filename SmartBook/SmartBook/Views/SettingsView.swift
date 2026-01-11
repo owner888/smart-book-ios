@@ -6,7 +6,6 @@ internal import AVFAudio
 struct SettingsView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
-    @EnvironmentObject var localizationManager: LocalizationManager
     @Environment(\.colorScheme) var systemColorScheme
     @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:8080"
     @AppStorage("autoTTS") private var autoTTS = true
@@ -14,8 +13,6 @@ struct SettingsView: View {
     
     @State private var showServerEditor = false
     @State private var editingURL = ""
-    @State private var selectedLanguage: Language = .system
-    @State private var refreshID = UUID()  // 用于刷新视图
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -26,26 +23,6 @@ struct SettingsView: View {
             List {
                 // 通用设置
                 Section {
-                    // 语言选择
-                    HStack(spacing: 12) {
-                        SettingsIcon(icon: "globe", color: .blue)
-                        Text(L("settings.language"))
-                            .foregroundColor(colors.primaryText)
-                        Spacer()
-                        Picker("", selection: $selectedLanguage) {
-                            ForEach(Language.allCases) { language in
-                                Text(language.displayName).tag(language)
-                            }
-                        }
-                        .labelsHidden()
-                        .tint(colors.secondaryText)
-                    }
-                    .onChange(of: selectedLanguage) { _, newValue in
-                        if newValue != localizationManager.currentLanguage {
-                            localizationManager.currentLanguage = newValue
-                        }
-                    }
-                    
                     // 主题选择
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "paintbrush", color: .purple)
@@ -166,7 +143,6 @@ struct SettingsView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .background(colors.background.ignoresSafeArea())
-            .id(refreshID)  // 强制视图刷新
             .navigationTitle(L("settings.title"))
             .navigationBarTitleDisplayMode(.large)
             .sheet(isPresented: $showServerEditor) {
@@ -178,9 +154,6 @@ struct SettingsView: View {
         }
         .onChange(of: ttsRate) { _, newValue in
             appState.ttsService.rate = Float(newValue)
-        }
-        .onAppear {
-            selectedLanguage = localizationManager.currentLanguage
         }
     }
 }
@@ -402,5 +375,4 @@ struct VoiceSelectionView: View {
     SettingsView()
         .environment(AppState())
         .environment(ThemeManager.shared)
-        .environmentObject(LocalizationManager.shared)
 }
