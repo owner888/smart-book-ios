@@ -1,5 +1,4 @@
-// SearchView.swift - Apple Music 风格搜索视图
-// Search Landing Page - 底部显示 Home 按钮 + 搜索框
+// SearchView.swift - 搜索视图（支持多语言）
 
 import SwiftUI
 
@@ -14,7 +13,6 @@ struct SearchView: View {
     @FocusState private var isSearchFocused: Bool
     @State private var isPresented = false
     
-    // 来源页面信息
     var previousTabIcon: String = "books.vertical"
     var previousTabName: String = "书架"
     var onBack: (() -> Void)?
@@ -23,16 +21,15 @@ struct SearchView: View {
         themeManager.colors(for: systemColorScheme)
     }
     
-    // 书籍分类
     private let categories: [(name: String, color: Color, icon: String)] = [
-        ("四大名著", .red, "book.fill"),
-        ("历史小说", .orange, "clock.fill"),
-        ("武侠小说", .purple, "figure.martial.arts"),
-        ("言情小说", .pink, "heart.fill"),
-        ("科幻小说", .blue, "sparkles"),
-        ("推理悬疑", .indigo, "magnifyingglass"),
-        ("经典文学", .green, "leaf.fill"),
-        ("现代小说", .cyan, "building.2.fill")
+        ("search.category.classics", .red, "book.fill"),
+        ("search.category.history", .orange, "clock.fill"),
+        ("search.category.wuxia", .purple, "figure.martial.arts"),
+        ("search.category.romance", .pink, "heart.fill"),
+        ("search.category.scifi", .blue, "sparkles"),
+        ("search.category.mystery", .indigo, "magnifyingglass"),
+        ("search.category.literature", .green, "leaf.fill"),
+        ("search.category.modern", .cyan, "building.2.fill")
     ]
     
     var filteredBooks: [Book] {
@@ -52,7 +49,7 @@ struct SearchView: View {
                     mainContent
                 }
             }
-            .navigationTitle("搜索")
+            .navigationTitle(L("search.title"))
             .navigationBarTitleDisplayMode(.large)
             .task {
                 await loadBooks()
@@ -61,10 +58,9 @@ struct SearchView: View {
             .fullScreenCover(item: $selectedBookForReading) { book in
                 ReaderView(book: book)
             }
-        }.searchable(text: $searchText, prompt: Text("书名、作者"))
+        }.searchable(text: $searchText, prompt: L("search.placeholder"))
     }
     
-    // MARK: - 主内容
     @ViewBuilder
     var mainContent: some View {
         ScrollView {
@@ -72,11 +68,11 @@ struct SearchView: View {
                 if isPresented {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text("最近搜索")
+                            Text(L("search.recentSearches"))
                                 .font(.headline)
                                 .foregroundColor(colors.primaryText)
                             Spacer()
-                            Button("清除") {
+                            Button(L("search.clear")) {
                                 clearRecentSearches()
                             }
                             .foregroundColor(.red)
@@ -92,15 +88,14 @@ struct SearchView: View {
                     }
                     .padding(.top)
                 } else {
-                    // 显示分类卡片
                     LazyVGrid(columns: [
                         GridItem(.flexible(), spacing: 12),
                         GridItem(.flexible(), spacing: 12)
                     ], spacing: 12) {
                         ForEach(categories, id: \.name) { category in
-                            CategoryCard(name: category.name, color: category.color, icon: category.icon)
+                            CategoryCard(name: L(category.name), color: category.color, icon: category.icon)
                                 .onTapGesture {
-                                    searchText = category.name
+                                    searchText = L(category.name)
                                 }
                         }
                     }
@@ -108,22 +103,20 @@ struct SearchView: View {
                 }
             
             } else {
-                // 搜索结果
                 VStack(alignment: .leading, spacing: 12) {
                     if filteredBooks.isEmpty {
-                        // 无结果
                         VStack(spacing: 16) {
                             Spacer().frame(height: 60)
                             Image(systemName: "book.closed")
                                 .font(.system(size: 50))
                                 .foregroundColor(colors.secondaryText)
-                            Text("未找到「\(searchText)」")
+                            Text(String(format: L("search.noResultsFor"), searchText))
                                 .font(.headline)
                                 .foregroundColor(colors.primaryText)
                         }
                         .frame(maxWidth: .infinity)
                     } else {
-                        Text("找到 \(filteredBooks.count) 本书")
+                        Text(String(format: L("search.foundBooks"), filteredBooks.count))
                             .font(.headline)
                             .foregroundColor(colors.primaryText)
                             .padding(.horizontal)
@@ -146,63 +139,6 @@ struct SearchView: View {
         }
     }
     
-    // MARK: - 底部搜索栏（替代 TabBar）
-    var bottomSearchBar: some View {
-        HStack(spacing: 12) {
-            // Home 返回按钮
-            Button {
-                onBack?()
-            } label: {
-                Image(systemName: previousTabIcon)
-                    .font(.title2)
-                    .foregroundColor(colors.primaryText)
-                    .frame(width: 44, height: 44)
-                    .background(colors.cardBackground)
-                    .clipShape(Circle())
-            }
-            
-            // 搜索输入框
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(colors.secondaryText)
-                
-                TextField("书名、作者", text: $searchText)
-                    .foregroundColor(colors.primaryText)
-                    .focused($isSearchFocused)
-                
-                // 语音按钮
-                Button {
-                    // TODO: 语音搜索
-                } label: {
-                    Image(systemName: "mic.fill")
-                        .foregroundColor(colors.secondaryText)
-                }
-                
-                // 清除按钮
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(colors.secondaryText)
-                    }
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(colors.cardBackground)
-            .cornerRadius(25)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(
-            colors.background
-                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: -4)
-        )
-        .transition(.move(edge: .bottom).combined(with: .opacity))
-    }
-    
-    // MARK: - 方法
     func loadBooks() async {
         do {
             books = try await appState.bookService.fetchBooks()
@@ -233,7 +169,6 @@ struct SearchView: View {
     }
 }
 
-// MARK: - 分类卡片
 struct CategoryCard: View {
     let name: String
     let color: Color
@@ -263,7 +198,6 @@ struct CategoryCard: View {
     }
 }
 
-// MARK: - 最近搜索行
 struct RecentSearchRow: View {
     let text: String
     var colors: ThemeColors
@@ -288,7 +222,6 @@ struct RecentSearchRow: View {
     }
 }
 
-// MARK: - 搜索结果行
 struct SearchResultRow: View {
     let book: Book
     let searchText: String
@@ -296,18 +229,16 @@ struct SearchResultRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // 封面
             bookCover
                 .frame(width: 50, height: 70)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             
-            // 信息
             VStack(alignment: .leading, spacing: 4) {
                 highlightedText(book.title, searchText: searchText, baseColor: colors.primaryText)
                     .font(.headline)
                     .lineLimit(2)
                 
-                Text("书籍 · \(book.author)")
+                Text(String(format: L("search.bookAuthor"), book.author))
                     .font(.caption)
                     .foregroundColor(colors.secondaryText)
             }
@@ -315,7 +246,6 @@ struct SearchResultRow: View {
             Spacer()
             
             Button {
-                // 更多操作
             } label: {
                 Image(systemName: "ellipsis")
                     .foregroundColor(colors.secondaryText)

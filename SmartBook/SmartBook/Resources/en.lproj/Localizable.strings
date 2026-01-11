@@ -181,6 +181,18 @@
 "search.clear" = "Clear Search";
 "search.inChapter" = "In Chapter";
 "search.relevance" = "Relevance";
+"search.recentSearches" = "Recent Searches";
+"search.noResultsFor" = "No results for \"%@\"";
+"search.foundBooks" = "Found %d books";
+"search.bookAuthor" = "Book · %@";
+"search.category.classics" = "Classics";
+"search.category.history" = "Historical Fiction";
+"search.category.wuxia" = "Wuxia";
+"search.category.romance" = "Romance";
+"search.category.scifi" = "Sci-Fi";
+"search.category.mystery" = "Mystery";
+"search.category.literature" = "Literature";
+"search.category.modern" = "Modern Fiction";
 
 /* Notifications */
 "notification.importComplete" = "Import Complete";

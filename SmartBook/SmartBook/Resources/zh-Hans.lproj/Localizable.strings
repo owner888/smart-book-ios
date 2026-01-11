@@ -181,6 +181,18 @@
 "search.clear" = "清除搜索";
 "search.inChapter" = "所在章节";
 "search.relevance" = "相关度";
+"search.recentSearches" = "最近搜索";
+"search.noResultsFor" = "未找到「%@」";
+"search.foundBooks" = "找到 %d 本书";
+"search.bookAuthor" = "书籍 · %@";
+"search.category.classics" = "四大名著";
+"search.category.history" = "历史小说";
+"search.category.wuxia" = "武侠小说";
+"search.category.romance" = "言情小说";
+"search.category.scifi" = "科幻小说";
+"search.category.mystery" = "推理悬疑";
+"search.category.literature" = "经典文学";
+"search.category.modern" = "现代小说";
 
 /* Notifications */
 "notification.importComplete" = "导入完成";

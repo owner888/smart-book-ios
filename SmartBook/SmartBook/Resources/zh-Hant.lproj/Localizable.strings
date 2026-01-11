@@ -181,6 +181,18 @@
 "search.clear" = "清除搜尋";
 "search.inChapter" = "所在章節";
 "search.relevance" = "相關度";
+"search.recentSearches" = "最近搜尋";
+"search.noResultsFor" = "未找到「%@」";
+"search.foundBooks" = "找到 %d 本書";
+"search.bookAuthor" = "書籍 · %@";
+"search.category.classics" = "四大名著";
+"search.category.history" = "歷史小說";
+"search.category.wuxia" = "武俠小說";
+"search.category.romance" = "言情小說";
+"search.category.scifi" = "科幻小說";
+"search.category.mystery" = "推理懸疑";
+"search.category.literature" = "經典文學";
+"search.category.modern" = "現代小說";
 
 /* Notifications */
 "notification.importComplete" = "匯入完成";
