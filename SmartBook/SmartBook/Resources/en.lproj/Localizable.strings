@@ -30,6 +30,18 @@
 
 /* Main Tab */
 "tab.home" = "Home";
+
+/* Home */
+"home.readingStats" = "Reading Stats";
+"home.booksRead" = "Books";
+"home.totalTime" = "Total Time";
+"home.streak" = "Day Streak";
+"home.todayReading" = "Today's Reading";
+"home.continueReading" = "Continue Reading";
+"home.favorites" = "Favorites";
+"home.readProgress" = "In Progress";
+"home.empty" = "Start Reading";
+"home.emptyTip" = "Import books to see them here";
 "tab.library" = "Library";
 "tab.reader" = "Reader";
 "tab.chat" = "Chat";

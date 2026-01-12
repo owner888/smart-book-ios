@@ -5,6 +5,7 @@ import UniformTypeIdentifiers
 
 // Tab 枚举
 enum AppTab: String, CaseIterable {
+    case home = "tab.home"
     case bookshelf = "tab.library"
     case chat = "tab.chat"
     case settings = "tab.settings"
@@ -12,6 +13,7 @@ enum AppTab: String, CaseIterable {
     
     var icon: String {
         switch self {
+        case .home: return "house.fill"
         case .bookshelf: return "books.vertical"
         case .chat: return "bubble.left.and.bubble.right"
         case .settings: return "gear"
@@ -28,6 +30,10 @@ struct ContentView: View {
     
     var body: some View {
         TabView(selection: $selectedTab) {
+            Tab(L(AppTab.home.rawValue), systemImage: AppTab.home.icon, value: .home) {
+                HomeView()
+            }
+            
             Tab(L(AppTab.bookshelf.rawValue), systemImage: AppTab.bookshelf.icon, value: .bookshelf) {
                 BookshelfView()
             }

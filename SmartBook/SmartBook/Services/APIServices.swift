@@ -11,7 +11,6 @@ class ChatService {
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         
-        // 构建请求体
         var body: [String: Any] = [
             "message": text,
             "history": history.map { msg in
@@ -43,14 +42,14 @@ class ChatService {
 }
 
 // MARK: - Book Service
+@Observable
 class BookService {
+    private let readingStatsKey = "reading_stats"
     
-    /// 获取用户 Documents 目录中的 Books 文件夹路径
     var userBooksDirectory: URL {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let booksPath = documentsPath.appendingPathComponent("Books")
         
-        // 确保目录存在
         if !FileManager.default.fileExists(atPath: booksPath.path) {
             try? FileManager.default.createDirectory(at: booksPath, withIntermediateDirectories: true)
         }
@@ -58,36 +57,43 @@ class BookService {
         return booksPath
     }
     
-    /// 获取书籍列表（合并 Bundle 和用户导入的书籍）
     func fetchBooks() async throws -> [Book] {
-        // 加载所有本地书籍（Bundle + 用户导入）
         let localBooks = loadLocalBooks()
         if !localBooks.isEmpty {
             return localBooks
         }
-        
-        // 如果本地没有书籍，尝试从 API 获取
         return try await fetchBooksFromAPI()
     }
     
-    /// 从本地加载所有 epub 书籍（Bundle + 用户导入）
     func loadLocalBooks() -> [Book] {
         var books: [Book] = []
-        
-        // 1. 从 Bundle 加载预置书籍
         books.append(contentsOf: loadBooksFromBundle())
-        
-        // 2. 从用户 Documents 目录加载导入的书籍
         books.append(contentsOf: loadBooksFromUserDocuments())
-        
+        // 加载阅读进度
+        for i in 0..<books.count {
+            let book = books[i]
+            if let progress = ReadingProgress.load(for: book.id) {
+                books[i] = Book(
+                    id: book.id,
+                    title: book.title,
+                    author: book.author,
+                    coverURL: book.coverURL,
+                    filePath: book.filePath,
+                    addedDate: book.addedDate,
+                    isFavorite: book.isFavorite,
+                    currentChapter: progress.chapterIndex,
+                    totalChapters: 0,
+                    currentPage: progress.pageIndex,
+                    totalPages: 0
+                )
+            }
+        }
         return books.sorted { $0.title < $1.title }
     }
     
-    /// 从 Bundle 加载预置书籍
     private func loadBooksFromBundle() -> [Book] {
         var books: [Book] = []
         
-        // 从 Bundle 中查找 epub 文件
         guard let resourcePath = Bundle.main.resourcePath else {
             return books
         }
@@ -95,9 +101,7 @@ class BookService {
         let booksPath = (resourcePath as NSString).appendingPathComponent("Books")
         let fileManager = FileManager.default
         
-        // 检查 Books 目录是否存在
         guard fileManager.fileExists(atPath: booksPath) else {
-            // 尝试直接从 Bundle 根目录查找
             return loadBooksFromBundleRoot()
         }
         
@@ -106,10 +110,7 @@ class BookService {
             for file in files {
                 if file.hasSuffix(".epub") {
                     let filePath = (booksPath as NSString).appendingPathComponent(file)
-                    if var book = createBook(from: file, path: filePath) {
-                        book = Book(id: book.id, title: book.title, author: book.author, 
-                                   coverURL: book.coverURL, filePath: book.filePath, 
-                                   addedDate: book.addedDate)
+                    if let book = createBook(from: file, path: filePath) {
                         books.append(book)
                     }
                 }
@@ -121,7 +122,6 @@ class BookService {
         return books
     }
     
-    /// 从用户 Documents 目录加载导入的书籍
     private func loadBooksFromUserDocuments() -> [Book] {
         var books: [Book] = []
         let fileManager = FileManager.default
@@ -143,27 +143,22 @@ class BookService {
         return books
     }
     
-    /// 导入书籍文件到用户 Documents 目录
     func importBook(from sourceURL: URL) throws -> Book {
         let fileManager = FileManager.default
         let filename = sourceURL.lastPathComponent
         let destinationURL = userBooksDirectory.appendingPathComponent(filename)
         
-        // 如果文件已存在，先删除
         if fileManager.fileExists(atPath: destinationURL.path) {
             try fileManager.removeItem(at: destinationURL)
         }
         
-        // 开始访问安全作用域资源
         guard sourceURL.startAccessingSecurityScopedResource() else {
             throw APIError.custom("无法访问该文件")
         }
         defer { sourceURL.stopAccessingSecurityScopedResource() }
         
-        // 复制文件到 Documents/Books 目录
         try fileManager.copyItem(at: sourceURL, to: destinationURL)
         
-        // 创建并返回 Book 对象
         guard let book = createBook(from: filename, path: destinationURL.path) else {
             throw APIError.custom("无法创建书籍")
         }
@@ -171,31 +166,27 @@ class BookService {
         return book
     }
     
-    /// 删除用户导入的书籍
     func deleteBook(_ book: Book) throws {
         guard let filePath = book.filePath else {
             throw APIError.custom("书籍路径不存在")
         }
         
-        // 只允许删除用户导入的书籍（在 Documents 目录中的）
-        let fileURL = URL(fileURLWithPath: filePath)
         guard filePath.contains("Documents/Books") else {
             throw APIError.custom("只能删除用户导入的书籍")
         }
         
+        let fileURL = URL(fileURLWithPath: filePath)
         let fileManager = FileManager.default
         if fileManager.fileExists(atPath: filePath) {
             try fileManager.removeItem(at: fileURL)
         }
     }
     
-    /// 检查书籍是否为用户导入的（可删除）
     func isUserImportedBook(_ book: Book) -> Bool {
         guard let filePath = book.filePath else { return false }
         return filePath.contains("Documents/Books")
     }
     
-    /// 从 Bundle 根目录查找 epub 文件
     private func loadBooksFromBundleRoot() -> [Book] {
         var books: [Book] = []
         
@@ -211,22 +202,14 @@ class BookService {
         return books.sorted { $0.title < $1.title }
     }
     
-    /// 根据文件名创建 Book 对象（解析 EPUB 元数据）
     private func createBook(from filename: String, path: String) -> Book? {
-        // 为书籍生成唯一 ID
         let id = filename.data(using: .utf8)?.base64EncodedString() ?? UUID().uuidString
-        
-        // 从文件名提取默认书名（去除 .epub 扩展名）
         let defaultTitle = (filename as NSString).deletingPathExtension
-        
-        // 尝试解析 EPUB 元数据
         let metadata = EPUBParser.parseMetadataForiOS(from: path)
         
-        // 使用解析的元数据，如果没有则使用默认值
         let title = metadata.title ?? defaultTitle
         let author = metadata.author ?? guessAuthor(for: defaultTitle)
         
-        // 提取并缓存封面图片
         var coverURL: String? = nil
         if let cachedCoverPath = EPUBParser.getCachedCoverPath(for: id) {
             coverURL = cachedCoverPath.absoluteString
@@ -244,46 +227,34 @@ class BookService {
         )
     }
     
-    /// 根据书名猜测作者
     private func guessAuthor(for title: String) -> String {
-        // 四大名著及常见书籍的作者映射
         let authorMap: [String: String] = [
-            // 四大名著（公版书）
             "西游记": "吴承恩",
             "三国演义": "罗贯中",
             "水浒传": "施耐庵",
             "红楼梦": "曹雪芹"
         ]
         
-        // 尝试精确匹配
         if let author = authorMap[title] {
             return author
         }
         
-        // 尝试部分匹配（处理带校注本等后缀的书名）
         for (bookName, author) in authorMap {
             if title.contains(bookName) {
                 return author
             }
         }
         
-        // 尝试从文件名中提取作者（格式：书名(作者)）
         if let range = title.range(of: "\\(([^)]+)\\)", options: .regularExpression) {
             var authorPart = String(title[range])
             authorPart = authorPart.replacingOccurrences(of: "(", with: "")
             authorPart = authorPart.replacingOccurrences(of: ")", with: "")
-            // 清理作者名
-            if authorPart.contains("曹雪芹") { return "曹雪芹" }
-            if authorPart.contains("罗贯中") { return "罗贯中" }
-            if authorPart.contains("施耐庵") { return "施耐庵" }
-            if authorPart.contains("吴承恩") { return "吴承恩" }
             return authorPart
         }
         
         return "未知作者"
     }
     
-    /// 从 API 获取书籍列表
     func fetchBooksFromAPI() async throws -> [Book] {
         let url = URL(string: "\(AppState.apiBaseURL)/api/books")!
         
@@ -321,6 +292,60 @@ class BookService {
         
         let searchResponse = try JSONDecoder().decode(SearchResponse.self, from: data)
         return searchResponse.results ?? []
+    }
+    
+    // MARK: - 阅读统计功能
+    
+    func loadReadingStats() -> ReadingStats {
+        guard let data = UserDefaults.standard.data(forKey: readingStatsKey),
+              let stats = try? JSONDecoder().decode(ReadingStats.self, from: data) else {
+            return ReadingStats()
+        }
+        
+        if let lastRead = stats.lastReadDate {
+            let calendar = Calendar.current
+            if !calendar.isDateInToday(lastRead) {
+                var newStats = stats
+                newStats.todayMinutes = 0
+                return newStats
+            }
+        }
+        
+        return stats
+    }
+    
+    func updateReadingProgress(bookId: String, progress: Double) {
+        updateReadingStats(minutes: 1)
+    }
+    
+    private func updateReadingStats(minutes: Int) {
+        var stats = loadReadingStats()
+        stats.totalMinutesRead += minutes
+        stats.todayMinutes += minutes
+        stats.lastReadDate = Date()
+        
+        if let lastRead = stats.lastReadDate {
+            let calendar = Calendar.current
+            if let yesterday = calendar.date(byAdding: .day, value: -1, to: Date()),
+               lastRead < yesterday {
+                stats.currentStreak = 1
+            } else if !calendar.isDateInToday(lastRead) {
+                stats.currentStreak += 1
+            }
+        } else {
+            stats.currentStreak = 1
+        }
+        
+        let books = loadLocalBooks()
+        stats.totalBooksRead = books.filter { $0.progressPercentage > 0.9 }.count
+        
+        if let data = try? JSONEncoder().encode(stats) {
+            UserDefaults.standard.set(data, forKey: readingStatsKey)
+        }
+    }
+    
+    func toggleFavorite(_ book: Book) {
+        // 暂不支持
     }
 }
 

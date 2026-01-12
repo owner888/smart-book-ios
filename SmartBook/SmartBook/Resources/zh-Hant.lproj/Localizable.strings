@@ -30,6 +30,18 @@
 
 /* Main Tab */
 "tab.home" = "首頁";
+
+/* Home */
+"home.readingStats" = "閱讀統計";
+"home.booksRead" = "已讀";
+"home.totalTime" = "總時長";
+"home.streak" = "連續閱讀";
+"home.todayReading" = "今日閱讀";
+"home.continueReading" = "繼續閱讀";
+"home.favorites" = "我的收藏";
+"home.readProgress" = "閱讀中";
+"home.empty" = "開始閱讀";
+"home.emptyTip" = "匯入書籍後即可在此查看";
 "tab.library" = "書架";
 "tab.reader" = "閱讀";
 "tab.chat" = "對話";
