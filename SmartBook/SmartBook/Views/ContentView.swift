@@ -25,8 +25,8 @@ enum AppTab: String, CaseIterable {
 struct ContentView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
-    @State private var selectedTab: AppTab = .bookshelf
-    @State private var previousTab: AppTab = .bookshelf
+    @State private var selectedTab: AppTab = .home
+    @State private var previousTab: AppTab = .home
     
     var body: some View {
         TabView(selection: $selectedTab) {
