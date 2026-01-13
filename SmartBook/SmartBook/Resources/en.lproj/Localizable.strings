@@ -40,6 +40,12 @@
 "home.continueReading" = "Continue Reading";
 "home.favorites" = "Favorites";
 "home.readProgress" = "In Progress";
+
+/* Check In */
+"checkIn.now" = "Check In";
+"checkIn.done" = "Checked";
+"checkIn.success" = "Checked in! Streak: %d days";
+"checkIn.error" = "Check in failed";
 "home.empty" = "Start Reading";
 "home.emptyTip" = "Import books to see them here";
 "tab.library" = "Library";

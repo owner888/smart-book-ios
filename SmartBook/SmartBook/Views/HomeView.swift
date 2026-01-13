@@ -10,6 +10,8 @@ struct HomeView: View {
     @State private var favoriteBooks: [Book] = []
     @State private var readingStats: ReadingStats = ReadingStats()
     @State private var selectedBookForReading: Book?
+    @State private var showingCheckInAlert = false
+    @State private var checkInMessage = ""
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -50,14 +52,61 @@ struct HomeView: View {
             }
             .navigationTitle(L("tab.home"))
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    checkInButton
+                }
+            }
             .task {
                 await loadData()
                 loadReadingStats()
+                await syncCloudKit()
             }
             .fullScreenCover(item: $selectedBookForReading) { book in
                 ReaderView(book: book)
             }
+            .alert(checkInMessage, isPresented: $showingCheckInAlert) {
+                Button(L("common.ok"), role: .cancel) { }
+            }
         }
+    }
+    
+    @ViewBuilder
+    private var checkInButton: some View {
+        Button {
+            performCheckIn()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: appState.checkInService.isTodayCheckedIn ? "checkmark.circle.fill" : "calendar.badge.checkmark")
+                    .foregroundColor(appState.checkInService.isTodayCheckedIn ? .green : .orange)
+                Text("\(appState.checkInService.formattedStreak)")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundColor(colors.primaryText)
+            }
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(colors.cardBackground)
+            .cornerRadius(12)
+        }
+        .disabled(appState.checkInService.isTodayCheckedIn)
+    }
+    
+    private func performCheckIn() {
+        Task {
+            do {
+                try await appState.checkInService.checkIn()
+                checkInMessage = String(format: L("checkIn.success"), appState.checkInService.currentStreak)
+                showingCheckInAlert = true
+            } catch {
+                checkInMessage = L("checkIn.error")
+                showingCheckInAlert = true
+            }
+        }
+    }
+    
+    private func syncCloudKit() async {
+        try? await appState.checkInService.fetchFromCloudKit()
     }
     
     func loadData() async {

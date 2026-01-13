@@ -40,6 +40,12 @@
 "home.continueReading" = "继续阅读";
 "home.favorites" = "我的收藏";
 "home.readProgress" = "阅读中";
+
+/* Check In */
+"checkIn.now" = "签到";
+"checkIn.done" = "已签";
+"checkIn.success" = "签到成功！连续 %d 天";
+"checkIn.error" = "签到失败";
 "home.empty" = "开始阅读";
 "home.emptyTip" = "导入书籍后即可在此查看";
 "tab.library" = "书架";

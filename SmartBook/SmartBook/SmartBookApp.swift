@@ -30,6 +30,7 @@ class AppState {
     let bookService = BookService()
     let speechService = SpeechService()
     let ttsService = TTSService()
+    let checkInService = CheckInService()
     
     // API 配置
     static let apiBaseURL = "http://localhost:8080"  // 你的 PHP 后端地址
