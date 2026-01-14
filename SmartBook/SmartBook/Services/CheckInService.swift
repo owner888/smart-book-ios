@@ -91,7 +91,7 @@ class CheckInService {
         
         privateDatabase.save(record) { _, error in
             if let error = error {
-                print("CloudKit save error: \(error.localizedDescription)")
+                Logger.error("CloudKit save error: \(error.localizedDescription)")
             }
         }
     }
