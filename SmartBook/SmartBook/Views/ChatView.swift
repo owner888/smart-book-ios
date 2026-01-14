@@ -23,43 +23,58 @@ struct ChatView: View {
             // 主内容 - AI 对话
             chatContent
             
-            // 左侧遮罩
+            // 遮罩层（带淡入淡出动画）
             if isSidebarVisible {
                 Color.black.opacity(0.3)
                     .ignoresSafeArea()
+                    .transition(.opacity)
                     .onTapGesture {
-                        withAnimation {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isSidebarVisible = false
                         }
                     }
             }
             
-            // 侧边栏（从左侧滑出）
-            if isSidebarVisible {
+            // 侧边栏（从左侧滑出，非全屏）
+            HStack(spacing: 0) {
+                // 侧边栏
                 SidebarView(
                     colors: colors,
                     onSelectChat: {
-                        withAnimation {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isSidebarVisible = false
                         }
                     },
                     onSelectBookshelf: {
                         showBookPicker = true
-                        withAnimation {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isSidebarVisible = false
                         }
                     },
                     onSelectSettings: {
                         showSettings = true
-                        withAnimation {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             isSidebarVisible = false
                         }
                     }
                 )
                 .environment(appState)
                 .environment(themeManager)
-                .transition(.move(edge: .leading))
+                .frame(width: 280)
+                .background(colors.cardBackground)
+                .offset(x: isSidebarVisible ? 0 : -280)
+                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSidebarVisible)
+                
+                // 右侧点击区域（点击关闭）
+                Color.clear
+                    .frame(width: UIScreen.main.bounds.width - 280)
+                    .onTapGesture {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            isSidebarVisible = false
+                        }
+                    }
             }
+            .allowsHitTesting(isSidebarVisible)
         }
         .sheet(isPresented: $showBookPicker) {
             BookPickerView(colors: colors) { book in
