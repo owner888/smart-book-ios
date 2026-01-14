@@ -1,4 +1,4 @@
-// ChatView.swift - AI 对话视图（支持多语言）
+// ChatView.swift - AI 对话视图（支持多语言，类似 ChatGPT 的极简设计）
 
 import SwiftUI
 
@@ -10,6 +10,8 @@ struct ChatView: View {
     @State private var inputText = ""
     @State private var isConversationMode = false
     @State private var showBookPicker = false
+    @State private var showSettings = false
+    @State private var isSidebarVisible = false
     @FocusState private var isInputFocused: Bool
     
     private var colors: ThemeColors {
@@ -17,11 +19,76 @@ struct ChatView: View {
     }
     
     var body: some View {
+        ZStack {
+            // 主内容 - AI 对话
+            chatContent
+            
+            // 左侧遮罩
+            if isSidebarVisible {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation {
+                            isSidebarVisible = false
+                        }
+                    }
+            }
+            
+            // 侧边栏（从左侧滑出）
+            if isSidebarVisible {
+                SidebarView(
+                    colors: colors,
+                    onSelectChat: {
+                        withAnimation {
+                            isSidebarVisible = false
+                        }
+                    },
+                    onSelectBookshelf: {
+                        showBookPicker = true
+                        withAnimation {
+                            isSidebarVisible = false
+                        }
+                    },
+                    onSelectSettings: {
+                        showSettings = true
+                        withAnimation {
+                            isSidebarVisible = false
+                        }
+                    }
+                )
+                .environment(appState)
+                .environment(themeManager)
+                .transition(.move(edge: .leading))
+            }
+        }
+        .sheet(isPresented: $showBookPicker) {
+            BookPickerView(colors: colors) { book in
+                withAnimation {
+                    appState.selectedBook = book
+                }
+                showBookPicker = false
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            SettingsView()
+                .environment(appState)
+                .environment(themeManager)
+        }
+        .onAppear {
+            viewModel.appState = appState
+        }
+    }
+    
+    // 主聊天内容
+    var chatContent: some View {
         NavigationStack {
             ZStack {
                 colors.background.ignoresSafeArea()
                 
                 VStack(spacing: 0) {
+                    // 顶部栏
+                    topBar
+                    
                     if let book = appState.selectedBook {
                         BookContextBar(book: book, colors: colors) {
                             withAnimation {
@@ -42,6 +109,7 @@ struct ChatView: View {
                         })
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
+                        // 对话列表
                         ScrollViewReader { proxy in
                             ScrollView {
                                 LazyVStack(spacing: 12) {
@@ -62,65 +130,56 @@ struct ChatView: View {
                         }
                     }
                     
+                    // 底部输入栏
                     InputBar(
                         text: $inputText,
                         isConversationMode: $isConversationMode,
                         isFocused: $isInputFocused,
                         isLoading: viewModel.isLoading,
                         speechService: appState.speechService,
+                        selectedBook: appState.selectedBook,
                         colors: colors,
                         onSend: sendMessage,
                         onVoice: toggleVoiceInput,
-                        onConversation: toggleConversationMode
+                        onConversation: toggleConversationMode,
+                        onSelectBook: { showBookPicker = true },
+                        onClearHistory: { viewModel.clearMessages() }
                     )
                 }
             }
-            .navigationTitle(L("chat.title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarBackground(colors.navigationBar, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .scrollDismissesKeyboard(.interactively)
-            .onTapGesture {
-                isInputFocused = false
+            .navigationBarHidden(true)
+        }
+    }
+    
+    // 顶部栏
+    var topBar: some View {
+        HStack(spacing: 12) {
+            // 左侧菜单按钮
+            Button(action: { isSidebarVisible.toggle() }) {
+                Image(systemName: "line.3.horizontal")
+                    .font(.title2)
+                    .foregroundColor(colors.primaryText)
             }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button(L("chat.selectBook"), systemImage: "book") {
-                            showBookPicker = true
-                        }
-                        
-                        if appState.selectedBook != nil {
-                            Button(L("chat.deselectBook"), systemImage: "book.closed") {
-                                withAnimation {
-                                    appState.selectedBook = nil
-                                }
-                            }
-                        }
-                        
-                        Divider()
-                        
-                        Button(L("chat.clearHistory"), systemImage: "trash", role: .destructive) {
-                            viewModel.clearMessages()
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .foregroundColor(colors.primaryText)
-                    }
-                }
-            }
-            .sheet(isPresented: $showBookPicker) {
-                BookPickerView(colors: colors) { book in
-                    withAnimation {
-                        appState.selectedBook = book
-                    }
-                    showBookPicker = false
-                }
+            
+            Spacer()
+            
+            // 标题
+            Text(L("chat.title"))
+                .font(.headline)
+                .foregroundColor(colors.primaryText)
+            
+            Spacer()
+            
+            // 右侧设置按钮
+            Button(action: { showSettings = true }) {
+                Image(systemName: "gearshape")
+                    .font(.title2)
+                    .foregroundColor(colors.primaryText)
             }
         }
-        .onAppear {
-            viewModel.appState = appState
-        }
+        .padding(.horizontal)
+        .padding(.vertical, 12)
+        .background(colors.navigationBar)
     }
     
     func sendMessage() {
@@ -170,6 +229,128 @@ struct ChatView: View {
     }
 }
 
+// MARK: - 侧边栏视图
+struct SidebarView: View {
+    var colors: ThemeColors
+    var onSelectChat: () -> Void
+    var onSelectBookshelf: () -> Void
+    var onSelectSettings: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // App 标题
+            HStack {
+                Image(systemName: "book.circle.fill")
+                    .font(.title)
+                    .foregroundColor(.green)
+                Text(L("app.name"))
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(colors.primaryText)
+            }
+            .padding()
+            
+            Divider()
+                .background(colors.secondaryText.opacity(0.3))
+            
+            // 菜单项
+            VStack(alignment: .leading, spacing: 4) {
+                // 当前对话
+                SidebarItem(
+                    icon: "bubble.left.and.bubble.right.fill",
+                    title: L("chat.title"),
+                    colors: colors,
+                    isSelected: true,
+                    action: onSelectChat
+                )
+                
+                // 书架
+                SidebarItem(
+                    icon: "books.vertical",
+                    title: L("library.title"),
+                    colors: colors,
+                    isSelected: false,
+                    action: onSelectBookshelf
+                )
+                
+                // 设置
+                SidebarItem(
+                    icon: "gearshape",
+                    title: L("settings.title"),
+                    colors: colors,
+                    isSelected: false,
+                    action: onSelectSettings
+                )
+            }
+            .padding(.vertical)
+            
+            Spacer()
+            
+            // 底部用户信息
+            VStack(alignment: .leading, spacing: 8) {
+                Divider()
+                    .background(colors.secondaryText.opacity(0.3))
+                
+                HStack(spacing: 12) {
+                    Circle()
+                        .fill(colors.secondaryText.opacity(0.3))
+                        .frame(width: 40, height: 40)
+                        .overlay {
+                            Image(systemName: "person.fill")
+                                .foregroundColor(colors.primaryText)
+                        }
+                    
+                    VStack(alignment: .leading) {
+                        Text("User")
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundColor(colors.primaryText)
+                        Text(L("app.description"))
+                            .font(.caption)
+                            .foregroundColor(colors.secondaryText)
+                            .lineLimit(1)
+                    }
+                }
+                .padding()
+            }
+        }
+        .background(colors.cardBackground)
+    }
+}
+
+// MARK: - 侧边栏菜单项
+struct SidebarItem: View {
+    let icon: String
+    let title: String
+    var colors: ThemeColors
+    var isSelected: Bool = false
+    var action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundColor(isSelected ? .white : colors.primaryText)
+                    .frame(width: 28)
+                
+                Text(title)
+                    .font(.body)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                    .foregroundColor(isSelected ? .white : colors.primaryText)
+                
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 12)
+            .background(isSelected ? Color.green.opacity(0.8) : Color.clear)
+            .cornerRadius(10)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - 书籍状态栏
 struct BookContextBar: View {
     let book: Book
     var colors: ThemeColors = .dark
@@ -198,17 +379,33 @@ struct BookContextBar: View {
     }
 }
 
+// MARK: - 消息气泡
 struct MessageBubble: View {
     let message: ChatMessage
     var colors: ThemeColors = .dark
     
     var body: some View {
-        HStack {
-            if message.role == .user {
-                Spacer(minLength: 60)
+        HStack(alignment: .top, spacing: 12) {
+            if message.role == .assistant {
+                // AI 头像
+                Circle()
+                    .fill(colors.secondaryText.opacity(0.2))
+                    .frame(width: 36, height: 36)
+                    .overlay {
+                        Image(systemName: "sparkles")
+                            .foregroundColor(.green)
+                            .font(.system(size: 18))
+                    }
+            } else {
+                Spacer(minLength: 48)
             }
             
-            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 4) {
+                // 角色名称
+                Text(message.role == .user ? L("common.tips") : "AI")
+                    .font(.caption)
+                    .foregroundColor(colors.secondaryText)
+                
                 Text(message.content)
                     .padding(12)
                     .background {
@@ -224,36 +421,50 @@ struct MessageBubble: View {
                 
                 Text(message.timestamp, style: .time)
                     .font(.caption2)
-                    .foregroundColor(colors.secondaryText)
+                    .foregroundColor(colors.secondaryText.opacity(0.6))
             }
             
-            if message.role == .assistant {
-                Spacer(minLength: 60)
+            if message.role == .user {
+                Spacer(minLength: 48)
             }
         }
     }
 }
 
+// MARK: - 输入栏
 struct InputBar: View {
     @Binding var text: String
     @Binding var isConversationMode: Bool
     var isFocused: FocusState<Bool>.Binding
     let isLoading: Bool
     let speechService: SpeechService
+    var selectedBook: Book?
     var colors: ThemeColors = .dark
     let onSend: () -> Void
     let onVoice: () -> Void
     let onConversation: () -> Void
+    let onSelectBook: () -> Void
+    let onClearHistory: () -> Void
     
     var body: some View {
         HStack(spacing: 12) {
-            Button(action: onConversation) {
-                Image(systemName: isConversationMode ? "waveform.circle.fill" : "plus.circle")
-                    .font(.title2)
-                    .foregroundColor(isConversationMode ? .green : colors.secondaryText)
-                    .symbolEffect(.pulse, isActive: isConversationMode)
+            // 左侧：书籍选择器
+            Button(action: onSelectBook) {
+                HStack(spacing: 4) {
+                    if let book = selectedBook {
+                        Image(systemName: "book.fill")
+                            .font(.title3)
+                    } else {
+                        Image(systemName: "books.vertical")
+                            .font(.title3)
+                    }
+                    Image(systemName: "chevron.down")
+                        .font(.caption)
+                }
+                .foregroundColor(selectedBook != nil ? .green : colors.secondaryText)
             }
             
+            // 中间：输入框
             TextField(L("chat.placeholder"), text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
                 .padding(12)
@@ -265,14 +476,17 @@ struct InputBar: View {
                 .focused(isFocused)
                 .lineLimit(1...5)
             
-            if text.isEmpty {
+            // 右侧：功能按钮
+            HStack(spacing: 8) {
+                // 语音输入
                 Button(action: onVoice) {
                     Image(systemName: speechService.isRecording ? "stop.circle.fill" : "mic.circle")
                         .font(.title2)
                         .foregroundColor(speechService.isRecording ? .red : colors.secondaryText)
                         .symbolEffect(.bounce, value: speechService.isRecording)
                 }
-            } else {
+                
+                // 发送按钮
                 Button(action: onSend) {
                     if isLoading {
                         ProgressView()
@@ -280,18 +494,19 @@ struct InputBar: View {
                     } else {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.title2)
-                            .foregroundColor(.green)
+                            .foregroundColor(text.isEmpty ? colors.secondaryText : .green)
                     }
                 }
-                .disabled(isLoading)
+                .disabled(isLoading || text.isEmpty)
             }
         }
         .padding(.horizontal)
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
         .background(colors.cardBackground)
     }
 }
 
+// MARK: - ChatViewModel
 @Observable
 class ChatViewModel {
     var messages: [ChatMessage] = []
@@ -331,7 +546,7 @@ class ChatViewModel {
     }
 }
 
-// 空状态引导视图（没有书籍时显示）
+// MARK: - 空状态视图（没有书籍时显示）
 struct EmptyStateView: View {
     var colors: ThemeColors = .dark
     var onAddBook: () -> Void
@@ -368,7 +583,7 @@ struct EmptyStateView: View {
     }
 }
 
-// 没有选择书籍时的聊天空状态视图
+// MARK: - 没有选择书籍时的聊天空状态视图
 struct EmptyChatStateView: View {
     var colors: ThemeColors = .dark
     var onAddBook: () -> Void
