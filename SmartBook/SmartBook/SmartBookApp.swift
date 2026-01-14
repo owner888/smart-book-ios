@@ -22,6 +22,7 @@ struct SmartBookApp: App {
 @Observable
 class AppState {
     var selectedBook: Book?
+    var books: [Book] = []
     var isLoading = false
     var errorMessage: String?
     
@@ -34,4 +35,21 @@ class AppState {
     
     // API 配置
     static let apiBaseURL = "http://localhost:8080"  // 你的 PHP 后端地址
+    
+    init() {
+        Task {
+            await loadBooks()
+        }
+    }
+    
+    @MainActor
+    func loadBooks() async {
+        isLoading = true
+        do {
+            books = try await bookService.fetchBooks()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoading = false
+    }
 }

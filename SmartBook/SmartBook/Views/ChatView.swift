@@ -30,20 +30,33 @@ struct ChatView: View {
                         }
                     }
                     
-                    ScrollViewReader { proxy in
-                        ScrollView {
-                            LazyVStack(spacing: 12) {
-                                ForEach(viewModel.messages) { message in
-                                    MessageBubble(message: message, colors: colors)
-                                        .id(message.id)
+                    // 空状态引导（没有选择书籍时显示）
+                    if appState.selectedBook == nil && appState.books.isEmpty {
+                        EmptyStateView(colors: colors, onAddBook: {
+                            showBookPicker = true
+                        })
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if appState.selectedBook == nil {
+                        EmptyChatStateView(colors: colors, onAddBook: {
+                            showBookPicker = true
+                        })
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                LazyVStack(spacing: 12) {
+                                    ForEach(viewModel.messages) { message in
+                                        MessageBubble(message: message, colors: colors)
+                                            .id(message.id)
+                                    }
                                 }
+                                .padding()
                             }
-                            .padding()
-                        }
-                        .onChange(of: viewModel.messages.count) { _, _ in
-                            if let lastMessage = viewModel.messages.last {
-                                withAnimation {
-                                    proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                            .onChange(of: viewModel.messages.count) { _, _ in
+                                if let lastMessage = viewModel.messages.last {
+                                    withAnimation {
+                                        proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                                    }
                                 }
                             }
                         }
@@ -315,6 +328,69 @@ class ChatViewModel {
     
     func clearMessages() {
         messages.removeAll()
+    }
+}
+
+// 空状态引导视图（没有书籍时显示）
+struct EmptyStateView: View {
+    var colors: ThemeColors = .dark
+    var onAddBook: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "books.vertical")
+                .font(.system(size: 64))
+                .foregroundColor(colors.secondaryText.opacity(0.6))
+            
+            Text(L("chat.emptyState.title"))
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(colors.primaryText)
+            
+            Text(L("chat.emptyState.desc"))
+                .font(.body)
+                .foregroundColor(colors.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+            
+            Button(action: onAddBook) {
+                Label(L("chat.emptyState.addBook"), systemImage: "plus.circle.fill")
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Color.green)
+                    .clipShape(Capsule())
+            }
+            .padding(.top, 8)
+        }
+        .padding()
+    }
+}
+
+// 没有选择书籍时的聊天空状态视图
+struct EmptyChatStateView: View {
+    var colors: ThemeColors = .dark
+    var onAddBook: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "bubble.left.and.bubble.right")
+                .font(.system(size: 64))
+                .foregroundColor(colors.secondaryText.opacity(0.6))
+            
+            Text(L("chat.emptyState.noBookTitle"))
+                .font(.title2)
+                .fontWeight(.semibold)
+                .foregroundColor(colors.primaryText)
+            
+            Text(L("chat.emptyState.noBookDesc"))
+                .font(.body)
+                .foregroundColor(colors.secondaryText)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+        }
+        .padding()
     }
 }
 

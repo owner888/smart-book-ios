@@ -131,6 +131,11 @@
 "chat.readingBook" = "Reading: %@";
 "chat.selectBook" = "Select Book";
 "chat.deselectBook" = "Deselect Book";
+"chat.emptyState.title" = "No Books Yet";
+"chat.emptyState.desc" = "Add your first book to start chatting with AI about it.";
+"chat.emptyState.addBook" = "Add Book";
+"chat.emptyState.noBookTitle" = "Select a Book";
+"chat.emptyState.noBookDesc" = "Tap the menu button above to select a book for AI chat.";
 
 /* AI */
 "ai.analysis" = "AI Analysis";

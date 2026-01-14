@@ -131,6 +131,11 @@
 "chat.readingBook" = "正在閱讀: %@";
 "chat.selectBook" = "選擇書籍";
 "chat.deselectBook" = "取消選擇";
+"chat.emptyState.title" = "還沒有書籍";
+"chat.emptyState.desc" = "添加第一本書，開始與 AI 對話討論書籍內容。";
+"chat.emptyState.addBook" = "添加書籍";
+"chat.emptyState.noBookTitle" = "選擇一本書";
+"chat.emptyState.noBookDesc" = "點擊右上角選單按鈕，選擇一本書開始 AI 對話。";
 
 /* AI */
 "ai.analysis" = "AI 分析";
