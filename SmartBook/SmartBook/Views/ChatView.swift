@@ -2,6 +2,83 @@
 
 import SwiftUI
 
+// MARK: - iOS 26 液态玻璃效果按钮样式
+struct GlassButtonStyle: ButtonStyle {
+    var foregroundColor: Color = .primary
+    var shadowColor: Color = .black.opacity(0.15)
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 20)
+            .padding(.vertical, 12)
+            .background {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.ultraThinMaterial)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(configuration.isPressed ? 0.12 : 0.18),
+                                .white.opacity(configuration.isPressed ? 0.02 : 0.05)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            }
+            .shadow(color: shadowColor, radius: configuration.isPressed ? 4 : 8, x: 0, y: configuration.isPressed ? 2 : 4)
+            .foregroundColor(foregroundColor)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
+// MARK: - 液态玻璃图标按钮样式
+struct GlassIconButtonStyle: ButtonStyle {
+    var size: CGFloat = 44
+    var color: Color = .primary
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .frame(width: size, height: size)
+            .background {
+                Circle()
+                    .fill(.ultraThinMaterial)
+            }
+            .overlay {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(configuration.isPressed ? 0.15 : 0.25),
+                                .white.opacity(configuration.isPressed ? 0.03 : 0.08)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+            }
+            .shadow(color: .black.opacity(configuration.isPressed ? 0.1 : 0.2), radius: configuration.isPressed ? 4 : 8, x: 0, y: configuration.isPressed ? 2 : 4)
+            .foregroundColor(color)
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
+extension ButtonStyle where Self == GlassButtonStyle {
+    static var glass: GlassButtonStyle {
+        GlassButtonStyle()
+    }
+}
+
+extension ButtonStyle where Self == GlassIconButtonStyle {
+    static var glassIcon: GlassIconButtonStyle {
+        GlassIconButtonStyle()
+    }
+}
+
 struct ChatView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
@@ -11,72 +88,37 @@ struct ChatView: View {
     @State private var isConversationMode = false
     @State private var showBookPicker = false
     @State private var showSettings = false
-    @State private var isSidebarVisible = false
     @FocusState private var isInputFocused: Bool
+    @StateObject private var sideObser = ExpandSideObservable()
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
     
     var body: some View {
-        ZStack {
-            // 主内容 - AI 对话
-            chatContent
-            
-            // 遮罩层（带淡入淡出动画）
-            if isSidebarVisible {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-                    .onTapGesture {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            isSidebarVisible = false
-                        }
-                    }
-            }
-            
+        ExpandSideView() {
             // 侧边栏（从左侧滑出，非全屏）
-            HStack(spacing: 0) {
-                // 侧边栏
-                SidebarView(
-                    colors: colors,
-                    onSelectChat: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            isSidebarVisible = false
-                        }
-                    },
-                    onSelectBookshelf: {
-                        showBookPicker = true
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            isSidebarVisible = false
-                        }
-                    },
-                    onSelectSettings: {
-                        showSettings = true
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            isSidebarVisible = false
-                        }
-                    }
-                )
-                .environment(appState)
-                .environment(themeManager)
-                .frame(width: 280)
-                .background(colors.cardBackground)
-                .offset(x: isSidebarVisible ? 0 : -280)
-                .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSidebarVisible)
-                
-                // 右侧点击区域（点击关闭）
-                Color.clear
-                    .frame(width: UIScreen.main.bounds.width - 280)
-                    .onTapGesture {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            isSidebarVisible = false
-                        }
-                    }
-            }
-            .allowsHitTesting(isSidebarVisible)
-        }
-        .sheet(isPresented: $showBookPicker) {
+            SidebarView(
+                colors: colors,
+                onSelectChat: {
+                    sideObser.jumpToPage(1)
+                },
+                onSelectBookshelf: {
+                    showBookPicker = true
+                    sideObser.jumpToPage(1)
+                },
+                onSelectSettings: {
+                    showSettings = true
+                    sideObser.jumpToPage(1)
+                }
+            )
+            .environment(appState)
+            .environment(themeManager)
+            .frame(width: 280)
+            .background(colors.cardBackground)
+        } content: {
+            chatContent
+        }.environmentObject(sideObser).sheet(isPresented: $showBookPicker) {
             BookPickerView(colors: colors) { book in
                 withAnimation {
                     appState.selectedBook = book
@@ -170,11 +212,12 @@ struct ChatView: View {
     var topBar: some View {
         HStack(spacing: 12) {
             // 左侧菜单按钮
-            Button(action: { isSidebarVisible.toggle() }) {
+            Button(action: { sideObser.jumpToPage(0) }) {
                 Image(systemName: "line.3.horizontal")
                     .font(.title2)
                     .foregroundColor(colors.primaryText)
-            }
+            }.glassEffect()
+        
             
             Spacer()
             
@@ -191,6 +234,7 @@ struct ChatView: View {
                     .font(.title2)
                     .foregroundColor(colors.primaryText)
             }
+            .buttonStyle(.glassIcon)
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
@@ -358,8 +402,14 @@ struct SidebarItem: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
-            .background(isSelected ? Color.green.opacity(0.8) : Color.clear)
-            .cornerRadius(10)
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? Color.green.opacity(0.6) : Color.white.opacity(0.2))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(.white.opacity(isSelected ? 0 : 0.2), lineWidth: 0.5)
+            }
         }
         .buttonStyle(.plain)
     }
@@ -385,8 +435,10 @@ struct BookContextBar: View {
             
             Button(action: onClear) {
                 Image(systemName: "xmark.circle.fill")
+                    .font(.body)
                     .foregroundColor(colors.secondaryText)
             }
+            .buttonStyle(.glassIcon)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -478,6 +530,7 @@ struct InputBar: View {
                 }
                 .foregroundColor(selectedBook != nil ? .green : colors.secondaryText)
             }
+            .buttonStyle(.glassIcon)
             
             // 中间：输入框
             TextField(L("chat.placeholder"), text: $text, axis: .vertical)
@@ -500,6 +553,7 @@ struct InputBar: View {
                         .foregroundColor(speechService.isRecording ? .red : colors.secondaryText)
                         .symbolEffect(.bounce, value: speechService.isRecording)
                 }
+                .buttonStyle(.glassIcon)
                 
                 // 发送按钮
                 Button(action: onSend) {
@@ -512,6 +566,7 @@ struct InputBar: View {
                             .foregroundColor(text.isEmpty ? colors.secondaryText : .green)
                     }
                 }
+                .buttonStyle(.glassIcon)
                 .disabled(isLoading || text.isEmpty)
             }
         }
@@ -589,9 +644,8 @@ struct EmptyStateView: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
-                    .background(Color.green)
-                    .clipShape(Capsule())
             }
+            .buttonStyle(.glass)
             .padding(.top, 8)
         }
         .padding()
