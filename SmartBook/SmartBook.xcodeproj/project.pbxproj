@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		22F036192F1ADE1A00A47787 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 22F036182F1ADE1A00A47787 /* Secrets.xcconfig */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		22B210292F10FD9B0078D1EA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,11 +31,25 @@
 		22B210192F10FD990078D1EA /* SmartBook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartBook.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		22B210282F10FD9B0078D1EA /* SmartBookTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartBookTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		22B210322F10FD9B0078D1EA /* SmartBookUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartBookUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		22F036182F1ADE1A00A47787 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		22F036172F1ADC6200A47787 /* Exceptions for "SmartBook" folder in "SmartBook" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 22B210182F10FD990078D1EA /* SmartBook */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		22B2101B2F10FD990078D1EA /* SmartBook */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				22F036172F1ADC6200A47787 /* Exceptions for "SmartBook" folder in "SmartBook" target */,
+			);
 			path = SmartBook;
 			sourceTree = "<group>";
 		};
@@ -79,6 +97,7 @@
 				22B2102B2F10FD9B0078D1EA /* SmartBookTests */,
 				22B210352F10FD9B0078D1EA /* SmartBookUITests */,
 				22B2101A2F10FD990078D1EA /* Products */,
+				22F036182F1ADE1A00A47787 /* Secrets.xcconfig */,
 			);
 			sourceTree = "<group>";
 		};
@@ -214,6 +233,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22F036192F1ADE1A00A47787 /* Secrets.xcconfig in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -394,6 +414,7 @@
 		};
 		22B2103D2F10FD9B0078D1EA /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 22F036182F1ADE1A00A47787 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -403,6 +424,7 @@
 				DEVELOPMENT_TEAM = 42GWBGG54F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SmartBook/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "需要麦克风权限来录制语音";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "需要语音识别权限来实现语音输入";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -430,6 +452,7 @@
 		};
 		22B2103E2F10FD9B0078D1EA /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 22F036182F1ADE1A00A47787 /* Secrets.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -439,6 +462,7 @@
 				DEVELOPMENT_TEAM = 42GWBGG54F;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SmartBook/Info.plist;
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "需要麦克风权限来录制语音";
 				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "需要语音识别权限来实现语音输入";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

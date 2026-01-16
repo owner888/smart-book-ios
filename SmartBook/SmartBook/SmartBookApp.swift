@@ -33,8 +33,10 @@ class AppState {
     let ttsService = TTSService()
     let checkInService = CheckInService()
     
-    // API 配置
-    static let apiBaseURL = "http://localhost:8080"  // 你的 PHP 后端地址
+    // API 配置 - 从 Info.plist 读取
+    static let apiBaseURL: String = {
+        Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? "http://localhost:8080"
+    }()
     
     init() {
         Task {
