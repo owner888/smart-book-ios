@@ -6,7 +6,7 @@ import SwiftUI
 struct GlassButtonStyle: ButtonStyle {
     var foregroundColor: Color = .primary
     var shadowColor: Color = .black.opacity(0.15)
-    
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding(.horizontal, 20)
@@ -20,15 +20,24 @@ struct GlassButtonStyle: ButtonStyle {
                     .fill(
                         LinearGradient(
                             colors: [
-                                .white.opacity(configuration.isPressed ? 0.12 : 0.18),
-                                .white.opacity(configuration.isPressed ? 0.02 : 0.05)
+                                .white.opacity(
+                                    configuration.isPressed ? 0.12 : 0.18
+                                ),
+                                .white.opacity(
+                                    configuration.isPressed ? 0.02 : 0.05
+                                ),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
             }
-            .shadow(color: shadowColor, radius: configuration.isPressed ? 4 : 8, x: 0, y: configuration.isPressed ? 2 : 4)
+            .shadow(
+                color: shadowColor,
+                radius: configuration.isPressed ? 4 : 8,
+                x: 0,
+                y: configuration.isPressed ? 2 : 4
+            )
             .foregroundColor(foregroundColor)
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
@@ -39,7 +48,7 @@ struct GlassButtonStyle: ButtonStyle {
 struct GlassIconButtonStyle: ButtonStyle {
     var size: CGFloat = 44
     var color: Color = .primary
-    
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .frame(width: size, height: size)
@@ -52,15 +61,24 @@ struct GlassIconButtonStyle: ButtonStyle {
                     .fill(
                         LinearGradient(
                             colors: [
-                                .white.opacity(configuration.isPressed ? 0.15 : 0.25),
-                                .white.opacity(configuration.isPressed ? 0.03 : 0.08)
+                                .white.opacity(
+                                    configuration.isPressed ? 0.15 : 0.25
+                                ),
+                                .white.opacity(
+                                    configuration.isPressed ? 0.03 : 0.08
+                                ),
                             ],
                             startPoint: .top,
                             endPoint: .bottom
                         )
                     )
             }
-            .shadow(color: .black.opacity(configuration.isPressed ? 0.1 : 0.2), radius: configuration.isPressed ? 4 : 8, x: 0, y: configuration.isPressed ? 2 : 4)
+            .shadow(
+                color: .black.opacity(configuration.isPressed ? 0.1 : 0.2),
+                radius: configuration.isPressed ? 4 : 8,
+                x: 0,
+                y: configuration.isPressed ? 2 : 4
+            )
             .foregroundColor(color)
             .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
             .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
@@ -90,13 +108,14 @@ struct ChatView: View {
     @State private var showSettings = false
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
-    
+    @State private var keyboardHeight: CGFloat = 0
+
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
-    
+
     var body: some View {
-        ExpandSideView() {
+        ExpandSideView {
             // 侧边栏（从左侧滑出，非全屏）
             SidebarView(
                 colors: colors,
@@ -133,19 +152,24 @@ struct ChatView: View {
         }
         .onAppear {
             viewModel.appState = appState
+            setupKeyboardObservers()
+        }
+        .onDisappear {
+            removeKeyboardObservers()
         }
     }
-    
+
     // 主聊天内容
     var chatContent: some View {
         NavigationStack {
-            ZStack {
+            ZStack(alignment: .bottom) {
                 colors.background.ignoresSafeArea()
-                
+
+                // 聊天内容区域
                 VStack(spacing: 0) {
                     // 顶部栏
                     topBar
-                    
+
                     if let book = appState.selectedBook {
                         BookContextBar(book: book, colors: colors) {
                             withAnimation {
@@ -153,61 +177,92 @@ struct ChatView: View {
                             }
                         }
                     }
-                    
+
                     // 空状态引导（没有选择书籍时显示）
-                    if appState.selectedBook == nil && appState.books.isEmpty {
-                        EmptyStateView(colors: colors, onAddBook: {
-                            showBookPicker = true
-                        })
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    if appState.selectedBook == nil
+                        && appState.books.isEmpty
+                    {
+                        EmptyStateView(
+                            colors: colors,
+                            onAddBook: {
+                                showBookPicker = true
+                            }
+                        )
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity
+                        )
                     } else if appState.selectedBook == nil {
-                        EmptyChatStateView(colors: colors, onAddBook: {
-                            showBookPicker = true
-                        })
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        EmptyChatStateView(
+                            colors: colors,
+                            onAddBook: {
+                                showBookPicker = true
+                            }
+                        )
+                        .frame(
+                            maxWidth: .infinity,
+                            maxHeight: .infinity
+                        )
                     } else {
                         // 对话列表
                         ScrollViewReader { proxy in
                             ScrollView {
                                 LazyVStack(spacing: 12) {
-                                    ForEach(viewModel.messages) { message in
-                                        MessageBubble(message: message, colors: colors)
-                                            .id(message.id)
+                                    ForEach(viewModel.messages) {
+                                        message in
+                                        MessageBubble(
+                                            message: message,
+                                            colors: colors
+                                        )
+                                        .id(message.id)
                                     }
                                 }
                                 .padding()
                             }
-                            .onChange(of: viewModel.messages.count) { _, _ in
-                                if let lastMessage = viewModel.messages.last {
+                            .onChange(of: viewModel.messages.count) {
+                                _,
+                                _ in
+                                if let lastMessage = viewModel.messages
+                                    .last
+                                {
                                     withAnimation {
-                                        proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                                        proxy.scrollTo(
+                                            lastMessage.id,
+                                            anchor: .bottom
+                                        )
                                     }
                                 }
                             }
                         }
                     }
-                    
-                    // 底部输入栏
-                    InputBar(
-                        text: $inputText,
-                        isConversationMode: $isConversationMode,
-                        isFocused: $isInputFocused,
-                        isLoading: viewModel.isLoading,
-                        speechService: appState.speechService,
-                        selectedBook: appState.selectedBook,
-                        colors: colors,
-                        onSend: sendMessage,
-                        onVoice: toggleVoiceInput,
-                        onConversation: toggleConversationMode,
-                        onSelectBook: { showBookPicker = true },
-                        onClearHistory: { viewModel.clearMessages() }
-                    )
+
+                    // 预留InputBar的空间
+                    Spacer()
+                        .frame(height: keyboardHeight > 0 ? 80 : 0) // 根据键盘高度调整预留空间
                 }
+
+                // InputBar - 根据键盘高度调整位置
+                InputBar(
+                    text: $inputText,
+                    isConversationMode: $isConversationMode,
+                    isFocused: $isInputFocused,
+                    isLoading: viewModel.isLoading,
+                    speechService: appState.speechService,
+                    selectedBook: appState.selectedBook,
+                    colors: colors,
+                    onSend: sendMessage,
+                    onVoice: toggleVoiceInput,
+                    onConversation: toggleConversationMode,
+                    onSelectBook: { showBookPicker = true },
+                    onClearHistory: { viewModel.clearMessages() }
+                )
+                .offset(y: -keyboardHeight)
+                .ignoresSafeArea(.keyboard)
             }
             .navigationBarHidden(true)
         }
     }
-    
+
     // 顶部栏
     var topBar: some View {
         HStack(spacing: 12) {
@@ -217,47 +272,48 @@ struct ChatView: View {
                     .font(.title2)
                     .foregroundColor(colors.primaryText)
             }.glassEffect()
-        
-            
+
             Spacer()
-            
+
             // 标题
             Text(L("chat.title"))
                 .font(.headline)
                 .foregroundColor(colors.primaryText)
-            
+
             Spacer()
-            
+
             // 右侧设置按钮
             Button(action: { showSettings = true }) {
                 Image(systemName: "gearshape")
                     .font(.title2)
                     .foregroundColor(colors.primaryText)
-            }
-            .buttonStyle(.glassIcon)
+            }.glassEffect()
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
         .background(colors.navigationBar)
     }
-    
+
     func sendMessage() {
-        guard !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-        
+        guard !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return }
+
         let text = inputText
         inputText = ""
         isInputFocused = false
-        
+
         Task {
             await viewModel.sendMessage(text)
-            
-            if isConversationMode, let lastMessage = viewModel.messages.last, lastMessage.role == .assistant {
+
+            if isConversationMode, let lastMessage = viewModel.messages.last,
+                lastMessage.role == .assistant
+            {
                 await appState.ttsService.speak(lastMessage.content)
                 startVoiceInput()
             }
         }
     }
-    
+
     func toggleVoiceInput() {
         if appState.speechService.isRecording {
             appState.speechService.stopRecording()
@@ -265,7 +321,7 @@ struct ChatView: View {
             startVoiceInput()
         }
     }
-    
+
     func startVoiceInput() {
         appState.speechService.startRecording { result in
             inputText = result
@@ -276,7 +332,7 @@ struct ChatView: View {
             }
         }
     }
-    
+
     func toggleConversationMode() {
         isConversationMode.toggle()
         if isConversationMode {
@@ -286,6 +342,52 @@ struct ChatView: View {
             appState.ttsService.stop()
         }
     }
+
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main
+        ) {  notification in
+
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                // 获取键盘在屏幕坐标系中的高度
+                let window = UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .first?.windows
+                    .first
+
+                if let window = window {
+                    let keyboardFrameInWindow = window.convert(keyboardFrame, from: UIScreen.main.coordinateSpace)
+                    let keyboardHeight = window.bounds.height - keyboardFrameInWindow.origin.y
+
+                    // 减去底部安全区域的高度
+                    let bottomSafeArea = window.safeAreaInsets.bottom
+                    let adjustedKeyboardHeight = max(0, keyboardHeight - bottomSafeArea)
+
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        self.keyboardHeight = adjustedKeyboardHeight
+                    }
+                }
+            }
+        }
+
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            withAnimation(.easeOut(duration: 0.25)) {
+                self.keyboardHeight = 0
+            }
+        }
+    }
+
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+
 }
 
 // MARK: - 侧边栏视图
@@ -294,7 +396,7 @@ struct SidebarView: View {
     var onSelectChat: () -> Void
     var onSelectBookshelf: () -> Void
     var onSelectSettings: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // App 标题
@@ -308,10 +410,10 @@ struct SidebarView: View {
                     .foregroundColor(colors.primaryText)
             }
             .padding()
-            
+
             Divider()
                 .background(colors.secondaryText.opacity(0.3))
-            
+
             // 菜单项
             VStack(alignment: .leading, spacing: 4) {
                 // 当前对话
@@ -322,7 +424,7 @@ struct SidebarView: View {
                     isSelected: true,
                     action: onSelectChat
                 )
-                
+
                 // 书架
                 SidebarItem(
                     icon: "books.vertical",
@@ -331,7 +433,7 @@ struct SidebarView: View {
                     isSelected: false,
                     action: onSelectBookshelf
                 )
-                
+
                 // 设置
                 SidebarItem(
                     icon: "gearshape",
@@ -342,14 +444,14 @@ struct SidebarView: View {
                 )
             }
             .padding(.vertical)
-            
+
             Spacer()
-            
+
             // 底部用户信息
             VStack(alignment: .leading, spacing: 8) {
                 Divider()
                     .background(colors.secondaryText.opacity(0.3))
-                
+
                 HStack(spacing: 12) {
                     Circle()
                         .fill(colors.secondaryText.opacity(0.3))
@@ -358,7 +460,7 @@ struct SidebarView: View {
                             Image(systemName: "person.fill")
                                 .foregroundColor(colors.primaryText)
                         }
-                    
+
                     VStack(alignment: .leading) {
                         Text("User")
                             .font(.subheadline)
@@ -384,7 +486,7 @@ struct SidebarItem: View {
     var colors: ThemeColors
     var isSelected: Bool = false
     var action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
@@ -392,23 +494,21 @@ struct SidebarItem: View {
                     .font(.title3)
                     .foregroundColor(isSelected ? .white : colors.primaryText)
                     .frame(width: 28)
-                
+
                 Text(title)
                     .font(.body)
                     .fontWeight(isSelected ? .semibold : .regular)
                     .foregroundColor(isSelected ? .white : colors.primaryText)
-                
+
                 Spacer()
             }
             .padding(.horizontal)
             .padding(.vertical, 12)
             .background {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.green.opacity(0.6) : Color.white.opacity(0.2))
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(.white.opacity(isSelected ? 0 : 0.2), lineWidth: 0.5)
+                    .fill(
+                        isSelected ? Color.apprBlack.opacity(0.1) : Color.white.opacity(0.001)
+                    )
             }
         }
         .buttonStyle(.plain)
@@ -420,19 +520,19 @@ struct BookContextBar: View {
     let book: Book
     var colors: ThemeColors = .dark
     var onClear: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: "book.fill")
                 .foregroundColor(.green)
-            
+
             Text(String(format: L("chat.readingBook"), book.title))
                 .font(.caption)
                 .foregroundColor(colors.primaryText.opacity(0.8))
                 .lineLimit(1)
-            
+
             Spacer()
-            
+
             Button(action: onClear) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.body)
@@ -450,7 +550,7 @@ struct BookContextBar: View {
 struct MessageBubble: View {
     let message: ChatMessage
     var colors: ThemeColors = .dark
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             if message.role == .assistant {
@@ -466,13 +566,13 @@ struct MessageBubble: View {
             } else {
                 Spacer(minLength: 48)
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 // 角色名称
                 Text(message.role == .user ? L("common.tips") : "AI")
                     .font(.caption)
                     .foregroundColor(colors.secondaryText)
-                
+
                 Text(message.content)
                     .padding(12)
                     .background {
@@ -485,12 +585,12 @@ struct MessageBubble: View {
                         }
                     }
                     .foregroundColor(colors.primaryText)
-                
+
                 Text(message.timestamp, style: .time)
                     .font(.caption2)
                     .foregroundColor(colors.secondaryText.opacity(0.6))
             }
-            
+
             if message.role == .user {
                 Spacer(minLength: 48)
             }
@@ -512,7 +612,7 @@ struct InputBar: View {
     let onConversation: () -> Void
     let onSelectBook: () -> Void
     let onClearHistory: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // 左侧：书籍选择器
@@ -528,10 +628,12 @@ struct InputBar: View {
                     Image(systemName: "chevron.down")
                         .font(.caption)
                 }
-                .foregroundColor(selectedBook != nil ? .green : colors.secondaryText)
+                .foregroundColor(
+                    selectedBook != nil ? .green : colors.secondaryText
+                )
             }
             .buttonStyle(.glassIcon)
-            
+
             // 中间：输入框
             TextField(L("chat.placeholder"), text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
@@ -543,18 +645,23 @@ struct InputBar: View {
                 .foregroundColor(colors.primaryText)
                 .focused(isFocused)
                 .lineLimit(1...5)
-            
+
             // 右侧：功能按钮
             HStack(spacing: 8) {
                 // 语音输入
                 Button(action: onVoice) {
-                    Image(systemName: speechService.isRecording ? "stop.circle.fill" : "mic.circle")
-                        .font(.title2)
-                        .foregroundColor(speechService.isRecording ? .red : colors.secondaryText)
-                        .symbolEffect(.bounce, value: speechService.isRecording)
+                    Image(
+                        systemName: speechService.isRecording
+                            ? "stop.circle.fill" : "mic.circle"
+                    )
+                    .font(.title2)
+                    .foregroundColor(
+                        speechService.isRecording ? .red : colors.secondaryText
+                    )
+                    .symbolEffect(.bounce, value: speechService.isRecording)
                 }
                 .buttonStyle(.glassIcon)
-                
+
                 // 发送按钮
                 Button(action: onSend) {
                     if isLoading {
@@ -563,7 +670,9 @@ struct InputBar: View {
                     } else {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.title2)
-                            .foregroundColor(text.isEmpty ? colors.secondaryText : .green)
+                            .foregroundColor(
+                                text.isEmpty ? colors.secondaryText : .green
+                            )
                     }
                 }
                 .buttonStyle(.glassIcon)
@@ -581,36 +690,42 @@ struct InputBar: View {
 class ChatViewModel {
     var messages: [ChatMessage] = []
     var isLoading = false
-    
+
     var appState: AppState?
-    
+
     @MainActor
     func sendMessage(_ text: String) async {
         guard let appState = appState else { return }
-        
+
         let userMessage = ChatMessage(role: .user, content: text)
         messages.append(userMessage)
-        
+
         isLoading = true
-        
+
         do {
             let response = try await appState.chatService.sendMessage(
                 text,
                 bookId: appState.selectedBook?.id,
                 history: messages
             )
-            
-            let assistantMessage = ChatMessage(role: .assistant, content: response)
+
+            let assistantMessage = ChatMessage(
+                role: .assistant,
+                content: response
+            )
             messages.append(assistantMessage)
-            
+
         } catch {
-            let errorMessage = ChatMessage(role: .assistant, content: L("chat.error.api"))
+            let errorMessage = ChatMessage(
+                role: .assistant,
+                content: L("chat.error.api")
+            )
             messages.append(errorMessage)
         }
-        
+
         isLoading = false
     }
-    
+
     func clearMessages() {
         messages.removeAll()
     }
@@ -620,30 +735,33 @@ class ChatViewModel {
 struct EmptyStateView: View {
     var colors: ThemeColors = .dark
     var onAddBook: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "books.vertical")
                 .font(.system(size: 64))
                 .foregroundColor(colors.secondaryText.opacity(0.6))
-            
+
             Text(L("chat.emptyState.title"))
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(colors.primaryText)
-            
+
             Text(L("chat.emptyState.desc"))
                 .font(.body)
                 .foregroundColor(colors.secondaryText)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, 32)
-            
+
             Button(action: onAddBook) {
-                Label(L("chat.emptyState.addBook"), systemImage: "plus.circle.fill")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
+                Label(
+                    L("chat.emptyState.addBook"),
+                    systemImage: "plus.circle.fill"
+                )
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
             }
             .buttonStyle(.glass)
             .padding(.top, 8)
@@ -656,18 +774,18 @@ struct EmptyStateView: View {
 struct EmptyChatStateView: View {
     var colors: ThemeColors = .dark
     var onAddBook: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "bubble.left.and.bubble.right")
                 .font(.system(size: 64))
                 .foregroundColor(colors.secondaryText.opacity(0.6))
-            
+
             Text(L("chat.emptyState.noBookTitle"))
                 .font(.title2)
                 .fontWeight(.semibold)
                 .foregroundColor(colors.primaryText)
-            
+
             Text(L("chat.emptyState.noBookDesc"))
                 .font(.body)
                 .foregroundColor(colors.secondaryText)
@@ -678,8 +796,10 @@ struct EmptyChatStateView: View {
     }
 }
 
+
 #Preview {
     ChatView()
         .environment(AppState())
         .environment(ThemeManager.shared)
 }
+
