@@ -52,12 +52,12 @@ struct ChatView: View {
             }
         }
         .sheet(isPresented: $showSettings) {
-            SettingsView(dismiss: { showSettings = false })
+            SettingsView()
                 .environment(appState)
                 .environment(themeManager)
         }
         .sheet(isPresented: $showBookshelf) {
-            BookshelfView(dismiss: { showBookshelf = false })
+            BookshelfView()
                 .environment(appState)
                 .environment(themeManager)
         }

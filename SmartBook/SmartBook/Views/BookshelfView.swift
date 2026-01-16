@@ -9,7 +9,7 @@ struct BookshelfView: View {
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
-    var dismiss: (() -> Void)?
+    @Environment(\.dismiss) var dismiss
     @State private var books: [Book] = []
     @State private var isLoading = false
     @State private var showingImporter = false
@@ -28,96 +28,14 @@ struct BookshelfView: View {
             ZStack {
                 colors.background.ignoresSafeArea()
                 
-                if isLoading {
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .tint(colors.primaryText)
-                        Text(L("common.loading"))
-                            .foregroundColor(colors.secondaryText)
-                    }
-                } else if books.isEmpty {
-                    VStack(spacing: 20) {
-                        Image(systemName: "books.vertical")
-                            .font(.system(size: 60))
-                            .foregroundColor(colors.secondaryText)
-                        Text(L("library.empty"))
-                            .font(.headline)
-                            .foregroundColor(colors.secondaryText)
-                        Text(L("library.empty.tip"))
-                            .font(.caption)
-                            .foregroundColor(colors.secondaryText.opacity(0.7))
-                        
-                        Button {
-                            showingImporter = true
-                        } label: {
-                            Label(L("library.import"), systemImage: "plus.circle.fill")
-                                .font(.headline)
-                                .padding(.horizontal, 24)
-                                .padding(.vertical, 12)
-                                .background(Color.green.opacity(0.8))
-                                .foregroundColor(.white)
-                                .cornerRadius(25)
-                        }
-                    }
-                } else {
-                    ScrollView {
-                        HStack {
-                            Text(String(format: L("library.bookCount"), books.count))
-                                .font(.subheadline)
-                                .foregroundColor(colors.secondaryText)
-                            Spacer()
-                        }
-                        .padding(.horizontal)
-                        .padding(.top, 8)
-                        
-                        LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 24) {
-                            ForEach(books) { book in
-                                BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book), colors: colors)
-                                    .onTapGesture {
-                                        if book.filePath != nil {
-                                            selectedBookForReading = book
-                                        } else {
-                                            appState.selectedBook = book
-                                        }
-                                    }
-                                    .contextMenu {
-                                        if book.filePath != nil {
-                                            Button {
-                                                selectedBookForReading = book
-                                            } label: {
-                                                Label(L("reader.title"), systemImage: "book")
-                                            }
-                                        }
-                                        
-                                        Button {
-                                            appState.selectedBook = book
-                                        } label: {
-                                            Label(L("chat.title"), systemImage: "bubble.left.and.bubble.right")
-                                        }
-                                        
-                                        if appState.bookService.isUserImportedBook(book) {
-                                            Button(role: .destructive) {
-                                                bookToDelete = book
-                                                showingDeleteAlert = true
-                                            } label: {
-                                                Label(L("common.delete"), systemImage: "trash")
-                                            }
-                                        }
-                                    }
-                            }
-                        }
-                        .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 24)
-                        .padding(.vertical)
-                    }
-                }
+                contentView
             }
             .navigationTitle(L("library.title"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
-                        dismiss?()
+                        dismiss()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(colors.primaryText)
@@ -165,6 +83,114 @@ struct BookshelfView: View {
             }
             .fullScreenCover(item: $selectedBookForReading) { book in
                 ReaderView(book: book)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var contentView: some View {
+        if isLoading {
+            loadingView
+        } else if books.isEmpty {
+            emptyView
+        } else {
+            bookGridView
+        }
+    }
+    
+    private var loadingView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.5)
+                .tint(colors.primaryText)
+            Text(L("common.loading"))
+                .foregroundColor(colors.secondaryText)
+        }
+    }
+    
+    private var emptyView: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "books.vertical")
+                .font(.system(size: 60))
+                .foregroundColor(colors.secondaryText)
+            Text(L("library.empty"))
+                .font(.headline)
+                .foregroundColor(colors.secondaryText)
+            Text(L("library.empty.tip"))
+                .font(.caption)
+                .foregroundColor(colors.secondaryText.opacity(0.7))
+            
+            Button {
+                showingImporter = true
+            } label: {
+                Label(L("library.import"), systemImage: "plus.circle.fill")
+                    .font(.headline)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 12)
+                    .background(Color.green.opacity(0.8))
+                    .foregroundColor(.white)
+                    .cornerRadius(25)
+            }
+        }
+    }
+    
+    private var bookGridView: some View {
+        ScrollView {
+            HStack {
+                Text(String(format: L("library.bookCount"), books.count))
+                    .font(.subheadline)
+                    .foregroundColor(colors.secondaryText)
+                Spacer()
+            }
+            .padding(.horizontal)
+            .padding(.top, 8)
+            
+            LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 24) {
+                ForEach(books) { book in
+                    BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book), colors: colors)
+                        .onTapGesture {
+                            handleBookTap(book)
+                        }
+                        .contextMenu {
+                            contextMenuItems(for: book)
+                        }
+                }
+            }
+            .padding(.horizontal, horizontalSizeClass == .regular ? 28 : 24)
+            .padding(.vertical)
+        }
+    }
+    
+    private func handleBookTap(_ book: Book) {
+        if book.filePath != nil {
+            selectedBookForReading = book
+        } else {
+            appState.selectedBook = book
+        }
+    }
+    
+    @ViewBuilder
+    private func contextMenuItems(for book: Book) -> some View {
+        if book.filePath != nil {
+            Button {
+                selectedBookForReading = book
+            } label: {
+                Label(L("reader.title"), systemImage: "book")
+            }
+        }
+        
+        Button {
+            appState.selectedBook = book
+        } label: {
+            Label(L("chat.title"), systemImage: "bubble.left.and.bubble.right")
+        }
+        
+        if appState.bookService.isUserImportedBook(book) {
+            Button(role: .destructive) {
+                bookToDelete = book
+                showingDeleteAlert = true
+            } label: {
+                Label(L("common.delete"), systemImage: "trash")
             }
         }
     }
@@ -320,7 +346,7 @@ struct BookCard: View {
 }
 
 #Preview {
-    BookshelfView(dismiss: {})
+    BookshelfView()
         .environment(AppState())
         .environment(ThemeManager.shared)
 }

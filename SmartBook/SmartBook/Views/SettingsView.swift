@@ -7,7 +7,7 @@ struct SettingsView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
-    var dismiss: (() -> Void)?
+    @Environment(\.dismiss) var dismiss
     @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:8080"
     @AppStorage("autoTTS") private var autoTTS = true
     @AppStorage("ttsRate") private var ttsRate = 1.0
@@ -149,7 +149,7 @@ struct SettingsView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
-                        dismiss?()
+                        dismiss()
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(colors.primaryText)
