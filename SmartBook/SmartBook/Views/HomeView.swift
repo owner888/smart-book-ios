@@ -251,7 +251,7 @@ struct ContinueReadingCard: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            bookCover
+            BookCoverView(book: book, colors: colors)
                 .frame(width: 60, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             
@@ -286,25 +286,6 @@ struct ContinueReadingCard: View {
         .background(colors.cardBackground)
         .cornerRadius(12)
         .frame(width: 240)
-    }
-    
-    @ViewBuilder
-    var bookCover: some View {
-        if let coverURLString = book.coverURL,
-           let coverURL = URL(string: coverURLString),
-           coverURL.isFileURL,
-           let uiImage = UIImage(contentsOfFile: coverURL.path) {
-            Image(uiImage: uiImage)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-        } else {
-            Rectangle()
-                .fill(colors.inputBackground)
-                .overlay {
-                    Image(systemName: "book.closed")
-                        .foregroundColor(colors.secondaryText)
-                }
-        }
     }
 }
 
@@ -347,7 +328,7 @@ struct FavoriteBookCard: View {
     
     var body: some View {
         VStack(spacing: 6) {
-            bookCover
+            BookCoverView(book: book, colors: colors)
                 .frame(height: 100)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             
@@ -356,25 +337,6 @@ struct FavoriteBookCard: View {
                 .foregroundColor(colors.primaryText)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
-        }
-    }
-    
-    @ViewBuilder
-    var bookCover: some View {
-        if let coverURLString = book.coverURL,
-           let coverURL = URL(string: coverURLString),
-           coverURL.isFileURL,
-           let uiImage = UIImage(contentsOfFile: coverURL.path) {
-            Image(uiImage: uiImage)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-        } else {
-            Rectangle()
-                .fill(colors.inputBackground)
-                .overlay {
-                    Image(systemName: "book.closed.fill")
-                        .foregroundColor(colors.secondaryText)
-                }
         }
     }
 }

@@ -262,7 +262,7 @@ struct BookCard: View {
                 let height = width / coverAspectRatio
                 
                 ZStack(alignment: .topTrailing) {
-                    coverImage
+                    BookCoverView(book: book, colors: colors)
                         .frame(width: width, height: height)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
@@ -292,56 +292,6 @@ struct BookCard: View {
                 .foregroundColor(colors.secondaryText)
                 .lineLimit(1)
         }
-    }
-    
-    @ViewBuilder
-    var coverImage: some View {
-        if let coverURLString = book.coverURL,
-           let coverURL = URL(string: coverURLString) {
-            if coverURL.isFileURL {
-                if let uiImage = UIImage(contentsOfFile: coverURL.path) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } else {
-                    placeholderCover
-                }
-            } else {
-                AsyncImage(url: coverURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    placeholderCover
-                }
-            }
-        } else {
-            placeholderCover
-        }
-    }
-    
-    var placeholderCover: some View {
-        Rectangle()
-            .fill(
-                LinearGradient(
-                    colors: [colors.inputBackground, colors.inputBackground.opacity(0.7)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-            .overlay {
-                VStack(spacing: 8) {
-                    Image(systemName: "book.closed.fill")
-                        .font(.system(size: 32))
-                        .foregroundColor(colors.secondaryText.opacity(0.5))
-                    Text(book.title)
-                        .font(.caption2)
-                        .foregroundColor(colors.secondaryText.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                        .lineLimit(3)
-                        .padding(.horizontal, 8)
-                }
-            }
     }
 }
 

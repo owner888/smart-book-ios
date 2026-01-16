@@ -122,3 +122,68 @@ extension View {
             .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
+
+// MARK: - 书籍封面组件
+struct BookCoverView: View {
+    let book: Book
+    var colors: ThemeColors = .dark
+    var showTitle: Bool = false
+    
+    var body: some View {
+        ZStack {
+            coverImage
+        }
+    }
+    
+    @ViewBuilder
+    private var coverImage: some View {
+        if let coverURLString = book.coverURL,
+           let coverURL = URL(string: coverURLString) {
+            if coverURL.isFileURL {
+                if let uiImage = UIImage(contentsOfFile: coverURL.path) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } else {
+                    placeholderCover
+                }
+            } else {
+                AsyncImage(url: coverURL) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    placeholderCover
+                }
+            }
+        } else {
+            placeholderCover
+        }
+    }
+    
+    private var placeholderCover: some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: [colors.inputBackground, colors.inputBackground.opacity(0.7)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .overlay {
+                VStack(spacing: 8) {
+                    Image(systemName: "book.closed.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(colors.secondaryText.opacity(0.5))
+                    if showTitle {
+                        Text(book.title)
+                            .font(.caption2)
+                            .foregroundColor(colors.secondaryText.opacity(0.7))
+                            .multilineTextAlignment(.center)
+                            .lineLimit(3)
+                            .padding(.horizontal, 8)
+                    }
+                }
+            }
+    }
+}
