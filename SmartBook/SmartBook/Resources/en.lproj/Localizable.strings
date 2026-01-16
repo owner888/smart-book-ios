@@ -230,3 +230,7 @@
 "error.permissionDenied" = "Permission denied";
 "error.storageFull" = "Storage is full";
 "error.loading" = "Failed to load";
+
+/* Navigation */
+"nav.library" = "Library";
+"nav.recent" = "Recent";

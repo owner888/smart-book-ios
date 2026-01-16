@@ -106,6 +106,7 @@ struct ChatView: View {
     @State private var isConversationMode = false
     @State private var showBookPicker = false
     @State private var showSettings = false
+    @State private var showBookshelf = false
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
     @State private var keyboardHeight: CGFloat = 0
@@ -123,7 +124,7 @@ struct ChatView: View {
                     sideObser.jumpToPage(1)
                 },
                 onSelectBookshelf: {
-                    showBookPicker = true
+                    showBookshelf = true
                     sideObser.jumpToPage(1)
                 },
                 onSelectSettings: {
@@ -147,6 +148,11 @@ struct ChatView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
+                .environment(appState)
+                .environment(themeManager)
+        }
+        .sheet(isPresented: $showBookshelf) {
+            BookshelfView()
                 .environment(appState)
                 .environment(themeManager)
         }
@@ -802,4 +808,3 @@ struct EmptyChatStateView: View {
         .environment(AppState())
         .environment(ThemeManager.shared)
 }
-

@@ -230,3 +230,7 @@
 "error.permissionDenied" = "权限被拒绝";
 "error.storageFull" = "存储空间不足";
 "error.loading" = "加载失败";
+
+/* Navigation */
+"nav.library" = "资料库";
+"nav.recent" = "最近";
