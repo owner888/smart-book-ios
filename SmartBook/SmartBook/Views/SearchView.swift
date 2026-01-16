@@ -229,7 +229,7 @@ struct SearchResultRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            bookCover
+            BookCoverView(book: book, colors: colors)
                 .frame(width: 50, height: 70)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             
@@ -253,25 +253,6 @@ struct SearchResultRow: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-    }
-    
-    @ViewBuilder
-    var bookCover: some View {
-        if let coverURLString = book.coverURL,
-           let coverURL = URL(string: coverURLString),
-           coverURL.isFileURL,
-           let uiImage = UIImage(contentsOfFile: coverURL.path) {
-            Image(uiImage: uiImage)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-        } else {
-            Rectangle()
-                .fill(colors.inputBackground)
-                .overlay {
-                    Image(systemName: "book.closed")
-                        .foregroundColor(colors.secondaryText)
-                }
-        }
     }
     
     @ViewBuilder

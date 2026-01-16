@@ -103,7 +103,7 @@ struct BookPickerRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            bookCover
+            BookCoverView(book: book, colors: colors)
                 .frame(width: 50, height: 70)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             
@@ -127,41 +127,6 @@ struct BookPickerRow: View {
             }
         }
         .padding(.vertical, 4)
-    }
-    
-    @ViewBuilder
-    var bookCover: some View {
-        if let coverURLString = book.coverURL,
-           let coverURL = URL(string: coverURLString) {
-            if coverURL.isFileURL {
-                if let uiImage = UIImage(contentsOfFile: coverURL.path) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } else {
-                    placeholderCover
-                }
-            } else {
-                AsyncImage(url: coverURL) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    placeholderCover
-                }
-            }
-        } else {
-            placeholderCover
-        }
-    }
-    
-    var placeholderCover: some View {
-        Rectangle()
-            .fill(colors.inputBackground)
-            .overlay {
-                Image(systemName: "book.closed")
-                    .foregroundColor(colors.secondaryText)
-            }
     }
 }
 
