@@ -7,6 +7,7 @@ struct SettingsView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
+    var dismiss: (() -> Void)?
     @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:8080"
     @AppStorage("autoTTS") private var autoTTS = true
     @AppStorage("ttsRate") private var ttsRate = 1.0
@@ -145,6 +146,16 @@ struct SettingsView: View {
             .background(colors.background.ignoresSafeArea())
             .navigationTitle(L("settings.title"))
             .navigationBarTitleDisplayMode(.large)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss?()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(colors.primaryText)
+                    }
+                }
+            }
             .sheet(isPresented: $showServerEditor) {
                 ServerEditorView(url: $editingURL, colors: colors) { newURL in
                     apiBaseURL = newURL

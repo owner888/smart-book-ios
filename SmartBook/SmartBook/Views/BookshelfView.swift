@@ -9,6 +9,7 @@ struct BookshelfView: View {
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    var dismiss: (() -> Void)?
     @State private var books: [Book] = []
     @State private var isLoading = false
     @State private var showingImporter = false
@@ -114,6 +115,15 @@ struct BookshelfView: View {
             .navigationTitle(L("library.title"))
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss?()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(colors.primaryText)
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showingImporter = true
@@ -310,7 +320,7 @@ struct BookCard: View {
 }
 
 #Preview {
-    BookshelfView()
+    BookshelfView(dismiss: {})
         .environment(AppState())
         .environment(ThemeManager.shared)
 }
