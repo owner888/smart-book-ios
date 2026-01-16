@@ -31,7 +31,7 @@ struct BookshelfView: View {
                 contentView
             }
             .navigationTitle(L("library.title"))
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {

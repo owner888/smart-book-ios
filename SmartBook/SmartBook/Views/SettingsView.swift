@@ -145,7 +145,7 @@ struct SettingsView: View {
             .scrollContentBackground(.hidden)
             .background(colors.background.ignoresSafeArea())
             .navigationTitle(L("settings.title"))
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button {
