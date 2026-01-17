@@ -12,9 +12,10 @@ struct ChatView: View {
     @State private var showBookPicker = false
     @State private var showSettings = false
     @State private var showBookshelf = false
+    
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
-    @State private var keyboardHeight: CGFloat = 0
+ 
 
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -60,119 +61,116 @@ struct ChatView: View {
             BookshelfView()
                 .environment(appState)
                 .environment(themeManager)
-        }
-        .onAppear {
+        }.onAppear {
             viewModel.appState = appState
-            setupKeyboardObservers()
-        }
-        .onDisappear {
-            removeKeyboardObservers()
         }
     }
 
     // 主聊天内容
     var chatContent: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
-                colors.background.ignoresSafeArea()
+            GeometryReader { proxy in
+                ZStack() {
+                    colors.background.ignoresSafeArea()
+                    InputToolBarView(inputText: $inputText) {
+                        // 聊天内容区域
+                        VStack(spacing: 0) {
+                            // 顶部栏
+                            topBar
 
-                // 聊天内容区域
-                VStack(spacing: 0) {
-                    // 顶部栏
-                    topBar
-
-                    if let book = appState.selectedBook {
-                        BookContextBar(book: book, colors: colors) {
-                            withAnimation {
-                                appState.selectedBook = nil
-                            }
-                        }
-                    }
-
-                    // 空状态引导（没有选择书籍时显示）
-                    if appState.selectedBook == nil
-                        && appState.books.isEmpty
-                    {
-                        EmptyStateView(
-                            colors: colors,
-                            onAddBook: {
-                                showBookPicker = true
-                            }
-                        )
-                        .frame(
-                            maxWidth: .infinity,
-                            maxHeight: .infinity
-                        )
-                    } else if appState.selectedBook == nil {
-                        EmptyChatStateView(
-                            colors: colors,
-                            onAddBook: {
-                                showBookPicker = true
-                            }
-                        )
-                        .frame(
-                            maxWidth: .infinity,
-                            maxHeight: .infinity
-                        )
-                    } else {
-                        // 对话列表
-                        ScrollViewReader { proxy in
-                            ScrollView {
-                                LazyVStack(spacing: 12) {
-                                    ForEach(viewModel.messages) {
-                                        message in
-                                        MessageBubble(
-                                            message: message,
-                                            colors: colors
-                                        )
-                                        .id(message.id)
-                                    }
-                                }
-                                .padding()
-                            }
-                            .onChange(of: viewModel.messages.count) {
-                                _,
-                                _ in
-                                if let lastMessage = viewModel.messages
-                                    .last
-                                {
+                            if let book = appState.selectedBook {
+                                BookContextBar(book: book, colors: colors) {
                                     withAnimation {
-                                        proxy.scrollTo(
-                                            lastMessage.id,
-                                            anchor: .bottom
-                                        )
+                                        appState.selectedBook = nil
+                                    }
+                                }
+                            }
+
+                            // 空状态引导（没有选择书籍时显示）
+                            if appState.selectedBook == nil
+                                && appState.books.isEmpty
+                            {
+                                EmptyStateView(
+                                    colors: colors,
+                                    onAddBook: {
+                                        showBookPicker = true
+                                    }
+                                )
+                                .frame(
+                                    maxWidth: .infinity,
+                                    maxHeight: .infinity
+                                )
+                            } else if appState.selectedBook == nil {
+                                EmptyChatStateView(
+                                    colors: colors,
+                                    onAddBook: {
+                                        showBookPicker = true
+                                    }
+                                )
+                                .frame(
+                                    maxWidth: .infinity,
+                                    maxHeight: .infinity
+                                )
+                            } else {
+                                // 对话列表
+                                ScrollViewReader { proxy in
+                                    ScrollView {
+                                        LazyVStack(spacing: 12) {
+                                            ForEach(viewModel.messages) {
+                                                message in
+                                                MessageBubble(
+                                                    message: message,
+                                                    colors: colors
+                                                )
+                                                .id(message.id)
+                                            }
+                                        }
+                                        .padding()
+                                    }
+                                    .onChange(of: viewModel.messages.count) {
+                                        _,
+                                        _ in
+                                        if let lastMessage = viewModel.messages
+                                            .last
+                                        {
+                                            withAnimation {
+                                                proxy.scrollTo(
+                                                    lastMessage.id,
+                                                    anchor: .bottom
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
 
-                    // 预留InputBar的空间
-                    Spacer()
-                        .frame(height: keyboardHeight > 0 ? 80 : 0) // 根据键盘高度调整预留空间
+                    // InputBar - 根据键盘高度调整位置
+                    //                InputBar(
+                    //                    text: $inputText,
+                    //                    isConversationMode: $isConversationMode,
+                    //                    isFocused: $isInputFocused,
+                    //                    isLoading: viewModel.isLoading,
+                    //                    speechService: appState.speechService,
+                    //                    selectedBook: appState.selectedBook,
+                    //                    colors: colors,
+                    //                    onSend: sendMessage,
+                    //                    onVoice: toggleVoiceInput,
+                    //                    onConversation: toggleConversationMode,
+                    //                    onSelectBook: { showBookPicker = true },
+                    //                    onClearHistory: { viewModel.clearMessages() }
+                    //                )
+                    //                .offset(y: -keyboardHeight)
+                    //                .ignoresSafeArea(.keyboard)
+        
                 }
-
-                // InputBar - 根据键盘高度调整位置
-                InputBar(
-                    text: $inputText,
-                    isConversationMode: $isConversationMode,
-                    isFocused: $isInputFocused,
-                    isLoading: viewModel.isLoading,
-                    speechService: appState.speechService,
-                    selectedBook: appState.selectedBook,
-                    colors: colors,
-                    onSend: sendMessage,
-                    onVoice: toggleVoiceInput,
-                    onConversation: toggleConversationMode,
-                    onSelectBook: { showBookPicker = true },
-                    onClearHistory: { viewModel.clearMessages() }
-                )
-                .offset(y: -keyboardHeight)
-                .ignoresSafeArea(.keyboard)
-            }
-            .navigationBarHidden(true)
+                
+            }.navigationBarHidden(true)
         }
     }
+    
+    
 
     // 顶部栏
     var topBar: some View {
@@ -254,50 +252,6 @@ struct ChatView: View {
         }
     }
 
-    private func setupKeyboardObservers() {
-        NotificationCenter.default.addObserver(
-            forName: UIResponder.keyboardWillShowNotification,
-            object: nil,
-            queue: .main
-        ) {  notification in
-
-            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
-                // 获取键盘在屏幕坐标系中的高度
-                let window = UIApplication.shared.connectedScenes
-                    .compactMap { $0 as? UIWindowScene }
-                    .first?.windows
-                    .first
-
-                if let window = window {
-                    let keyboardFrameInWindow = window.convert(keyboardFrame, from: UIScreen.main.coordinateSpace)
-                    let keyboardHeight = window.bounds.height - keyboardFrameInWindow.origin.y
-
-                    // 减去底部安全区域的高度
-                    let bottomSafeArea = window.safeAreaInsets.bottom
-                    let adjustedKeyboardHeight = max(0, keyboardHeight - bottomSafeArea)
-
-                    withAnimation(.easeOut(duration: 0.25)) {
-                        self.keyboardHeight = adjustedKeyboardHeight
-                    }
-                }
-            }
-        }
-
-        NotificationCenter.default.addObserver(
-            forName: UIResponder.keyboardWillHideNotification,
-            object: nil,
-            queue: .main
-        ) { _ in
-            withAnimation(.easeOut(duration: 0.25)) {
-                self.keyboardHeight = 0
-            }
-        }
-    }
-
-    private func removeKeyboardObservers() {
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
-        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
-    }
 
 }
 
@@ -582,9 +536,20 @@ struct EmptyChatStateView: View {
     }
 }
 
-
 #Preview {
     ChatView()
         .environment(AppState())
         .environment(ThemeManager.shared)
 }
+
+extension CGRect {
+    func edgeInset(_ size: CGSize) -> EdgeInsets {
+        EdgeInsets(
+            top: minY,
+            leading: minX,
+            bottom: size.height - maxY,
+            trailing: size.width - maxX
+        )
+    }
+}
+
