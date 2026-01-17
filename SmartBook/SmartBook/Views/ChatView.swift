@@ -214,6 +214,9 @@ struct ChatView: View {
 
         let text = inputText
         inputText = ""
+        
+        // 立即收起键盘
+        hiddenKeyboard()
         isInputFocused = false
 
         Task {
