@@ -8,9 +8,9 @@ struct SettingsView: View {
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.dismiss) var dismiss
-    @AppStorage("apiBaseURL") private var apiBaseURL = "http://localhost:8080"
-    @AppStorage("autoTTS") private var autoTTS = true
-    @AppStorage("ttsRate") private var ttsRate = 1.0
+    @AppStorage(AppConfig.Keys.apiBaseURL) private var apiBaseURL = AppConfig.initialAPIBaseURL
+    @AppStorage(AppConfig.Keys.autoTTS) private var autoTTS = AppConfig.DefaultValues.autoTTS
+    @AppStorage(AppConfig.Keys.ttsRate) private var ttsRate = AppConfig.DefaultValues.ttsRate
     
     @State private var showServerEditor = false
     @State private var editingURL = ""
@@ -190,7 +190,7 @@ struct ServerEditorView: View {
                             .font(.headline)
                             .foregroundColor(colors.primaryText)
                         
-                        TextField("http://localhost:8080", text: $url)
+                        TextField(L("server.address.placeholder"), text: $url)
                             .textFieldStyle(.plain)
                             .keyboardType(.URL)
                             .autocapitalization(.none)
@@ -283,7 +283,7 @@ struct ServerEditorView: View {
     
     private var quickURLs: [String] {
         [
-            "http://localhost:8080",
+            AppConfig.apiBaseURL,
             "http://127.0.0.1:8080",
             "http://192.168.1.100:8080"
         ]

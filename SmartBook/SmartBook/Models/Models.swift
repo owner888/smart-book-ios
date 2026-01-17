@@ -137,10 +137,10 @@ struct AppSettings: Codable {
     var ttsRate: Double
     
     static let `default` = AppSettings(
-        apiBaseURL: "http://localhost:8080",
+        apiBaseURL: AppConfig.DefaultValues.apiBaseURL,
         selectedModel: "gemini-2.5-flash",
-        autoTTS: true,
+        autoTTS: AppConfig.DefaultValues.autoTTS,
         ttsVoice: nil,
-        ttsRate: 1.0
+        ttsRate: AppConfig.DefaultValues.ttsRate
     )
 }

@@ -33,11 +33,6 @@ class AppState {
     let ttsService = TTSService()
     let checkInService = CheckInService()
     
-    // API 配置 - 从 Info.plist 读取
-    static let apiBaseURL: String = {
-        Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? "http://localhost:8080"
-    }()
-    
     init() {
         Task {
             await loadBooks()

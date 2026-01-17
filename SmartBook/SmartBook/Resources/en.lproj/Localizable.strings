@@ -178,7 +178,7 @@
 /* Server */
 "server.title" = "Server";
 "server.address" = "Server Address";
-"server.address.placeholder" = "http://localhost:8080";
+"server.address.placeholder" = "http://192.168.1.100:8080";
 "server.quickSet" = "Quick Settings";
 "server.edit" = "Edit Server";
 "server.url.invalid" = "Please enter a valid URL";

@@ -178,7 +178,7 @@
 /* Server */
 "server.title" = "伺服器";
 "server.address" = "伺服器位址";
-"server.address.placeholder" = "http://localhost:8080";
+"server.address.placeholder" = "http://192.168.1.100:8080";
 "server.quickSet" = "快速設定";
 "server.edit" = "編輯伺服器";
 "server.url.invalid" = "請輸入有效的 URL 位址";

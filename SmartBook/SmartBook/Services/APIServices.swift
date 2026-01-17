@@ -6,7 +6,7 @@ import Foundation
 class ChatService {
     
     func sendMessage(_ text: String, bookId: String?, history: [ChatMessage]) async throws -> String {
-        let url = URL(string: "\(AppState.apiBaseURL)/api/chat")!
+        let url = URL(string: "\(AppConfig.apiBaseURL)/api/chat")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -256,7 +256,7 @@ class BookService {
     }
     
     func fetchBooksFromAPI() async throws -> [Book] {
-        let url = URL(string: "\(AppState.apiBaseURL)/api/books")!
+        let url = URL(string: "\(AppConfig.apiBaseURL)/api/books")!
         
         let (data, response) = try await URLSession.shared.data(from: url)
         
@@ -275,7 +275,7 @@ class BookService {
     }
     
     func searchBook(_ bookId: String, query: String) async throws -> [SearchResult] {
-        let url = URL(string: "\(AppState.apiBaseURL)/api/books/\(bookId)/search")!
+        let url = URL(string: "\(AppConfig.apiBaseURL)/api/books/\(bookId)/search")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
