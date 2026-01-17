@@ -4,9 +4,12 @@ import Foundation
 
 // MARK: - 流式聊天服务
 @Observable
-class StreamingChatService {
+class StreamingChatService: NSObject {
     var isStreaming = false
     var currentTask: URLSessionDataTask?
+    private var receivedData = Data()
+    private var onEventHandler: SSEEventHandler?
+    private var onCompleteHandler: CompletionHandler?
     
     // SSE 事件处理闭包
     typealias SSEEventHandler = (SSEEvent) -> Void
@@ -23,6 +26,9 @@ class StreamingChatService {
         onComplete: @escaping CompletionHandler
     ) {
         isStreaming = true
+        receivedData = Data()
+        onEventHandler = onEvent
+        onCompleteHandler = onComplete
         
         var url: URL
         var body: [String: Any]
@@ -65,36 +71,10 @@ class StreamingChatService {
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 300 // 5分钟超时
         
-        let session = URLSession.shared
-        let task = session.dataTask(with: request) { [weak self] data, response, error in
-            guard let self = self else { return }
-            
-            DispatchQueue.main.async {
-                self.isStreaming = false
-                self.currentTask = nil
-            }
-            
-            if let error = error {
-                DispatchQueue.main.async {
-                    onComplete(.failure(error))
-                }
-                return
-            }
-            
-            guard let data = data else {
-                DispatchQueue.main.async {
-                    onComplete(.failure(APIError.custom("No data received")))
-                }
-                return
-            }
-            
-            // 解析 SSE 数据
-            self.parseSSEData(data, onEvent: onEvent)
-            
-            DispatchQueue.main.async {
-                onComplete(.success(()))
-            }
-        }
+        // 使用delegate的session来实现真正的流式接收
+        let config = URLSessionConfiguration.default
+        let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        let task = session.dataTask(with: request)
         
         currentTask = task
         task.resume()
@@ -107,7 +87,7 @@ class StreamingChatService {
         isStreaming = false
     }
     
-    // 解析 SSE 数据
+    // 解析 SSE 数据（增量解析）
     private func parseSSEData(_ data: Data, onEvent: @escaping SSEEventHandler) {
         guard let text = String(data: data, encoding: .utf8) else { return }
         
@@ -134,6 +114,37 @@ class StreamingChatService {
                 dataLines = []
             }
         }
+    }
+}
+
+// MARK: - URLSessionDataDelegate
+extension StreamingChatService: URLSessionDataDelegate {
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        // 每次收到数据块就立即处理（实现真正的流式）
+        if let onEvent = onEventHandler {
+            parseSSEData(data, onEvent: onEvent)
+        }
+    }
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            self.isStreaming = false
+            self.currentTask = nil
+            
+            if let error = error {
+                self.onCompleteHandler?(.failure(error))
+            } else {
+                self.onCompleteHandler?(.success(()))
+            }
+            
+            // 清理
+            self.onEventHandler = nil
+            self.onCompleteHandler = nil
+            self.receivedData = Data()
+        }
+        
+        session.finishTasksAndInvalidate()
     }
 }
 
