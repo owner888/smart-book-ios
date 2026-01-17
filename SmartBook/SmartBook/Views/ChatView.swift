@@ -282,11 +282,16 @@ struct BookContextBar: View {
             Spacer()
 
             Button(action: onClear) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.body)
+                Image(systemName: "xmark")
+                    .font(.caption)
+                    .fontWeight(.semibold)
                     .foregroundColor(colors.secondaryText)
+                    .padding(6)
+                    .background(
+                        Circle()
+                            .fill(colors.secondaryText.opacity(0.15))
+                    )
             }
-            .buttonStyle(.glassIcon)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
