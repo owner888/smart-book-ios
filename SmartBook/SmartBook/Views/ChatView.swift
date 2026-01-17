@@ -196,9 +196,9 @@ struct ChatView: View {
 
             Spacer()
 
-            // 右侧设置按钮
-            Button(action: { showSettings = true }) {
-                Image(systemName: "gearshape")
+            // 右侧添加书籍按钮
+            Button(action: { showBookPicker = true }) {
+                Image(systemName: "plus")
                     .font(.title2)
                     .foregroundColor(colors.primaryText)
             }.glassEffect()
