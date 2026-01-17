@@ -9,24 +9,15 @@ enum AppConfig {
     // MARK: - API 配置
     
     /// API 基础 URL
-    /// 优先级：用户设置 > Info.plist (Secrets.xcconfig) > 默认值
+    /// 从 UserDefaults 读取，如果不存在则返回默认配置值
+    /// 优先级：UserDefaults > Info.plist (Secrets.xcconfig) > 硬编码默认值
     static var apiBaseURL: String {
-        // 1. 优先使用用户在设置中配置的 URL
-        if let userURL = UserDefaults.standard.string(forKey: Keys.apiBaseURL), !userURL.isEmpty {
-            return userURL
-        }
-        
-        // 2. 其次使用 Info.plist 中配置的 URL（来自 Secrets.xcconfig）
-        if let configURL = Bundle.main.infoDictionary?["API_BASE_URL"] as? String, !configURL.isEmpty {
-            return configURL
-        }
-        
-        // 3. 最后使用默认值
-        return DefaultValues.apiBaseURL
+        UserDefaults.standard.string(forKey: Keys.apiBaseURL) ?? defaultAPIBaseURL
     }
     
-    /// 获取配置的初始 URL（用于 @AppStorage 初始化）
-    static var initialAPIBaseURL: String {
+    /// 默认 API URL（从 Info.plist 读取或使用硬编码默认值）
+    /// 用于 @AppStorage 的初始值和回退值
+    static var defaultAPIBaseURL: String {
         Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? DefaultValues.apiBaseURL
     }
     

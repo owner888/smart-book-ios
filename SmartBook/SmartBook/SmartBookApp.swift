@@ -8,6 +8,13 @@ struct SmartBookApp: App {
     @State private var appState = AppState()
     @State private var themeManager = ThemeManager.shared
     
+    init() {
+        // 在 Debug 模式下打印配置信息
+        #if DEBUG
+        DebugConfig.printAllConfiguration()
+        #endif
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()

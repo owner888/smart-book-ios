@@ -8,7 +8,7 @@ struct SettingsView: View {
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.dismiss) var dismiss
-    @AppStorage(AppConfig.Keys.apiBaseURL) private var apiBaseURL = AppConfig.initialAPIBaseURL
+    @AppStorage(AppConfig.Keys.apiBaseURL) private var apiBaseURL = AppConfig.defaultAPIBaseURL
     @AppStorage(AppConfig.Keys.autoTTS) private var autoTTS = AppConfig.DefaultValues.autoTTS
     @AppStorage(AppConfig.Keys.ttsRate) private var ttsRate = AppConfig.DefaultValues.ttsRate
     
