@@ -293,28 +293,14 @@ struct MessageBubble: View {
     var colors: ThemeColors = .dark
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            if message.role == .assistant {
-                // AI 头像
-                Circle()
-                    .fill(colors.secondaryText.opacity(0.2))
-                    .frame(width: 36, height: 36)
-                    .overlay {
-                        Image(systemName: "sparkles")
-                            .foregroundColor(.green)
-                            .font(.system(size: 18))
-                    }
-            } else {
-                Spacer(minLength: 48)
+        HStack(alignment: .top, spacing: 0) {
+            if message.role == .user {
+                Spacer()
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                // 角色名称
-                Text(message.role == .user ? L("common.tips") : "AI")
-                    .font(.caption)
-                    .foregroundColor(colors.secondaryText)
-
+            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
                 Text(message.content)
+                    .multilineTextAlignment(message.role == .user ? .trailing : .leading)
                     .padding(12)
                     .background {
                         if message.role == .user {
@@ -331,9 +317,10 @@ struct MessageBubble: View {
                     .font(.caption2)
                     .foregroundColor(colors.secondaryText.opacity(0.6))
             }
+            .frame(maxWidth: .infinity * 0.75, alignment: message.role == .user ? .trailing : .leading)
 
-            if message.role == .user {
-                Spacer(minLength: 48)
+            if message.role == .assistant {
+                Spacer()
             }
         }
     }
