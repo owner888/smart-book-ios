@@ -7,6 +7,8 @@ import SwiftUI
 struct SmartBookApp: App {
     @State private var appState = AppState()
     @State private var themeManager = ThemeManager.shared
+    @State private var assistantService = AssistantService()
+    @State private var modelService = ModelService()
     
     init() {
         // 在 Debug 模式下打印配置信息
@@ -20,6 +22,8 @@ struct SmartBookApp: App {
             ContentView()
                 .environment(appState)
                 .environment(themeManager)
+                .environment(assistantService)
+                .environment(modelService)
                 .preferredColorScheme(themeManager.colorScheme)
         }
     }

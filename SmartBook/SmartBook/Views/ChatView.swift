@@ -72,7 +72,7 @@ struct ChatView: View {
             GeometryReader { proxy in
                 ZStack() {
                     colors.background.ignoresSafeArea()
-                    InputToolBarView(inputText: $inputText) {
+                    InputToolBarView(inputText: $inputText, content: {
                         // 聊天内容区域
                         VStack(spacing: 0) {
                             // 顶部栏
@@ -144,7 +144,7 @@ struct ChatView: View {
                                 }
                             }
                         }
-                    }
+                    }, onSend: sendMessage)
 
                     // InputBar - 根据键盘高度调整位置
                     //                InputBar(
@@ -430,40 +430,89 @@ struct InputBar: View {
 class ChatViewModel {
     var messages: [ChatMessage] = []
     var isLoading = false
-
+    
     var appState: AppState?
+    private let streamingService = StreamingChatService()
+    private var streamingContent = ""
 
     @MainActor
     func sendMessage(_ text: String) async {
-        guard let appState = appState else { return }
+        guard let appState = appState else {
+            Logger.error("❌ ChatViewModel: appState is nil")
+            return
+        }
+
+        Logger.info("📤 ChatViewModel: 开始发送消息")
+        Logger.info("📝 消息内容: \(text)")
+        Logger.info("📚 书籍ID: \(appState.selectedBook?.id ?? "无")")
 
         let userMessage = ChatMessage(role: .user, content: text)
         messages.append(userMessage)
 
         isLoading = true
+        streamingContent = ""
+        
+        // 创建一个临时的助手消息用于流式更新
+        let streamingMessage = ChatMessage(role: .assistant, content: "")
+        messages.append(streamingMessage)
+        let messageIndex = messages.count - 1
 
-        do {
-            let response = try await appState.chatService.sendMessage(
-                text,
-                bookId: appState.selectedBook?.id,
-                history: messages
-            )
-
-            let assistantMessage = ChatMessage(
-                role: .assistant,
-                content: response
-            )
-            messages.append(assistantMessage)
-
-        } catch {
-            let errorMessage = ChatMessage(
-                role: .assistant,
-                content: L("chat.error.api")
-            )
-            messages.append(errorMessage)
+        Logger.info("🚀 ChatViewModel: 调用StreamingChatService")
+        
+        // 使用流式API
+        streamingService.sendMessageStream(
+            message: text,
+            assistant: Assistant.defaultAssistants.first!,
+            bookId: appState.selectedBook?.id,
+            model: "gemini-2.0-flash-exp",
+            ragEnabled: true
+        ) { [weak self] event in
+            guard let self = self else { return }
+            
+            Task { @MainActor in
+                switch event {
+                case .content(let content):
+                    // 逐步更新内容
+                    self.streamingContent += content
+                    if messageIndex < self.messages.count {
+                        self.messages[messageIndex] = ChatMessage(
+                            role: .assistant,
+                            content: self.streamingContent
+                        )
+                    }
+                    
+                case .error(let error):
+                    if messageIndex < self.messages.count {
+                        self.messages[messageIndex] = ChatMessage(
+                            role: .assistant,
+                            content: "❌ 错误: \(error)"
+                        )
+                    }
+                    
+                default:
+                    break
+                }
+            }
+        } onComplete: { [weak self] result in
+            guard let self = self else { return }
+            
+            Task { @MainActor in
+                self.isLoading = false
+                
+                switch result {
+                case .failure(let error):
+                    if messageIndex < self.messages.count {
+                        self.messages[messageIndex] = ChatMessage(
+                            role: .assistant,
+                            content: "❌ 请求失败: \(error.localizedDescription)"
+                        )
+                    }
+                case .success:
+                    // 流式完成，内容已经在事件中更新
+                    break
+                }
+            }
         }
-
-        isLoading = false
     }
 
     func clearMessages() {
@@ -552,4 +601,3 @@ extension CGRect {
         )
     }
 }
-

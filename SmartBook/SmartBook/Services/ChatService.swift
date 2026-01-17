@@ -1,10 +1,10 @@
-// EnhancedChatService.swift - 增强的聊天服务（支持SSE流式响应）
+// ChatService.swift - 流式聊天服务（支持SSE流式响应）
 
 import Foundation
 
-// MARK: - 增强的聊天服务
+// MARK: - 流式聊天服务
 @Observable
-class EnhancedChatService {
+class StreamingChatService {
     var isStreaming = false
     var currentTask: URLSessionDataTask?
     
@@ -22,6 +22,13 @@ class EnhancedChatService {
         onEvent: @escaping SSEEventHandler,
         onComplete: @escaping CompletionHandler
     ) {
+        Logger.info("🔵 StreamingChatService: sendMessageStream 被调用")
+        Logger.info("📝 消息: \(message)")
+        Logger.info("👤 助手: \(assistant.name)")
+        Logger.info("📚 书籍ID: \(bookId ?? "无")")
+        Logger.info("🤖 模型: \(model)")
+        Logger.info("🔍 RAG: \(ragEnabled)")
+        
         isStreaming = true
         
         var url: URL
@@ -59,14 +66,20 @@ class EnhancedChatService {
             ]
         }
         
+        Logger.info("🌐 请求URL: \(url.absoluteString)")
+        Logger.info("📦 请求体: \(body)")
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 300 // 5分钟超时
         
+        Logger.info("✅ 请求已构建，准备发送")
+        
         let session = URLSession.shared
         let task = session.dataTask(with: request) { [weak self] data, response, error in
+            Logger.info("📨 收到响应")
             guard let self = self else { return }
             
             DispatchQueue.main.async {
@@ -75,20 +88,32 @@ class EnhancedChatService {
             }
             
             if let error = error {
+                Logger.error("❌ 请求错误: \(error.localizedDescription)")
                 DispatchQueue.main.async {
                     onComplete(.failure(error))
                 }
                 return
             }
             
+            if let httpResponse = response as? HTTPURLResponse {
+                Logger.info("📊 HTTP状态码: \(httpResponse.statusCode)")
+            }
+            
             guard let data = data else {
+                Logger.error("❌ 没有收到数据")
                 DispatchQueue.main.async {
                     onComplete(.failure(APIError.custom("No data received")))
                 }
                 return
             }
             
+            Logger.info("📦 收到数据大小: \(data.count) bytes")
+            if let responseText = String(data: data, encoding: .utf8) {
+                Logger.info("📄 响应内容（前500字符）: \(String(responseText.prefix(500)))")
+            }
+            
             // 解析 SSE 数据
+            Logger.info("🔄 开始解析SSE数据")
             self.parseSSEData(data, onEvent: onEvent)
             
             DispatchQueue.main.async {
