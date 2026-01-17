@@ -86,33 +86,34 @@ struct ChatView: View {
                                 }
                             }
 
-                            // 空状态引导（没有选择书籍时显示）
-                            if appState.selectedBook == nil
-                                && appState.books.isEmpty
-                            {
-                                EmptyStateView(
-                                    colors: colors,
-                                    onAddBook: {
-                                        showBookPicker = true
-                                    }
-                                )
-                                .frame(
-                                    maxWidth: .infinity,
-                                    maxHeight: .infinity
-                                )
-                            } else if appState.selectedBook == nil {
-                                EmptyChatStateView(
-                                    colors: colors,
-                                    onAddBook: {
-                                        showBookPicker = true
-                                    }
-                                )
-                                .frame(
-                                    maxWidth: .infinity,
-                                    maxHeight: .infinity
-                                )
+                            // 对话列表（始终显示，无论是否选择书籍）
+                            if viewModel.messages.isEmpty {
+                                // 空状态提示
+                                if appState.books.isEmpty {
+                                    EmptyStateView(
+                                        colors: colors,
+                                        onAddBook: {
+                                            showBookPicker = true
+                                        }
+                                    )
+                                    .frame(
+                                        maxWidth: .infinity,
+                                        maxHeight: .infinity
+                                    )
+                                } else {
+                                    EmptyChatStateView(
+                                        colors: colors,
+                                        onAddBook: {
+                                            showBookPicker = true
+                                        }
+                                    )
+                                    .frame(
+                                        maxWidth: .infinity,
+                                        maxHeight: .infinity
+                                    )
+                                }
                             } else {
-                                // 对话列表
+                                // 有消息时显示对话列表
                                 ScrollViewReader { proxy in
                                     ScrollView {
                                         LazyVStack(spacing: 12) {
@@ -437,14 +438,9 @@ class ChatViewModel {
 
     @MainActor
     func sendMessage(_ text: String) async {
-        guard let appState = appState else {
-            Logger.error("❌ ChatViewModel: appState is nil")
-            return
-        }
+        guard let appState = appState else { return }
 
-        Logger.info("📤 ChatViewModel: 开始发送消息")
-        Logger.info("📝 消息内容: \(text)")
-        Logger.info("📚 书籍ID: \(appState.selectedBook?.id ?? "无")")
+        Logger.info("📤 发送消息: \(text)")
 
         let userMessage = ChatMessage(role: .user, content: text)
         messages.append(userMessage)
@@ -456,8 +452,6 @@ class ChatViewModel {
         let streamingMessage = ChatMessage(role: .assistant, content: "")
         messages.append(streamingMessage)
         let messageIndex = messages.count - 1
-
-        Logger.info("🚀 ChatViewModel: 调用StreamingChatService")
         
         // 使用流式API
         streamingService.sendMessageStream(
@@ -472,6 +466,7 @@ class ChatViewModel {
             Task { @MainActor in
                 switch event {
                 case .content(let content):
+                    Logger.info("💬 收到内容: \(content)")
                     // 逐步更新内容
                     self.streamingContent += content
                     if messageIndex < self.messages.count {
