@@ -9,7 +9,7 @@ import SwiftUI
 
 struct InputToolBarView<Content: View>: View {
     @Binding var inputText: String
-    @ViewBuilder var content: Content
+    @ViewBuilder var content: (_ keyboardHeight: CGFloat) -> Content
     var onSend: (() -> Void)?  // 新增：发送回调
     
     @State private var aiModel = "ChatGPT"
@@ -23,7 +23,7 @@ struct InputToolBarView<Content: View>: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack(alignment: .bottom) {
-                content
+                content(keyboardHeight)
                 InputToolBar(
                     aiModel: $aiModel,
                     inputText: $inputText,

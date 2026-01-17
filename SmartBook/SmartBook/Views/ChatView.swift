@@ -72,7 +72,7 @@ struct ChatView: View {
             GeometryReader { proxy in
                 ZStack() {
                     colors.background.ignoresSafeArea()
-                    InputToolBarView(inputText: $inputText, content: {
+                    InputToolBarView(inputText: $inputText, content: { keyboardHeight in
                         // 聊天内容区域
                         VStack(spacing: 0) {
                             // 顶部栏
@@ -127,6 +127,7 @@ struct ChatView: View {
                                             }
                                         }
                                         .padding()
+                                        .padding(.bottom, 100 + keyboardHeight) // 给输入栏和键盘留出空间
                                     }
                                     .onChange(of: viewModel.messages.count) {
                                         _,
@@ -134,11 +135,14 @@ struct ChatView: View {
                                         if let lastMessage = viewModel.messages
                                             .last
                                         {
-                                            withAnimation {
-                                                proxy.scrollTo(
-                                                    lastMessage.id,
-                                                    anchor: .bottom
-                                                )
+                                            // 延迟一点让UI更新完成
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                                withAnimation {
+                                                    proxy.scrollTo(
+                                                        lastMessage.id,
+                                                        anchor: .bottom
+                                                    )
+                                                }
                                             }
                                         }
                                     }
