@@ -10,6 +10,8 @@ import SwiftUI
 struct InputToolBarView<Content: View>: View {
     @Binding var inputText: String
     @ViewBuilder var content: Content
+    var onSend: (() -> Void)?  // 新增：发送回调
+    
     @State private var aiModel = "ChatGPT"
     @State private var keyboardHeight: CGFloat = 0
     @State private var mediaMenuEdge = EdgeInsets()
@@ -35,7 +37,8 @@ struct InputToolBarView<Content: View>: View {
                         modelMenuEdge = buttonRelatively(rect, proxy: proxy)
                         menuObser.willShow()
                         showModelMenu = true
-                    }
+                    },
+                    onSend: onSend  // 传递发送回调
                 ).offset(y: -keyboardHeight)
                     .ignoresSafeArea(.keyboard)
                 if showMediaMenu {

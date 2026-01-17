@@ -12,10 +12,16 @@ struct InputToolBar: View {
     @Binding var inputText: String
     var openMedia: (CGRect) -> Void
     var openModel: (CGRect) -> Void
+    var onSend: (() -> Void)?  // 新增：发送回调
 
     @State private var isRecording = false
     @State private var mediaBtnFrame = CGRect.zero
     @State private var modelBtnFrame = CGRect.zero
+    
+    // 判断是否有输入内容
+    private var hasInput: Bool {
+        !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -60,18 +66,40 @@ struct InputToolBar: View {
                 .getFrame($modelBtnFrame)
 
                 Spacer()
-                Button {
-                    isRecording = !isRecording
-                } label: {
-                    HStack(spacing: 3) {
-                        Image(systemName: isRecording ? "stop.fill" : "waveform").resizable().frame(
-                            width: 12,
-                            height: 12
-                        ).foregroundStyle(.apprWhite)
-                        Text(isRecording ? "停止" : "开始说话").font(.caption2).foregroundStyle(.apprWhite)
-                    }.padding(.horizontal, 10).padding(.vertical, 6)
-                }.background {
-                    Color.apprBlack.clipShape(RoundedRectangle(cornerRadius: 12))
+                
+                // 根据输入内容动态切换按钮
+                if hasInput {
+                    // 发送按钮
+                    Button {
+                        onSend?()
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "arrow.up.circle.fill").resizable().frame(
+                                width: 16,
+                                height: 16
+                            ).foregroundStyle(.apprWhite)
+                            Text("发送").font(.caption2).foregroundStyle(.apprWhite)
+                        }.padding(.horizontal, 10).padding(.vertical, 6)
+                    }.background {
+                        Color.green.clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .transition(.scale.combined(with: .opacity))
+                } else {
+                    // 语音输入按钮
+                    Button {
+                        isRecording = !isRecording
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: isRecording ? "stop.fill" : "waveform").resizable().frame(
+                                width: 12,
+                                height: 12
+                            ).foregroundStyle(.apprWhite)
+                            Text(isRecording ? "停止" : "开始说话").font(.caption2).foregroundStyle(.apprWhite)
+                        }.padding(.horizontal, 10).padding(.vertical, 6)
+                    }.background {
+                        Color.apprBlack.clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .transition(.scale.combined(with: .opacity))
                 }
             }
         }.padding(.horizontal, 12)
@@ -84,6 +112,7 @@ struct InputToolBar: View {
                     lineWidth: 1
                 )
             }.padding(.horizontal,18).padding(.vertical,6)
+            .animation(.spring(duration: 0.3), value: hasInput)  // 添加动画
     }
 }
 

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		22F036192F1ADE1A00A47787 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 22F036182F1ADE1A00A47787 /* Secrets.xcconfig */; };
+		22F03A542F1C0B6400A47787 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 22F03A532F1C0B6400A47787 /* MarkdownUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				22F03A542F1C0B6400A47787 /* MarkdownUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -131,6 +133,7 @@
 			);
 			name = SmartBook;
 			packageProductDependencies = (
+				22F03A532F1C0B6400A47787 /* MarkdownUI */,
 			);
 			productName = SmartBook;
 			productReference = 22B210192F10FD990078D1EA /* SmartBook.app */;
@@ -216,6 +219,9 @@
 			);
 			mainGroup = 22B210102F10FD990078D1EA;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				22F03A522F1C0B6400A47787 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 22B2101A2F10FD990078D1EA /* Products */;
 			projectDirPath = "";
@@ -612,6 +618,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		22F03A522F1C0B6400A47787 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		22F03A532F1C0B6400A47787 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 22F03A522F1C0B6400A47787 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 22B210112F10FD990078D1EA /* Project object */;
 }
