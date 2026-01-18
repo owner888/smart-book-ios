@@ -38,6 +38,7 @@ struct MessageBubble: View {
     
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
+            // 用户消息：前面用Spacer推到右边
             if message.role == .user {
                 Spacer()
             }
@@ -59,7 +60,7 @@ struct MessageBubble: View {
                     }
                 }
                 
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 12) {
                     // 系统提示词（如果有）
                     if let systemPrompt = message.systemPrompt {
                         systemPromptView(systemPrompt)
@@ -106,7 +107,8 @@ struct MessageBubble: View {
                     .foregroundColor(colors.secondaryText.opacity(0.6))
             }
             
-            if message.role == .user {
+            // 助手消息靠左，右侧留空间
+            if message.role == .assistant {
                 Spacer(minLength: 48)
             }
         }
