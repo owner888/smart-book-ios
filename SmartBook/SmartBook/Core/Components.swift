@@ -132,7 +132,16 @@ extension View {
             }
             .overlay {
                 Circle()
-                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                .white.opacity(0.18),
+                                .white.opacity(0.05),
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
             }
             .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
