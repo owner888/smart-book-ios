@@ -136,6 +136,13 @@
 "chat.emptyState.addBook" = "添加书籍";
 "chat.emptyState.noBookTitle" = "选择一本书";
 "chat.emptyState.noBookDesc" = "点击右上角菜单按钮，选择一本书开始 AI 对话。";
+"chat.menu.selectBook" = "选择书籍";
+"chat.menu.clearHistory" = "清除历史";
+"chat.menu.exportChat" = "导出对话";
+"chat.menu.settings" = "设置";
+"chat.contextMenu.copy" = "复制";
+"chat.contextMenu.regenerate" = "重新生成";
+"chat.contextMenu.share" = "分享";
 
 /* AI */
 "ai.analysis" = "AI 分析";

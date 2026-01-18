@@ -136,6 +136,13 @@
 "chat.emptyState.addBook" = "Add Book";
 "chat.emptyState.noBookTitle" = "Select a Book";
 "chat.emptyState.noBookDesc" = "Tap the menu button above to select a book for AI chat.";
+"chat.menu.selectBook" = "Select Book";
+"chat.menu.clearHistory" = "Clear History";
+"chat.menu.exportChat" = "Export Chat";
+"chat.menu.settings" = "Settings";
+"chat.contextMenu.copy" = "Copy";
+"chat.contextMenu.regenerate" = "Regenerate";
+"chat.contextMenu.share" = "Share";
 
 /* AI */
 "ai.analysis" = "AI Analysis";
