@@ -136,41 +136,6 @@ struct RAGSource: Codable, Identifiable {
     }
 }
 
-// MARK: - 增强的聊天消息
-struct EnhancedChatMessage: Identifiable {
-    let id: UUID
-    let role: MessageRole
-    let content: String
-    let timestamp: Date
-    var thinking: String?
-    var sources: [RAGSource]?
-    var usage: UsageInfo?
-    var systemPrompt: String?
-    
-    init(id: UUID = UUID(), role: MessageRole, content: String, timestamp: Date = Date(), thinking: String? = nil, sources: [RAGSource]? = nil, usage: UsageInfo? = nil, systemPrompt: String? = nil) {
-        self.id = id
-        self.role = role
-        self.content = content
-        self.timestamp = timestamp
-        self.thinking = thinking
-        self.sources = sources
-        self.usage = usage
-        self.systemPrompt = systemPrompt
-    }
-    
-    // 从基本消息创建
-    init(from message: ChatMessage) {
-        self.id = message.id
-        self.role = message.role
-        self.content = message.content
-        self.timestamp = message.timestamp
-        self.thinking = nil
-        self.sources = nil
-        self.usage = nil
-        self.systemPrompt = nil
-    }
-}
-
 // MARK: - AI 模型配置
 struct AIModel: Identifiable, Codable {
     let id: String

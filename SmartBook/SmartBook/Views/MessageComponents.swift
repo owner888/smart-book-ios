@@ -1,41 +1,63 @@
-// EnhancedMessageView.swift - 增强的消息视图组件
+// MessageComponents.swift - 消息组件
 
 import SwiftUI
 import MarkdownUI
 
-// MARK: - 增强的消息气泡
-struct EnhancedMessageBubble: View {
-    let message: EnhancedChatMessage
-    let assistant: Assistant
+// MARK: - 消息气泡（智能适配简单和增强模式）
+struct MessageBubble: View {
+    let message: ChatMessage
+    let assistant: Assistant?  // 可选，简单模式时为nil
     var colors: ThemeColors = .dark
     var onSpeak: ((String) -> Void)?
     var onCopy: ((String) -> Void)?
     var onRegenerate: (() -> Void)?
+    
+    // 简单模式初始化器
+    init(message: ChatMessage, colors: ThemeColors = .dark) {
+        self.message = message
+        self.assistant = nil
+        self.colors = colors
+        self.onSpeak = nil
+        self.onCopy = nil
+        self.onRegenerate = nil
+    }
+    
+    // 增强模式初始化器
+    init(message: ChatMessage, assistant: Assistant, colors: ThemeColors = .dark, onSpeak: ((String) -> Void)? = nil, onCopy: ((String) -> Void)? = nil, onRegenerate: (() -> Void)? = nil) {
+        self.message = message
+        self.assistant = assistant
+        self.colors = colors
+        self.onSpeak = onSpeak
+        self.onCopy = onCopy
+        self.onRegenerate = onRegenerate
+    }
     
     @State private var isThinkingExpanded = false
     @State private var isSystemPromptExpanded = false
     @State private var isSourcesExpanded = true
     
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            if message.role == .assistant {
-                // AI 头像
-                Circle()
-                    .fill(assistant.colorValue.opacity(0.2))
-                    .frame(width: 36, height: 36)
-                    .overlay {
-                        Text(assistant.avatar)
-                            .font(.system(size: 18))
-                    }
-            } else {
-                Spacer(minLength: 48)
+        HStack(alignment: .top, spacing: 0) {
+            if message.role == .user {
+                Spacer()
             }
             
-            VStack(alignment: .leading, spacing: 8) {
-                // 角色名称
-                Text(message.role == .user ? L("common.tips") : assistant.name)
-                    .font(.caption)
-                    .foregroundColor(colors.secondaryText)
+            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
+                // 增强模式：显示头像和角色名
+                if let assistant = assistant, message.role == .assistant {
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(assistant.colorValue.opacity(0.2))
+                            .frame(width: 24, height: 24)
+                            .overlay {
+                                Text(assistant.avatar)
+                                    .font(.system(size: 12))
+                            }
+                        Text(assistant.name)
+                            .font(.caption)
+                            .foregroundColor(colors.secondaryText)
+                    }
+                }
                 
                 VStack(alignment: .leading, spacing: 12) {
                     // 系统提示词（如果有）
@@ -462,8 +484,15 @@ struct TypingIndicator: View {
 
 #Preview {
     VStack {
-        EnhancedMessageBubble(
-            message: EnhancedChatMessage(
+        // 简单模式示例
+        MessageBubble(
+            message: ChatMessage(role: .user, content: "你好"),
+            colors: .dark
+        )
+        
+        // 增强模式示例
+        MessageBubble(
+            message: ChatMessage(
                 role: .assistant,
                 content: "这是一条测试消息",
                 thinking: "我正在思考如何回答...",

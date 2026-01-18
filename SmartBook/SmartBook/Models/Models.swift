@@ -89,12 +89,20 @@ struct ChatMessage: Identifiable, Codable {
     let role: MessageRole
     let content: String
     let timestamp: Date
+    var thinking: String?
+    var sources: [RAGSource]?
+    var usage: UsageInfo?
+    var systemPrompt: String?
     
-    init(id: UUID = UUID(), role: MessageRole, content: String, timestamp: Date = Date()) {
+    init(id: UUID = UUID(), role: MessageRole, content: String, timestamp: Date = Date(), thinking: String? = nil, sources: [RAGSource]? = nil, usage: UsageInfo? = nil, systemPrompt: String? = nil) {
         self.id = id
         self.role = role
         self.content = content
         self.timestamp = timestamp
+        self.thinking = thinking
+        self.sources = sources
+        self.usage = usage
+        self.systemPrompt = systemPrompt
     }
 }
 
