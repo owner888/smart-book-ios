@@ -55,6 +55,7 @@ struct SidebarView: View {
                     action: onSelectSettings
                 )
             }
+            .padding(.horizontal, 12)
             .padding(.vertical)
 
             Spacer()

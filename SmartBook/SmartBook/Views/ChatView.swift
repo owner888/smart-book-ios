@@ -40,7 +40,7 @@ struct ChatView: View {
             )
             .environment(appState)
             .environment(themeManager)
-            .frame(width: 280)
+            .frame(width: 340)
             .background(colors.cardBackground)
         } content: {
             chatContent
@@ -199,25 +199,25 @@ struct ChatView: View {
             // 右侧更多菜单按钮
             Menu {
                 Button(action: { showBookPicker = true }) {
-                    Label("Select Book", systemImage: "book")
+                    Label(L("chat.menu.selectBook"), systemImage: "book")
                 }
                 
                 Divider()
                 
                 Button(action: { viewModel.clearMessages() }) {
-                    Label("Clear History", systemImage: "trash")
+                    Label(L("chat.menu.clearHistory"), systemImage: "trash")
                 }
                 .disabled(viewModel.messages.isEmpty)
                 
                 Button(action: { exportConversation() }) {
-                    Label("Export Chat", systemImage: "square.and.arrow.up")
+                    Label(L("chat.menu.exportChat"), systemImage: "square.and.arrow.up")
                 }
                 .disabled(viewModel.messages.isEmpty)
                 
                 Divider()
                 
                 Button(action: { showSettings = true }) {
-                    Label("Settings", systemImage: "gearshape")
+                    Label(L("chat.menu.settings"), systemImage: "gearshape")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -373,14 +373,14 @@ struct MessageBubble: View {
                         Button(action: {
                             UIPasteboard.general.string = message.content
                         }) {
-                            Label("复制", systemImage: "doc.on.doc")
+                            Label(L("chat.contextMenu.copy"), systemImage: "doc.on.doc")
                         }
                         
                         if message.role == .assistant {
                             Button(action: {
                                 // 重新生成功能
                             }) {
-                                Label("重新生成", systemImage: "arrow.clockwise")
+                                Label(L("chat.contextMenu.regenerate"), systemImage: "arrow.clockwise")
                             }
                         }
                         
@@ -394,7 +394,7 @@ struct MessageBubble: View {
                                 rootVC.present(activityVC, animated: true)
                             }
                         }) {
-                            Label("分享", systemImage: "square.and.arrow.up")
+                            Label(L("chat.contextMenu.share"), systemImage: "square.and.arrow.up")
                         }
                     }
 
