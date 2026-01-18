@@ -223,8 +223,27 @@ struct ChatView: View {
                 Image(systemName: "ellipsis")
                     .font(.title2)
                     .foregroundColor(colors.primaryText)
+                    .padding(14)
+                    .background {
+                        Circle()
+                            .fill(.ultraThinMaterial)
+                    }
+                    .overlay {
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        .white.opacity(0.18),
+                                        .white.opacity(0.05),
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+                    .contentShape(Circle())
             }
-            .menuGlassEffect()
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
