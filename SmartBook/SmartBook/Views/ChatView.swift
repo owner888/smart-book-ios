@@ -12,10 +12,9 @@ struct ChatView: View {
     @State private var showBookPicker = false
     @State private var showSettings = false
     @State private var showBookshelf = false
-    
+
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
- 
 
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -70,112 +69,101 @@ struct ChatView: View {
     var chatContent: some View {
         NavigationStack {
             GeometryReader { proxy in
-                ZStack() {
+                ZStack {
                     colors.background.ignoresSafeArea()
-                    InputToolBarView(inputText: $inputText, content: { keyboardHeight in
-                        // 聊天内容区域
-                        VStack(spacing: 0) {
-                            // 顶部栏
-                            topBar
-
-                            if let book = appState.selectedBook {
-                                BookContextBar(book: book, colors: colors) {
-                                    withAnimation {
-                                        appState.selectedBook = nil
-                                    }
-                                }
-                            }
-
-                            // 对话列表（始终显示，无论是否选择书籍）
-                            if viewModel.messages.isEmpty {
-                                // 空状态提示
-                                if appState.books.isEmpty {
-                                    EmptyStateView(
-                                        colors: colors,
-                                        onAddBook: {
-                                            showBookPicker = true
-                                        }
-                                    )
-                                    .frame(
-                                        maxWidth: .infinity,
-                                        maxHeight: .infinity
-                                    )
-                                } else {
-                                    EmptyChatStateView(
-                                        colors: colors,
-                                        onAddBook: {
-                                            showBookPicker = true
-                                        }
-                                    )
-                                    .frame(
-                                        maxWidth: .infinity,
-                                        maxHeight: .infinity
-                                    )
-                                }
-                            } else {
-                                // 有消息时显示对话列表
-                                ScrollViewReader { proxy in
-                                    ScrollView {
-                                        LazyVStack(spacing: 12) {
-                                            ForEach(viewModel.messages) {
-                                                message in
-                                                MessageBubble(
-                                                    message: message,
-                                                    colors: colors
-                                                )
-                                                .id(message.id)
+                    // 聊天内容区域
+                    ZStack(alignment: .top) {
+                        InputToolBarView(
+                            inputText: $inputText,
+                            content: {
+                                VStack(spacing: 0) {
+                                    if let book = appState.selectedBook {
+                                        BookContextBar(
+                                            book: book,
+                                            colors: colors
+                                        ) {
+                                            withAnimation {
+                                                appState.selectedBook = nil
                                             }
                                         }
-                                        .padding()
-                                        .padding(.bottom, 100 + keyboardHeight) // 给输入栏和键盘留出空间
                                     }
-                                    .onChange(of: viewModel.messages.count) {
-                                        _,
-                                        _ in
-                                        if let lastMessage = viewModel.messages
-                                            .last
-                                        {
-                                            // 延迟一点让UI更新完成
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                                withAnimation {
-                                                    proxy.scrollTo(
-                                                        lastMessage.id,
-                                                        anchor: .bottom
-                                                    )
+                                    // 对话列表（始终显示，无论是否选择书籍）
+                                    if viewModel.messages.isEmpty {
+                                        Spacer()
+                                        if appState.books.isEmpty {
+                                            EmptyStateView(
+                                                colors: colors,
+                                                onAddBook: {
+                                                    showBookPicker = true
+                                                }
+                                            )
+                                        } else {
+                                            EmptyChatStateView(
+                                                colors: colors,
+                                                onAddBook: {
+                                                    showBookPicker = true
+                                                }
+                                            )
+                                        }
+                                        Color.clear.frame(height: 70)
+                                        Spacer()
+                                    } else {
+                                        // 有消息时显示对话列表
+                                        ScrollViewReader { proxy in
+                                            ScrollView {
+                                                LazyVStack(spacing: 12) {
+                                                    ForEach(viewModel.messages)
+                                                    {
+                                                        message in
+                                                        MessageBubble(
+                                                            message: message,
+                                                            colors: colors
+                                                        )
+                                                        .id(message.id)
+                                                    }
+                                                }
+
+                                            }
+                                            .onChange(
+                                                of: viewModel.messages.count
+                                            ) {
+                                                _,
+                                                _ in
+                                                if let lastMessage = viewModel
+                                                    .messages
+                                                    .last
+                                                {
+                                                    // 延迟一点让UI更新完成
+                                                    DispatchQueue.main
+                                                        .asyncAfter(
+                                                            deadline: .now()
+                                                                + 0.1
+                                                        ) {
+                                                            withAnimation {
+                                                                proxy.scrollTo(
+                                                                    lastMessage
+                                                                        .id,
+                                                                    anchor:
+                                                                        .bottom
+                                                                )
+                                                            }
+                                                        }
                                                 }
                                             }
                                         }
                                     }
                                 }
-                            }
-                        }
-                    }, onSend: sendMessage)
 
-                    // InputBar - 根据键盘高度调整位置
-                    //                InputBar(
-                    //                    text: $inputText,
-                    //                    isConversationMode: $isConversationMode,
-                    //                    isFocused: $isInputFocused,
-                    //                    isLoading: viewModel.isLoading,
-                    //                    speechService: appState.speechService,
-                    //                    selectedBook: appState.selectedBook,
-                    //                    colors: colors,
-                    //                    onSend: sendMessage,
-                    //                    onVoice: toggleVoiceInput,
-                    //                    onConversation: toggleConversationMode,
-                    //                    onSelectBook: { showBookPicker = true },
-                    //                    onClearHistory: { viewModel.clearMessages() }
-                    //                )
-                    //                .offset(y: -keyboardHeight)
-                    //                .ignoresSafeArea(.keyboard)
-        
+                            },
+                            onSend: sendMessage
+                        )
+                        topBar
+                    }
                 }
-                
+
             }.navigationBarHidden(true)
         }
     }
-    
-    
 
     // 顶部栏
     var topBar: some View {
@@ -256,7 +244,7 @@ struct ChatView: View {
 
         let text = inputText
         inputText = ""
-        
+
         // 立即收起键盘
         hiddenKeyboard()
         isInputFocused = false
@@ -324,7 +312,6 @@ struct ChatView: View {
         }
     }
 
-
 }
 
 // MARK: - 书籍状态栏
@@ -362,6 +349,55 @@ struct BookContextBar: View {
         .background(colors.cardBackground)
     }
 }
+
+/*
+// MARK: - 消息气泡
+struct MessageBubble: View {
+    let message: ChatMessage
+    var colors: ThemeColors = .dark
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 0) {
+            if message.role == .user {
+                Spacer()
+            }
+
+            VStack(
+                alignment: message.role == .user ? .trailing : .leading,
+                spacing: 4
+            ) {
+                Text(message.content)
+                    .multilineTextAlignment(
+                        message.role == .user ? .trailing : .leading
+                    )
+                    .padding(12)
+                    .background {
+                        if message.role == .user {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(colors.userBubble)
+                        } else {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(colors.assistantBubble)
+                        }
+                    }
+                    .foregroundColor(colors.primaryText)
+
+                Text(message.timestamp, style: .time)
+                    .font(.caption2)
+                    .foregroundColor(colors.secondaryText.opacity(0.6))
+            }
+            .frame(
+                maxWidth: .infinity * 0.75,
+                alignment: message.role == .user ? .trailing : .leading
+            )
+
+            if message.role == .assistant {
+                Spacer()
+            }
+        }
+    }
+}
+*/
 
 // MARK: - 输入栏
 struct InputBar: View {
@@ -455,7 +491,7 @@ struct InputBar: View {
 class ChatViewModel {
     var messages: [ChatMessage] = []
     var isLoading = false
-    
+
     var appState: AppState?
     private let streamingService = StreamingChatService()
     private var streamingContent = ""
@@ -471,12 +507,12 @@ class ChatViewModel {
 
         isLoading = true
         streamingContent = ""
-        
+
         // 创建一个临时的助手消息用于流式更新
         let streamingMessage = ChatMessage(role: .assistant, content: "")
         messages.append(streamingMessage)
         let messageIndex = messages.count - 1
-        
+
         // 使用流式API
         streamingService.sendMessageStream(
             message: text,
@@ -486,7 +522,7 @@ class ChatViewModel {
             ragEnabled: true
         ) { [weak self] event in
             guard let self = self else { return }
-            
+
             Task { @MainActor in
                 switch event {
                 case .content(let content):
@@ -499,7 +535,7 @@ class ChatViewModel {
                             content: self.streamingContent
                         )
                     }
-                    
+
                 case .error(let error):
                     if messageIndex < self.messages.count {
                         self.messages[messageIndex] = ChatMessage(
@@ -507,17 +543,17 @@ class ChatViewModel {
                             content: "❌ 错误: \(error)"
                         )
                     }
-                    
+
                 default:
                     break
                 }
             }
         } onComplete: { [weak self] result in
             guard let self = self else { return }
-            
+
             Task { @MainActor in
                 self.isLoading = false
-                
+
                 switch result {
                 case .failure(let error):
                     if messageIndex < self.messages.count {

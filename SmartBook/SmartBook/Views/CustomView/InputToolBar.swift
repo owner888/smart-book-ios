@@ -8,20 +8,23 @@
 import SwiftUI
 
 struct InputToolBar: View {
-    @Binding var aiModel: String
+    @Binding var aiFunction: MenuConfig.AIModelFunctionType
     @Binding var inputText: String
     var openMedia: (CGRect) -> Void
     var openModel: (CGRect) -> Void
     var onSend: (() -> Void)?  // 新增：发送回调
 
+
     @State private var isRecording = false
     @State private var mediaBtnFrame = CGRect.zero
     @State private var modelBtnFrame = CGRect.zero
+
     
     // 判断是否有输入内容
     private var hasInput: Bool {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
+
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -42,26 +45,23 @@ struct InputToolBar: View {
                 Button {
                     openMedia(mediaBtnFrame)
                 } label: {
-                    Color.clear.frame(width: 36,height: 36).overlay {
+                    Color.clear.frame(width: 32,height: 32).overlay {
                         Image(systemName: "link").foregroundStyle(.apprBlack)
                     }
-                }.glassEffect(size: CGSize(width: 36, height: 36))
+                }.glassEffect(size: CGSize(width: 32, height: 32))
                 .getFrame($mediaBtnFrame)
 
                 Button {
                     openModel(modelBtnFrame)
                 } label: {
                     HStack(spacing: 5) {
-                        Image(systemName: "airplane").resizable().frame(
-                            width: 14,
-                            height: 14
-                        ).foregroundStyle(.apprBlack)
-                        Text(aiModel).font(.caption2).foregroundStyle(.apprBlack)
+                        MenuIcon(config: aiFunction.config)
+                        Text(aiFunction.config.title).font(.caption2).foregroundStyle(.apprBlack)
                         Image(systemName: "chevron.down").resizable().frame(
                             width: 8,
                             height: 8
                         ).foregroundStyle(.apprBlack)
-                    }.padding(.horizontal, 10).padding(.vertical, 6)
+                    }.padding(.horizontal, 10).frame(height: 32)
                 }.glassEffect(cornerRadius: 15)
                 .getFrame($modelBtnFrame)
 
@@ -111,7 +111,7 @@ struct InputToolBar: View {
                     .gray.opacity(0.3),
                     lineWidth: 1
                 )
-            }.padding(.horizontal,18).padding(.vertical,6)
+            }.padding(.vertical,6)
             .animation(.spring(duration: 0.3), value: hasInput)  // 添加动画
     }
 }
