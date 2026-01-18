@@ -121,6 +121,17 @@ extension View {
             }
             .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
+    
+    // Menu专用玻璃效果（圆形，不干扰交互）
+    func menuGlassEffect() -> some View {
+        self
+            .padding(14)
+            .background {
+                Circle()
+                    .fill(.ultraThinMaterial)
+            }
+            .contentShape(Circle())
+    }
 }
 
 // MARK: - 书籍封面组件

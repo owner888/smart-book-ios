@@ -198,49 +198,33 @@ struct ChatView: View {
 
             // 右侧更多菜单按钮
             Menu {
-                Button(action: {
-                    print("Select Book clicked")
-                    showBookPicker = true
-                }) {
+                Button(action: { showBookPicker = true }) {
                     Label("Select Book", systemImage: "book")
                 }
                 
                 Divider()
                 
-                Button(action: {
-                    print("Clear History clicked")
-                    viewModel.clearMessages()
-                }) {
+                Button(action: { viewModel.clearMessages() }) {
                     Label("Clear History", systemImage: "trash")
                 }
                 .disabled(viewModel.messages.isEmpty)
                 
-                Button(action: {
-                    print("Export Chat clicked")
-                    exportConversation()
-                }) {
+                Button(action: { exportConversation() }) {
                     Label("Export Chat", systemImage: "square.and.arrow.up")
                 }
                 .disabled(viewModel.messages.isEmpty)
                 
                 Divider()
                 
-                Button(action: {
-                    print("Settings clicked")
-                    showSettings = true
-                }) {
+                Button(action: { showSettings = true }) {
                     Label("Settings", systemImage: "gearshape")
                 }
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.title2)
                     .foregroundColor(colors.primaryText)
-                    .padding(10)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(.ultraThinMaterial)
-                    )
             }
+            .menuGlassEffect()
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
