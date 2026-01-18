@@ -130,7 +130,11 @@ extension View {
                 Circle()
                     .fill(.ultraThinMaterial)
             }
-            .contentShape(Circle())
+            .overlay {
+                Circle()
+                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
+            }
+            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
