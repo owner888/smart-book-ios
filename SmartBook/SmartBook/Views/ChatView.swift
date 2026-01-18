@@ -196,12 +196,51 @@ struct ChatView: View {
 
             Spacer()
 
-            // 右侧添加书籍按钮
-            Button(action: { showBookPicker = true }) {
-                Image(systemName: "plus")
+            // 右侧更多菜单按钮
+            Menu {
+                Button(action: {
+                    print("Select Book clicked")
+                    showBookPicker = true
+                }) {
+                    Label("Select Book", systemImage: "book")
+                }
+                
+                Divider()
+                
+                Button(action: {
+                    print("Clear History clicked")
+                    viewModel.clearMessages()
+                }) {
+                    Label("Clear History", systemImage: "trash")
+                }
+                .disabled(viewModel.messages.isEmpty)
+                
+                Button(action: {
+                    print("Export Chat clicked")
+                    exportConversation()
+                }) {
+                    Label("Export Chat", systemImage: "square.and.arrow.up")
+                }
+                .disabled(viewModel.messages.isEmpty)
+                
+                Divider()
+                
+                Button(action: {
+                    print("Settings clicked")
+                    showSettings = true
+                }) {
+                    Label("Settings", systemImage: "gearshape")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
                     .font(.title2)
                     .foregroundColor(colors.primaryText)
-            }.glassEffect()
+                    .padding(10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(.ultraThinMaterial)
+                    )
+            }
         }
         .padding(.horizontal)
         .padding(.vertical, 12)
@@ -257,6 +296,28 @@ struct ChatView: View {
         } else {
             appState.speechService.stopRecording()
             appState.ttsService.stop()
+        }
+    }
+    
+    func exportConversation() {
+        // 生成对话文本
+        var exportText = "# Chat Export\n\n"
+        
+        for message in viewModel.messages {
+            let role = message.role == .user ? "User" : "AI"
+            let timestamp = message.timestamp.formatted(date: .abbreviated, time: .shortened)
+            exportText += "**\(role)** (\(timestamp)):\n\(message.content)\n\n---\n\n"
+        }
+        
+        // 使用系统分享
+        let activityVC = UIActivityViewController(
+            activityItems: [exportText],
+            applicationActivities: nil
+        )
+        
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let rootVC = windowScene.windows.first?.rootViewController {
+            rootVC.present(activityVC, animated: true)
         }
     }
 
@@ -324,6 +385,34 @@ struct MessageBubble: View {
                         }
                     }
                     .foregroundColor(colors.primaryText)
+                    .contextMenu {
+                        Button(action: {
+                            UIPasteboard.general.string = message.content
+                        }) {
+                            Label("复制", systemImage: "doc.on.doc")
+                        }
+                        
+                        if message.role == .assistant {
+                            Button(action: {
+                                // 重新生成功能
+                            }) {
+                                Label("重新生成", systemImage: "arrow.clockwise")
+                            }
+                        }
+                        
+                        Button(action: {
+                            let activityVC = UIActivityViewController(
+                                activityItems: [message.content],
+                                applicationActivities: nil
+                            )
+                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                               let rootVC = windowScene.windows.first?.rootViewController {
+                                rootVC.present(activityVC, animated: true)
+                            }
+                        }) {
+                            Label("分享", systemImage: "square.and.arrow.up")
+                        }
+                    }
 
                 Text(message.timestamp, style: .time)
                     .font(.caption2)
