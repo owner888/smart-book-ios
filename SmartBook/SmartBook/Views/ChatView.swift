@@ -14,6 +14,7 @@ struct ChatView: View {
     @State private var showBookshelf = false
     @State private var scrollBottom = 120.0
     @State private var keyboardHeight: CGFloat = 0
+    @State private var showScrollToBottomButton = false
 
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
@@ -113,6 +114,7 @@ struct ChatView: View {
                                         ZStack(alignment: .bottom) {
                                             // 有消息时显示对话列表
                                             ScrollViewReader { scrollProxy in
+                                                let _ = viewModel.scrollProxy = scrollProxy
                                                 ScrollView {
                                                     LazyVStack(spacing: 12) {
                                                         ForEach(
@@ -132,6 +134,7 @@ struct ChatView: View {
                                                     Color.clear.frame(
                                                         height: scrollBottom
                                                     )
+                                                    .id("bottomAnchor")
                                                     
                                                 }.onChange(
                                                     of: viewModel
@@ -172,6 +175,9 @@ struct ChatView: View {
                             onSend: sendMessage,
                             keyboardHeightChanged: { value in
                                 keyboardHeight = value
+                            },
+                            scrollToBottom: {
+                                viewModel.scrollToBottom()
                             }
                         )
                         colors.background.frame(
@@ -491,10 +497,17 @@ class ChatViewModel {
     var messages: [ChatMessage] = []
     var isLoading = false
     var questionMessageId: UUID?
+    var scrollProxy: ScrollViewProxy?
 
     var appState: AppState?
     private let streamingService = StreamingChatService()
     private var streamingContent = ""
+    
+    func scrollToBottom() {
+        withAnimation {
+            scrollProxy?.scrollTo("bottomAnchor", anchor: .bottom)
+        }
+    }
 
     @MainActor
     func sendMessage(_ text: String) async {

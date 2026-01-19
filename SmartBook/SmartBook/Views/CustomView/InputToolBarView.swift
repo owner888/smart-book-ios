@@ -12,6 +12,8 @@ struct InputToolBarView<Content: View>: View {
     @ViewBuilder var content: Content
     var onSend: (() -> Void)?  // 新增：发送回调
     var keyboardHeightChanged: ((CGFloat) -> Void)?
+    var scrollToBottom: (() -> Void)?  // 新增：滚动到底部回调
+    @State private var showScrollToBottomButton = false  // 新增：控制按钮显示
     @State private var aiFunction = MenuConfig.AIModelFunctionType.auto
     @State private var keyboardHeight: CGFloat = 0
     @State private var mediaMenuEdge = EdgeInsets()
@@ -80,6 +82,30 @@ struct InputToolBarView<Content: View>: View {
                     } label: {
                         Color.clear.frame(width: 60, height: 30)
                     }.environmentObject(menuObser)
+                }
+                
+                // 滚动到底部按钮 - 右下角悬浮
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button {
+                            scrollToBottom?()
+                        } label: {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(.white)
+                                .frame(width: 44, height: 44)
+                                .background(
+                                    Circle()
+                                        .fill(Color.blue.opacity(0.9))
+                                        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                                )
+                        }
+                        .padding(.trailing, 24)
+                        .padding(.bottom, keyboardHeight + 80)
+                        .transition(.scale.combined(with: .opacity))
+                    }
                 }
             }
         }.contentShape(Rectangle()).onTapGesture {
