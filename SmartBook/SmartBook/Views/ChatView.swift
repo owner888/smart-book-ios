@@ -12,6 +12,8 @@ struct ChatView: View {
     @State private var showBookPicker = false
     @State private var showSettings = false
     @State private var showBookshelf = false
+    @State private var scrollBottom = 120.0
+    @State private var keyboardHeight: CGFloat = 0
 
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
@@ -71,8 +73,8 @@ struct ChatView: View {
             GeometryReader { proxy in
                 ZStack {
                     colors.background.ignoresSafeArea()
-                    // 聊天内容区域
-                    ZStack(alignment: .top) {
+                    VStack(spacing: 0) {
+                        // 聊天内容区域
                         InputToolBarView(
                             inputText: $inputText,
                             content: {
@@ -108,134 +110,128 @@ struct ChatView: View {
                                         Color.clear.frame(height: 70)
                                         Spacer()
                                     } else {
-                                        // 有消息时显示对话列表
-                                        ScrollViewReader { proxy in
-                                            ScrollView {
-                                                LazyVStack(spacing: 12) {
-                                                    ForEach(viewModel.messages)
-                                                    {
-                                                        message in
-                                                        MessageBubble(
-                                                            message: message,
-                                                            colors: colors
-                                                        )
-                                                        .id(message.id)
-                                                    }
-                                                }
-
-                                            }
-                                            .onChange(
-                                                of: viewModel.messages.count
-                                            ) {
-                                                _,
-                                                _ in
-                                                if let lastMessage = viewModel
-                                                    .messages
-                                                    .last
-                                                {
-                                                    // 延迟一点让UI更新完成
-                                                    DispatchQueue.main
-                                                        .asyncAfter(
-                                                            deadline: .now()
-                                                                + 0.1
+                                        ZStack(alignment: .bottom) {
+                                            // 有消息时显示对话列表
+                                            ScrollViewReader { scrollProxy in
+                                                ScrollView {
+                                                    LazyVStack(spacing: 12) {
+                                                        ForEach(
+                                                            viewModel.messages
                                                         ) {
-                                                            withAnimation {
-                                                                proxy.scrollTo(
-                                                                    lastMessage
-                                                                        .id,
-                                                                    anchor:
-                                                                        .bottom
-                                                                )
-                                                            }
+                                                            message in
+                                                            MessageBubble(
+                                                                message:
+                                                                    message,
+                                                                colors: colors
+                                                            )
+                                                            .id(message.id)
                                                         }
-                                                }
+                                                    }
+                                                    .padding(.horizontal, 18)
+                                                    .padding(.vertical, 8)
+                                                    Color.clear.frame(
+                                                        height: scrollBottom
+                                                    )
+                                                    
+                                                }.onChange(
+                                                    of: viewModel
+                                                        .questionMessageId,
+                                                    {
+                                                        if let messageId =
+                                                            viewModel
+                                                            .questionMessageId
+                                                        {
+                                                            scrollBottom = max(0,proxy.size.height - 160)
+                                                            // 延迟一点让UI更新完成
+                                                            DispatchQueue.main
+                                                                .asyncAfter(
+                                                                    deadline:
+                                                                        .now()
+                                                                        + 0.1
+                                                                ) {
+                                                                    withAnimation
+                                                                    {
+                                                                        scrollProxy
+                                                                            .scrollTo(
+                                                                                messageId,
+                                                                                anchor:
+                                                                                    .top
+                                                                            )
+                                                                    }
+                                                                }
+                                                        }
+                                                    }
+                                                )
                                             }
+                                            colors.background.frame(height: 10)
                                         }
                                     }
                                 }
 
                             },
-                            onSend: sendMessage
+                            onSend: sendMessage,
+                            keyboardHeightChanged: { value in
+                                keyboardHeight = value
+                                if keyboardHeight > 10 {
+                                    scrollBottom = 120
+                                }
+                            }
                         )
-                        topBar
+                        colors.background.frame(
+                            height: proxy.safeAreaInsets.bottom
+                        )
+                    }.ignoresSafeArea(.container, edges: .bottom)
+
+                }
+            }.navigationBarTitleDisplayMode(.inline)
+                .navigationTitle("智能对话").toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(action: { sideObser.jumpToPage(0) }) {
+                            Image(systemName: "line.3.horizontal")
+                        }
                     }
-                }
-
-            }.navigationBarHidden(true)
-        }
-    }
-
-    // 顶部栏
-    var topBar: some View {
-        HStack(spacing: 12) {
-            // 左侧菜单按钮
-            Button(action: { sideObser.jumpToPage(0) }) {
-                Image(systemName: "line.3.horizontal")
-                    .font(.title2)
-                    .foregroundColor(colors.primaryText)
-            }.glassEffect()
-
-            Spacer()
-
-            // 标题
-            Text(L("chat.title"))
-                .font(.headline)
-                .foregroundColor(colors.primaryText)
-
-            Spacer()
-
-            // 右侧更多菜单按钮
-            Menu {
-                Button(action: { showBookPicker = true }) {
-                    Label(L("chat.menu.selectBook"), systemImage: "book")
-                }
-                
-                Divider()
-                
-                Button(action: { viewModel.clearMessages() }) {
-                    Label(L("chat.menu.clearHistory"), systemImage: "trash")
-                }
-                .disabled(viewModel.messages.isEmpty)
-                
-                Button(action: { exportConversation() }) {
-                    Label(L("chat.menu.exportChat"), systemImage: "square.and.arrow.up")
-                }
-                .disabled(viewModel.messages.isEmpty)
-                
-                Divider()
-                
-                Button(action: { showSettings = true }) {
-                    Label(L("chat.menu.settings"), systemImage: "gearshape")
-                }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.title2)
-                    .foregroundColor(colors.primaryText)
-                    .padding(14)
-                    .background {
-                        Circle()
-                            .fill(.ultraThinMaterial)
-                    }
-                    .overlay {
-                        Circle()
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        .white.opacity(0.18),
-                                        .white.opacity(0.05),
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
+                    ToolbarItem(placement: .topBarTrailing) {
+                        // 右侧更多菜单按钮
+                        Menu {
+                            Button(action: { showBookPicker = true }) {
+                                Label(
+                                    L("chat.menu.selectBook"),
+                                    systemImage: "book"
                                 )
-                            )
+                            }
+
+                            Divider()
+
+                            Button(action: { viewModel.clearMessages() }) {
+                                Label(
+                                    L("chat.menu.clearHistory"),
+                                    systemImage: "trash"
+                                )
+                            }
+                            .disabled(viewModel.messages.isEmpty)
+
+                            Button(action: { exportConversation() }) {
+                                Label(
+                                    L("chat.menu.exportChat"),
+                                    systemImage: "square.and.arrow.up"
+                                )
+                            }
+                            .disabled(viewModel.messages.isEmpty)
+
+                            Divider()
+
+                            Button(action: { showSettings = true }) {
+                                Label(
+                                    L("chat.menu.settings"),
+                                    systemImage: "gearshape"
+                                )
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis")
+                        }
                     }
-                    .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-                    .contentShape(Circle())
-            }
+                }
         }
-        .padding(.horizontal)
-        .padding(.vertical, 12)
-        .background(colors.navigationBar)
     }
 
     func sendMessage() {
@@ -289,25 +285,31 @@ struct ChatView: View {
             appState.ttsService.stop()
         }
     }
-    
+
     func exportConversation() {
         // 生成对话文本
         var exportText = "# Chat Export\n\n"
-        
+
         for message in viewModel.messages {
             let role = message.role == .user ? "User" : "AI"
-            let timestamp = message.timestamp.formatted(date: .abbreviated, time: .shortened)
-            exportText += "**\(role)** (\(timestamp)):\n\(message.content)\n\n---\n\n"
+            let timestamp = message.timestamp.formatted(
+                date: .abbreviated,
+                time: .shortened
+            )
+            exportText +=
+                "**\(role)** (\(timestamp)):\n\(message.content)\n\n---\n\n"
         }
-        
+
         // 使用系统分享
         let activityVC = UIActivityViewController(
             activityItems: [exportText],
             applicationActivities: nil
         )
-        
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
+
+        if let windowScene = UIApplication.shared.connectedScenes.first
+            as? UIWindowScene,
+            let rootVC = windowScene.windows.first?.rootViewController
+        {
             rootVC.present(activityVC, animated: true)
         }
     }
@@ -491,6 +493,7 @@ struct InputBar: View {
 class ChatViewModel {
     var messages: [ChatMessage] = []
     var isLoading = false
+    var questionMessageId: UUID?
 
     var appState: AppState?
     private let streamingService = StreamingChatService()
@@ -504,6 +507,7 @@ class ChatViewModel {
 
         let userMessage = ChatMessage(role: .user, content: text)
         messages.append(userMessage)
+        questionMessageId = userMessage.id
 
         isLoading = true
         streamingContent = ""

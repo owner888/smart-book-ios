@@ -11,12 +11,14 @@ struct InputToolBarView<Content: View>: View {
     @Binding var inputText: String
     @ViewBuilder var content: Content
     var onSend: (() -> Void)?  // 新增：发送回调
+    var keyboardHeightChanged: ((CGFloat) -> Void)?
     @State private var aiFunction = MenuConfig.AIModelFunctionType.auto
     @State private var keyboardHeight: CGFloat = 0
     @State private var mediaMenuEdge = EdgeInsets()
     @State private var modelMenuEdge = EdgeInsets()
     @State private var showMediaMenu = false
     @State private var showModelMenu = false
+    @State private var hiddenTopView = false
     @StateObject private var menuObser = CustomMenuObservable()
 
     var body: some View {
@@ -25,9 +27,12 @@ struct InputToolBarView<Content: View>: View {
                 ZStack(alignment: .bottom) {
                     content
                     VStack(spacing:0) {
-                        InputTopView { function in
-                            
+                        if !hiddenTopView {
+                            InputTopView { function in
+
+                            }
                         }
+
                         InputToolBar(
                             aiFunction: $aiFunction,
                             inputText: $inputText,
@@ -42,10 +47,14 @@ struct InputToolBarView<Content: View>: View {
                                 menuObser.willShow()
                                 showModelMenu = true
                             },
-                            onSend: onSend  // 传递发送回调
+                            onSend: {
+                                hiddenTopView = true
+                                // 传递发送回调
+                                onSend?()
+                            }
                         )
                     }.padding(.horizontal,18)
-                    
+
                 }.padding(.bottom,keyboardHeight)
                     .ignoresSafeArea(.keyboard)
                 if showMediaMenu {
@@ -133,10 +142,12 @@ struct InputToolBarView<Content: View>: View {
                         0,
                         keyboardHeight - bottomSafeArea
                     )
-
+                    keyboardHeightChanged?(adjustedKeyboardHeight)
                     withAnimation(.easeOut(duration: 0.25)) {
                         self.keyboardHeight = adjustedKeyboardHeight
+                        
                     }
+                    
                 }
             }
         }
@@ -146,6 +157,7 @@ struct InputToolBarView<Content: View>: View {
             object: nil,
             queue: .main
         ) { _ in
+            keyboardHeightChanged?(0)
             withAnimation(.easeOut(duration: 0.25)) {
                 self.keyboardHeight = 0
             }
