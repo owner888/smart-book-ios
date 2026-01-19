@@ -172,9 +172,6 @@ struct ChatView: View {
                             onSend: sendMessage,
                             keyboardHeightChanged: { value in
                                 keyboardHeight = value
-                                if keyboardHeight > 10 {
-                                    scrollBottom = 120
-                                }
                             }
                         )
                         colors.background.frame(

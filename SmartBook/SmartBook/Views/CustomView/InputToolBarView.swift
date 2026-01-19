@@ -56,7 +56,6 @@ struct InputToolBarView<Content: View>: View {
                     }.padding(.horizontal,18)
 
                 }.padding(.bottom,keyboardHeight)
-                    .ignoresSafeArea(.keyboard)
                 if showMediaMenu {
                     CustomMenuView(
                         alignment: .bottomLeading,
@@ -411,4 +410,3 @@ class MenuConfig {
         }
     }
 }
-
