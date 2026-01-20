@@ -2,6 +2,7 @@
 // iOS 18+ / SwiftUI / 支持多语言 / 支持暗黑/浅色主题
 
 import SwiftUI
+import SwiftData
 
 @main
 struct SmartBookApp: App {
@@ -9,14 +10,14 @@ struct SmartBookApp: App {
     @State private var themeManager = ThemeManager.shared
     @State private var assistantService = AssistantService()
     @State private var modelService = ModelService()
-    
+
     init() {
         // 在 Debug 模式下打印配置信息
         #if DEBUG
-        DebugConfig.printAllConfiguration()
+            DebugConfig.printAllConfiguration()
         #endif
     }
-    
+
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -26,6 +27,12 @@ struct SmartBookApp: App {
                 .environment(modelService)
                 .preferredColorScheme(themeManager.colorScheme)
         }
+        .modelContainer(
+            for: [
+                ConversationModel.self,
+                MessageModel.self,
+            ]
+        )
     }
 }
 
@@ -36,20 +43,21 @@ class AppState {
     var books: [Book] = []
     var isLoading = false
     var errorMessage: String?
-    
+
     // 服务实例
     let chatService = ChatService()
     let bookService = BookService()
     let speechService = SpeechService()
     let ttsService = TTSService()
     let checkInService = CheckInService()
-    
+
+    @MainActor
     init() {
         Task {
             await loadBooks()
         }
     }
-    
+
     @MainActor
     func loadBooks() async {
         isLoading = true
