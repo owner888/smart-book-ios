@@ -3,8 +3,14 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(AppState.self) private var appState
+    
     var body: some View {
         ChatView()
+            .task {
+                // 在视图出现时加载书籍列表
+                await appState.loadBooks()
+            }
     }
 }
 

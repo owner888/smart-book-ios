@@ -37,6 +37,7 @@ struct SmartBookApp: App {
 }
 
 // MARK: - App State (全局状态管理)
+@MainActor
 @Observable
 class AppState {
     var selectedBook: Book?
@@ -51,16 +52,9 @@ class AppState {
     let ttsService = TTSService()
     let checkInService = CheckInService()
 
-    @MainActor
-    init() {
-        Task {
-            await loadBooks()
-        }
-    }
-
-    @MainActor
     func loadBooks() async {
         isLoading = true
+        errorMessage = nil
         do {
             books = try await bookService.fetchBooks()
         } catch {
