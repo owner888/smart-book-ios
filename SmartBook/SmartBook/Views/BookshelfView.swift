@@ -5,7 +5,7 @@ import UniformTypeIdentifiers
 
 // MARK: - 书架视图
 struct BookshelfView: View {
-    @Environment(AppState.self) var appState
+    @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
     @Environment(BookService.self) var bookService
     @Environment(\.colorScheme) var systemColorScheme
@@ -166,7 +166,7 @@ struct BookshelfView: View {
         if book.filePath != nil {
             selectedBookForReading = book
         } else {
-            appState.selectedBook = book
+            bookState.selectedBook = book
         }
     }
     
@@ -181,7 +181,7 @@ struct BookshelfView: View {
         }
         
         Button {
-            appState.selectedBook = book
+            bookState.selectedBook = book
         } label: {
             Label(L("chat.title"), systemImage: "bubble.left.and.bubble.right")
         }
@@ -201,7 +201,7 @@ struct BookshelfView: View {
         do {
             books = try await bookService.fetchBooks()
         } catch {
-            appState.errorMessage = error.localizedDescription
+            bookState.errorMessage = error.localizedDescription
             books = bookService.loadLocalBooks()
         }
         isLoading = false
@@ -298,6 +298,6 @@ struct BookCard: View {
 
 #Preview {
     BookshelfView()
-        .environment(AppState())
+        .environment(BookState())
         .environment(ThemeManager.shared)
 }

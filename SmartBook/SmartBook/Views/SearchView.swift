@@ -3,7 +3,7 @@
 import SwiftUI
 
 struct SearchView: View {
-    @Environment(AppState.self) var appState
+    @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
     @Environment(BookService.self) var bookService
     @Environment(\.colorScheme) var systemColorScheme
@@ -129,7 +129,7 @@ struct SearchView: View {
                                     if book.filePath != nil {
                                         selectedBookForReading = book
                                     } else {
-                                        appState.selectedBook = book
+                                        bookState.selectedBook = book
                                     }
                                 }
                         }
@@ -287,6 +287,6 @@ struct SearchResultRow: View {
 
 #Preview {
     SearchView()
-        .environment(AppState())
+        .environment(BookState())
         .environment(ThemeManager.shared)
 }

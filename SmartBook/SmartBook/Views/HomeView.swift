@@ -3,7 +3,7 @@
 import SwiftUI
 
 struct HomeView: View {
-    @Environment(AppState.self) var appState
+    @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
     @Environment(BookService.self) var bookService
     @Environment(CheckInService.self) var checkInService
@@ -367,6 +367,6 @@ struct EmptyHomeState: View {
 
 #Preview {
     HomeView()
-        .environment(AppState())
+        .environment(BookState())
         .environment(ThemeManager.shared)
 }

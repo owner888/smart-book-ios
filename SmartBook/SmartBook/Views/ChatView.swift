@@ -3,7 +3,7 @@
 import SwiftUI
 
 struct ChatView: View {
-    @Environment(AppState.self) var appState
+    @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
     @Environment(SpeechService.self) var speechService
     @Environment(TTSService.self) var ttsService
@@ -42,7 +42,7 @@ struct ChatView: View {
                     sideObser.jumpToPage(1)
                 }
             )
-            .environment(appState)
+            .environment(bookState)
             .environment(themeManager)
             .frame(width: 340)
             .background(colors.cardBackground)
@@ -51,22 +51,22 @@ struct ChatView: View {
         }.environmentObject(sideObser).sheet(isPresented: $showBookPicker) {
             BookPickerView(colors: colors) { book in
                 withAnimation {
-                    appState.selectedBook = book
+                    bookState.selectedBook = book
                 }
                 showBookPicker = false
             }
         }
         .sheet(isPresented: $showSettings) {
             SettingsView()
-                .environment(appState)
+                .environment(bookState)
                 .environment(themeManager)
         }
         .sheet(isPresented: $showBookshelf) {
             BookshelfView()
-                .environment(appState)
+                .environment(bookState)
                 .environment(themeManager)
         }.onAppear {
-            viewModel.appState = appState
+            viewModel.bookState = bookState
         }
     }
 
@@ -82,20 +82,20 @@ struct ChatView: View {
                             inputText: $inputText,
                             content: {
                                 VStack(spacing: 0) {
-                                    if let book = appState.selectedBook {
+                                    if let book = bookState.selectedBook {
                                         BookContextBar(
                                             book: book,
                                             colors: colors
                                         ) {
                                             withAnimation {
-                                                appState.selectedBook = nil
+                                                bookState.selectedBook = nil
                                             }
                                         }
                                     }
                                     // 对话列表（始终显示，无论是否选择书籍）
                                     if viewModel.messages.isEmpty {
                                         Spacer()
-                                        if appState.books.isEmpty {
+                                        if bookState.books.isEmpty {
                                             EmptyStateView(
                                                 colors: colors,
                                                 onAddBook: {
@@ -501,7 +501,7 @@ class ChatViewModel {
     var questionMessageId: UUID?
     var scrollProxy: ScrollViewProxy?
 
-    var appState: AppState?
+    var bookState: BookState?
     private let streamingService = StreamingChatService()
     private var streamingContent = ""
     
@@ -513,7 +513,7 @@ class ChatViewModel {
 
     @MainActor
     func sendMessage(_ text: String) async {
-        guard let appState = appState else { return }
+        guard let bookState = bookState else { return }
 
         Logger.info("📤 发送消息: \(text)")
 
@@ -533,7 +533,7 @@ class ChatViewModel {
         streamingService.sendMessageStream(
             message: text,
             assistant: Assistant.defaultAssistants.first!,
-            bookId: appState.selectedBook?.id,
+            bookId: bookState.selectedBook?.id,
             model: "gemini-2.0-flash-exp",
             ragEnabled: true
         ) { [weak self] event in
@@ -658,7 +658,7 @@ struct EmptyChatStateView: View {
 
 #Preview {
     ChatView()
-        .environment(AppState())
+        .environment(BookState())
         .environment(ThemeManager.shared)
 }
 

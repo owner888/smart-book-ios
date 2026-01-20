@@ -3,7 +3,7 @@
 import SwiftUI
 
 struct BookPickerView: View {
-    @Environment(AppState.self) var appState
+    @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
     @Environment(BookService.self) var bookService
     @Environment(\.colorScheme) var systemColorScheme
@@ -55,7 +55,7 @@ struct BookPickerView: View {
                 } else {
                     List {
                         ForEach(filteredBooks) { book in
-                            BookPickerRow(book: book, colors: themeColors, isSelected: appState.selectedBook?.id == book.id)
+                            BookPickerRow(book: book, colors: themeColors, isSelected: bookState.selectedBook?.id == book.id)
                                 .contentShape(Rectangle())
                                 .onTapGesture {
                                     onSelect(book)
@@ -135,6 +135,6 @@ struct BookPickerRow: View {
     BookPickerView(colors: .dark) { book in
         Logger.info("Selected: \(book.title)")
     }
-    .environment(AppState())
+    .environment(BookState())
     .environment(ThemeManager.shared)
 }

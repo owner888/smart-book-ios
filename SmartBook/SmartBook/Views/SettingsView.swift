@@ -4,7 +4,7 @@ import SwiftUI
 internal import AVFAudio
 
 struct SettingsView: View {
-    @Environment(AppState.self) var appState
+    @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
     @Environment(TTSService.self) var ttsService
     @Environment(\.colorScheme) var systemColorScheme
@@ -385,6 +385,6 @@ struct VoiceSelectionView: View {
 
 #Preview {
     SettingsView()
-        .environment(AppState())
+        .environment(BookState())
         .environment(ThemeManager.shared)
 }

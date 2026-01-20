@@ -6,8 +6,8 @@ import SwiftUI
 
 @main
 struct SmartBookApp: App {
-    // 状态管理
-    let appState = AppState()
+    // 状态管理（按功能领域拆分）
+    let bookState = BookState()
     let themeManager = ThemeManager.shared
     
     // AI 服务
@@ -33,7 +33,7 @@ struct SmartBookApp: App {
                 .environment(themeManager)
                 .environment(modelService)
                 .environment(assistantService)
-                .environment(appState)
+                .environment(bookState)
                 .environment(bookService)
                 .environment(speechService)
                 .environment(ttsService)
@@ -46,28 +46,5 @@ struct SmartBookApp: App {
                 MessageModel.self,
             ]
         )
-    }
-}
-
-// MARK: - App State (全局状态管理 - 只负责状态，不持有服务)
-@MainActor
-@Observable
-class AppState {
-    // 状态数据
-    var selectedBook: Book?
-    var books: [Book] = []
-    var isLoading = false
-    var errorMessage: String?
-
-    // 加载书籍（需要注入 bookService）
-    func loadBooks(using bookService: BookService) async {
-        isLoading = true
-        errorMessage = nil
-        do {
-            books = try await bookService.fetchBooks()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-        isLoading = false
     }
 }
