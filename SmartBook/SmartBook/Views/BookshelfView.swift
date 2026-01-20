@@ -11,7 +11,6 @@ struct BookshelfView: View {
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.dismiss) var dismiss
-    @State private var isLoading = false
     @State private var showingImporter = false
     @State private var showingDeleteAlert = false
     @State private var bookToDelete: Book?
@@ -89,7 +88,7 @@ struct BookshelfView: View {
     
     @ViewBuilder
     private var contentView: some View {
-        if isLoading {
+        if bookState.isLoading {
             loadingView
         } else if bookState.books.isEmpty {
             emptyView
@@ -196,9 +195,7 @@ struct BookshelfView: View {
     }
     
     func loadBooks() async {
-        isLoading = true
         await bookState.loadBooks(using: bookService)
-        isLoading = false
     }
     
     func handleImport(_ result: Result<[URL], Error>) async {

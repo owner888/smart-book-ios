@@ -8,7 +8,6 @@ struct BookPickerView: View {
     @Environment(BookService.self) var bookService
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.dismiss) private var dismiss
-    @State private var isLoading = true
     @State private var searchText = ""
     var colors: ThemeColors
     let onSelect: (Book) -> Void
@@ -32,7 +31,7 @@ struct BookPickerView: View {
             ZStack {
                 themeColors.background.ignoresSafeArea()
                 
-                if isLoading {
+                if bookState.isLoading {
                     VStack(spacing: 16) {
                         ProgressView()
                             .scaleEffect(1.2)
@@ -86,9 +85,7 @@ struct BookPickerView: View {
     }
     
     func loadBooks() async {
-        isLoading = true
         await bookState.loadBooks(using: bookService)
-        isLoading = false
     }
 }
 
