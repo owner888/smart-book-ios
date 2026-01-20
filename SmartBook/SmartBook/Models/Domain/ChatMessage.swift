@@ -10,7 +10,7 @@ import Foundation
 // MARK: - 聊天消息模型
 struct ChatMessage: Identifiable, Codable {
     let id: UUID
-    let role: MessageRole
+    let role: Role
     let content: String
     let timestamp: Date
     var thinking: String?
@@ -18,7 +18,7 @@ struct ChatMessage: Identifiable, Codable {
     var usage: UsageInfo?
     var systemPrompt: String?
     
-    init(id: UUID = UUID(), role: MessageRole, content: String, timestamp: Date = Date(), thinking: String? = nil, sources: [RAGSource]? = nil, usage: UsageInfo? = nil, systemPrompt: String? = nil) {
+    init(id: UUID = UUID(), role: Role, content: String, timestamp: Date = Date(), thinking: String? = nil, sources: [RAGSource]? = nil, usage: UsageInfo? = nil, systemPrompt: String? = nil) {
         self.id = id
         self.role = role
         self.content = content

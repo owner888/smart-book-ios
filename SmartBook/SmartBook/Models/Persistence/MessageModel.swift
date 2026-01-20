@@ -10,14 +10,14 @@ import Foundation
 @Model
 class MessageModel {
     var id: UUID
-    var role: MessageRole
+    var role: Role
     var content: String
     var createdAt: Date
 
     var conversation: ConversationModel?
 
     init(
-        role: MessageRole,
+        role: Role,
         content: String,
         conversation: ConversationModel?
     ) {

@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum MessageRole: String, Codable {
+enum Role: String, Codable {
     case user
     case assistant
     case system
