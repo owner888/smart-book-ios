@@ -5,6 +5,7 @@ import SwiftUI
 struct BookPickerView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(BookService.self) var bookService
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.dismiss) private var dismiss
     @State private var books: [Book] = []
@@ -88,9 +89,9 @@ struct BookPickerView: View {
     func loadBooks() async {
         isLoading = true
         do {
-            books = try await appState.bookService.fetchBooks()
+            books = try await bookService.fetchBooks()
         } catch {
-            books = appState.bookService.loadLocalBooks()
+            books = bookService.loadLocalBooks()
         }
         isLoading = false
     }

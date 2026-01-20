@@ -6,10 +6,19 @@ import SwiftUI
 
 @main
 struct SmartBookApp: App {
+    // 状态管理
     let appState = AppState()
     let themeManager = ThemeManager.shared
+    
+    // AI 服务
     let assistantService = AssistantService()
     let modelService = ModelService()
+    
+    // 业务服务
+    let bookService = BookService()
+    let speechService = SpeechService()
+    let ttsService = TTSService()
+    let checkInService = CheckInService()
 
     init() {
         // 在 Debug 模式下打印配置信息
@@ -25,6 +34,10 @@ struct SmartBookApp: App {
                 .environment(modelService)
                 .environment(assistantService)
                 .environment(appState)
+                .environment(bookService)
+                .environment(speechService)
+                .environment(ttsService)
+                .environment(checkInService)
                 .preferredColorScheme(themeManager.colorScheme)
         }
         .modelContainer(
@@ -36,23 +49,18 @@ struct SmartBookApp: App {
     }
 }
 
-// MARK: - App State (全局状态管理)
+// MARK: - App State (全局状态管理 - 只负责状态，不持有服务)
 @MainActor
 @Observable
 class AppState {
+    // 状态数据
     var selectedBook: Book?
     var books: [Book] = []
     var isLoading = false
     var errorMessage: String?
 
-    // 服务实例
-    let chatService = ChatService()
-    let bookService = BookService()
-    let speechService = SpeechService()
-    let ttsService = TTSService()
-    let checkInService = CheckInService()
-
-    func loadBooks() async {
+    // 加载书籍（需要注入 bookService）
+    func loadBooks(using bookService: BookService) async {
         isLoading = true
         errorMessage = nil
         do {

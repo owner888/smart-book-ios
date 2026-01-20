@@ -5,6 +5,8 @@ import SwiftUI
 struct ChatView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(SpeechService.self) var speechService
+    @Environment(TTSService.self) var ttsService
     @Environment(\.colorScheme) var systemColorScheme
     @State private var viewModel = ChatViewModel()
     @State private var inputText = ""
@@ -254,22 +256,22 @@ struct ChatView: View {
             if isConversationMode, let lastMessage = viewModel.messages.last,
                 lastMessage.role == .assistant
             {
-                await appState.ttsService.speak(lastMessage.content)
+                await ttsService.speak(lastMessage.content)
                 startVoiceInput()
             }
         }
     }
 
     func toggleVoiceInput() {
-        if appState.speechService.isRecording {
-            appState.speechService.stopRecording()
+        if speechService.isRecording {
+            speechService.stopRecording()
         } else {
             startVoiceInput()
         }
     }
 
     func startVoiceInput() {
-        appState.speechService.startRecording { result in
+        speechService.startRecording { result in
             inputText = result
         } onFinal: { finalResult in
             inputText = finalResult
@@ -284,8 +286,8 @@ struct ChatView: View {
         if isConversationMode {
             startVoiceInput()
         } else {
-            appState.speechService.stopRecording()
-            appState.ttsService.stop()
+            speechService.stopRecording()
+            ttsService.stop()
         }
     }
 

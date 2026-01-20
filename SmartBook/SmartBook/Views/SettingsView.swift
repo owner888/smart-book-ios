@@ -6,6 +6,7 @@ internal import AVFAudio
 struct SettingsView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(TTSService.self) var ttsService
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.dismiss) var dismiss
     @AppStorage(AppConfig.Keys.apiBaseURL) private var apiBaseURL = AppConfig.defaultAPIBaseURL
@@ -164,7 +165,7 @@ struct SettingsView: View {
             }
         }
         .onChange(of: ttsRate) { _, newValue in
-            appState.ttsService.rate = Float(newValue)
+            ttsService.rate = Float(newValue)
         }
     }
 }
@@ -335,8 +336,8 @@ struct SettingsRow<Content: View>: View {
 
 // MARK: - 语音选择视图
 struct VoiceSelectionView: View {
-    @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(TTSService.self) var ttsService
     @Environment(\.colorScheme) var systemColorScheme
     @State private var selectedVoiceId: String = ""
     
@@ -345,7 +346,7 @@ struct VoiceSelectionView: View {
     }
     
     var body: some View {
-        List(appState.ttsService.availableVoices, id: \.identifier) { voice in
+        List(ttsService.availableVoices, id: \.identifier) { voice in
             HStack {
                 VStack(alignment: .leading) {
                     Text(voice.name)
@@ -366,7 +367,7 @@ struct VoiceSelectionView: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 selectedVoiceId = voice.identifier
-                appState.ttsService.selectedVoice = voice
+                ttsService.selectedVoice = voice
             }
             .listRowBackground(colors.cardBackground)
         }
@@ -377,7 +378,7 @@ struct VoiceSelectionView: View {
         .toolbarBackground(colors.navigationBar, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .onAppear {
-            selectedVoiceId = appState.ttsService.selectedVoice?.identifier ?? ""
+            selectedVoiceId = ttsService.selectedVoice?.identifier ?? ""
         }
     }
 }

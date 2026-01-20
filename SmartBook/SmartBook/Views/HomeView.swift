@@ -5,6 +5,8 @@ import SwiftUI
 struct HomeView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(BookService.self) var bookService
+    @Environment(CheckInService.self) var checkInService
     @Environment(\.colorScheme) var systemColorScheme
     @State private var recentBooks: [Book] = []
     @State private var favoriteBooks: [Book] = []
@@ -77,9 +79,9 @@ struct HomeView: View {
             performCheckIn()
         } label: {
             HStack(spacing: 4) {
-                Image(systemName: appState.checkInService.isTodayCheckedIn ? "checkmark.circle.fill" : "calendar.badge.checkmark")
-                    .foregroundColor(appState.checkInService.isTodayCheckedIn ? .green : .orange)
-                Text("\(appState.checkInService.formattedStreak)")
+                Image(systemName: checkInService.isTodayCheckedIn ? "checkmark.circle.fill" : "calendar.badge.checkmark")
+                    .foregroundColor(checkInService.isTodayCheckedIn ? .green : .orange)
+                Text("\(checkInService.formattedStreak)")
                     .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(colors.primaryText)
@@ -89,14 +91,14 @@ struct HomeView: View {
             .background(colors.cardBackground)
             .cornerRadius(12)
         }
-        .disabled(appState.checkInService.isTodayCheckedIn)
+        .disabled(checkInService.isTodayCheckedIn)
     }
     
     private func performCheckIn() {
         Task {
             do {
-                try await appState.checkInService.checkIn()
-                checkInMessage = String(format: L("checkIn.success"), appState.checkInService.currentStreak)
+                try await checkInService.checkIn()
+                checkInMessage = String(format: L("checkIn.success"), checkInService.currentStreak)
                 showingCheckInAlert = true
             } catch {
                 checkInMessage = L("checkIn.error")
@@ -106,17 +108,17 @@ struct HomeView: View {
     }
     
     private func syncCloudKit() async {
-        try? await appState.checkInService.fetchFromCloudKit()
+        try? await checkInService.fetchFromCloudKit()
     }
     
     func loadData() async {
-        let books = appState.bookService.loadLocalBooks()
+        let books = bookService.loadLocalBooks()
         recentBooks = Array(books.prefix(5))
         favoriteBooks = books.filter { $0.isFavorite }
     }
     
     func loadReadingStats() {
-        readingStats = appState.bookService.loadReadingStats()
+        readingStats = bookService.loadReadingStats()
     }
 }
 

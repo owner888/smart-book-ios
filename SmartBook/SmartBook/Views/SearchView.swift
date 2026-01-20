@@ -5,6 +5,7 @@ import SwiftUI
 struct SearchView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(BookService.self) var bookService
     @Environment(\.colorScheme) var systemColorScheme
     @State private var searchText = ""
     @State private var books: [Book] = []
@@ -141,9 +142,9 @@ struct SearchView: View {
     
     func loadBooks() async {
         do {
-            books = try await appState.bookService.fetchBooks()
+            books = try await bookService.fetchBooks()
         } catch {
-            books = appState.bookService.loadLocalBooks()
+            books = bookService.loadLocalBooks()
         }
     }
     

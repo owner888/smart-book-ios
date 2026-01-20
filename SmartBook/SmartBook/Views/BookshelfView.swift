@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 struct BookshelfView: View {
     @Environment(AppState.self) var appState
     @Environment(ThemeManager.self) var themeManager
+    @Environment(BookService.self) var bookService
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.dismiss) var dismiss
@@ -147,7 +148,7 @@ struct BookshelfView: View {
             
             LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 24) {
                 ForEach(books) { book in
-                    BookCard(book: book, isUserImported: appState.bookService.isUserImportedBook(book), colors: colors)
+                    BookCard(book: book, isUserImported: bookService.isUserImportedBook(book), colors: colors)
                         .onTapGesture {
                             handleBookTap(book)
                         }
@@ -185,7 +186,7 @@ struct BookshelfView: View {
             Label(L("chat.title"), systemImage: "bubble.left.and.bubble.right")
         }
         
-        if appState.bookService.isUserImportedBook(book) {
+        if bookService.isUserImportedBook(book) {
             Button(role: .destructive) {
                 bookToDelete = book
                 showingDeleteAlert = true
@@ -198,10 +199,10 @@ struct BookshelfView: View {
     func loadBooks() async {
         isLoading = true
         do {
-            books = try await appState.bookService.fetchBooks()
+            books = try await bookService.fetchBooks()
         } catch {
             appState.errorMessage = error.localizedDescription
-            books = appState.bookService.loadLocalBooks()
+            books = bookService.loadLocalBooks()
         }
         isLoading = false
     }
@@ -212,7 +213,7 @@ struct BookshelfView: View {
             var importedCount = 0
             for url in urls {
                 do {
-                    _ = try appState.bookService.importBook(from: url)
+                    _ = try bookService.importBook(from: url)
                     importedCount += 1
                 } catch {
                     importError = L("library.import.failed") + ": \(error.localizedDescription)"
@@ -230,7 +231,7 @@ struct BookshelfView: View {
     
     func deleteBook(_ book: Book) {
         do {
-            try appState.bookService.deleteBook(book)
+            try bookService.deleteBook(book)
             books.removeAll { $0.id == book.id }
         } catch {
             importError = L("common.error") + ": \(error.localizedDescription)"
