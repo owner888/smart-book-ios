@@ -11,7 +11,6 @@ struct BookshelfView: View {
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.dismiss) var dismiss
-    @State private var books: [Book] = []
     @State private var isLoading = false
     @State private var showingImporter = false
     @State private var showingDeleteAlert = false
@@ -92,7 +91,7 @@ struct BookshelfView: View {
     private var contentView: some View {
         if isLoading {
             loadingView
-        } else if books.isEmpty {
+        } else if bookState.books.isEmpty {
             emptyView
         } else {
             bookGridView
@@ -138,7 +137,7 @@ struct BookshelfView: View {
     private var bookGridView: some View {
         ScrollView {
             HStack {
-                Text(String(format: L("library.bookCount"), books.count))
+                Text(String(format: L("library.bookCount"), bookState.books.count))
                     .font(.subheadline)
                     .foregroundColor(colors.secondaryText)
                 Spacer()
@@ -147,7 +146,7 @@ struct BookshelfView: View {
             .padding(.top, 8)
             
             LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 24) {
-                ForEach(books) { book in
+                ForEach(bookState.books) { book in
                     BookCard(book: book, isUserImported: bookService.isUserImportedBook(book), colors: colors)
                         .onTapGesture {
                             handleBookTap(book)
@@ -198,12 +197,7 @@ struct BookshelfView: View {
     
     func loadBooks() async {
         isLoading = true
-        do {
-            books = try await bookService.fetchBooks()
-        } catch {
-            bookState.errorMessage = error.localizedDescription
-            books = bookService.loadLocalBooks()
-        }
+        await bookState.loadBooks(using: bookService)
         isLoading = false
     }
     
@@ -232,7 +226,7 @@ struct BookshelfView: View {
     func deleteBook(_ book: Book) {
         do {
             try bookService.deleteBook(book)
-            books.removeAll { $0.id == book.id }
+            bookState.books.removeAll { $0.id == book.id }
         } catch {
             importError = L("common.error") + ": \(error.localizedDescription)"
             showingError = true

@@ -5,10 +5,8 @@ import SwiftUI
 struct SearchView: View {
     @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
-    @Environment(BookService.self) var bookService
     @Environment(\.colorScheme) var systemColorScheme
     @State private var searchText = ""
-    @State private var books: [Book] = []
     @State private var selectedBookForReading: Book?
     @State private var recentSearches: [String] = []
     @FocusState private var isSearchFocused: Bool
@@ -35,7 +33,7 @@ struct SearchView: View {
     
     var filteredBooks: [Book] {
         guard !searchText.isEmpty else { return [] }
-        return books.filter {
+        return bookState.books.filter {
             $0.title.localizedCaseInsensitiveContains(searchText) ||
             $0.author.localizedCaseInsensitiveContains(searchText)
         }
@@ -53,7 +51,6 @@ struct SearchView: View {
             .navigationTitle(L("search.title"))
             .navigationBarTitleDisplayMode(.large)
             .task {
-                await loadBooks()
                 loadRecentSearches()
             }
             .fullScreenCover(item: $selectedBookForReading) { book in
@@ -137,14 +134,6 @@ struct SearchView: View {
                 }
                 .padding(.top)
             }
-        }
-    }
-    
-    func loadBooks() async {
-        do {
-            books = try await bookService.fetchBooks()
-        } catch {
-            books = bookService.loadLocalBooks()
         }
     }
     

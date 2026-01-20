@@ -8,7 +8,6 @@ struct BookPickerView: View {
     @Environment(BookService.self) var bookService
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.dismiss) private var dismiss
-    @State private var books: [Book] = []
     @State private var isLoading = true
     @State private var searchText = ""
     var colors: ThemeColors
@@ -20,9 +19,9 @@ struct BookPickerView: View {
     
     var filteredBooks: [Book] {
         if searchText.isEmpty {
-            return books
+            return bookState.books
         }
-        return books.filter {
+        return bookState.books.filter {
             $0.title.localizedCaseInsensitiveContains(searchText) ||
             $0.author.localizedCaseInsensitiveContains(searchText)
         }
@@ -41,7 +40,7 @@ struct BookPickerView: View {
                         Text(L("library.loadingBooks"))
                             .foregroundColor(themeColors.secondaryText)
                     }
-                } else if books.isEmpty {
+                } else if bookState.books.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "books.vertical")
                             .font(.system(size: 50))
@@ -88,11 +87,7 @@ struct BookPickerView: View {
     
     func loadBooks() async {
         isLoading = true
-        do {
-            books = try await bookService.fetchBooks()
-        } catch {
-            books = bookService.loadLocalBooks()
-        }
+        await bookState.loadBooks(using: bookService)
         isLoading = false
     }
 }
