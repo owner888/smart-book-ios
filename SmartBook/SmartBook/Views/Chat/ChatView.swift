@@ -295,16 +295,3 @@ struct ChatView: View {
         .environment(BookState())
         .environment(ThemeManager.shared)
 }
-
-// MARK: - 辅助扩展
-
-extension CGRect {
-    func edgeInset(_ size: CGSize) -> EdgeInsets {
-        EdgeInsets(
-            top: minY,
-            leading: minX,
-            bottom: size.height - maxY,
-            trailing: size.width - maxX
-        )
-    }
-}

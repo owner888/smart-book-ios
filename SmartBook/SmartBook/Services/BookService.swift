@@ -1,47 +1,7 @@
-// APIServices.swift - API 服务（连接 PHP 后端）
+// BookService.swift - 书籍服务
 
 import Foundation
 
-// MARK: - Chat Service
-class ChatService {
-    
-    func sendMessage(_ text: String, bookId: String?, history: [ChatMessage]) async throws -> String {
-        let url = URL(string: "\(AppConfig.apiBaseURL)/api/chat")!
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        var body: [String: Any] = [
-            "message": text,
-            "history": history.map { msg in
-                ["role": msg.role.rawValue, "content": msg.content]
-            }
-        ]
-        
-        if let bookId = bookId {
-            body["book_id"] = bookId
-        }
-        
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw APIError.serverError
-        }
-        
-        let chatResponse = try JSONDecoder().decode(ChatResponse.self, from: data)
-        
-        if let error = chatResponse.error {
-            throw APIError.custom(error)
-        }
-        
-        return chatResponse.response ?? ""
-    }
-}
-
-// MARK: - Book Service
 @Observable
 class BookService {
     private let readingStatsKey = "reading_stats"
@@ -57,6 +17,8 @@ class BookService {
         return booksPath
     }
     
+    // MARK: - 书籍获取
+    
     func fetchBooks() async throws -> [Book] {
         let localBooks = loadLocalBooks()
         if !localBooks.isEmpty {
@@ -69,6 +31,7 @@ class BookService {
         var books: [Book] = []
         books.append(contentsOf: loadBooksFromBundle())
         books.append(contentsOf: loadBooksFromUserDocuments())
+        
         // 加载阅读进度
         for i in 0..<books.count {
             let book = books[i]
@@ -88,6 +51,7 @@ class BookService {
                 )
             }
         }
+        
         return books.sorted { $0.title < $1.title }
     }
     
@@ -143,6 +107,23 @@ class BookService {
         return books
     }
     
+    private func loadBooksFromBundleRoot() -> [Book] {
+        var books: [Book] = []
+        
+        if let urls = Bundle.main.urls(forResourcesWithExtension: "epub", subdirectory: nil) {
+            for url in urls {
+                let filename = url.lastPathComponent
+                if let book = createBook(from: filename, path: url.path) {
+                    books.append(book)
+                }
+            }
+        }
+        
+        return books.sorted { $0.title < $1.title }
+    }
+    
+    // MARK: - 书籍导入与删除
+    
     func importBook(from sourceURL: URL) throws -> Book {
         let fileManager = FileManager.default
         let filename = sourceURL.lastPathComponent
@@ -187,20 +168,7 @@ class BookService {
         return filePath.contains("Documents/Books")
     }
     
-    private func loadBooksFromBundleRoot() -> [Book] {
-        var books: [Book] = []
-        
-        if let urls = Bundle.main.urls(forResourcesWithExtension: "epub", subdirectory: nil) {
-            for url in urls {
-                let filename = url.lastPathComponent
-                if let book = createBook(from: filename, path: url.path) {
-                    books.append(book)
-                }
-            }
-        }
-        
-        return books.sorted { $0.title < $1.title }
-    }
+    // MARK: - 书籍创建
     
     private func createBook(from filename: String, path: String) -> Book? {
         let id = filename.data(using: .utf8)?.base64EncodedString() ?? UUID().uuidString
@@ -254,6 +222,8 @@ class BookService {
         
         return "未知作者"
     }
+    
+    // MARK: - API 调用
     
     func fetchBooksFromAPI() async throws -> [Book] {
         let url = URL(string: "\(AppConfig.apiBaseURL)/api/books")!
@@ -346,44 +316,5 @@ class BookService {
     
     func toggleFavorite(_ book: Book) {
         // 暂不支持
-    }
-}
-
-// MARK: - 搜索结果模型
-struct SearchResult: Codable, Identifiable {
-    var id: String { "\(chapterIndex)-\(score)" }
-    let content: String
-    let chapterTitle: String?
-    let chapterIndex: Int
-    let score: Double
-    
-    enum CodingKeys: String, CodingKey {
-        case content
-        case chapterTitle = "chapter_title"
-        case chapterIndex = "chapter_index"
-        case score
-    }
-}
-
-struct SearchResponse: Codable {
-    let results: [SearchResult]?
-    let error: String?
-}
-
-// MARK: - API 错误
-enum APIError: LocalizedError {
-    case serverError
-    case networkError
-    case custom(String)
-    
-    var errorDescription: String? {
-        switch self {
-        case .serverError:
-            return "服务器错误"
-        case .networkError:
-            return "网络连接失败"
-        case .custom(let message):
-            return message
-        }
     }
 }
