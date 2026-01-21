@@ -9,6 +9,11 @@ typealias BookSearchResult = SearchResult
 class BookService {
     private let readingStatsKey = "reading_stats"
     
+    // MARK: - 分页加载缓存
+    private var cachedBooks: [Book] = []
+    private var isCacheValid = false
+    private let cacheQueue = DispatchQueue(label: "com.smartbook.bookservice.cache")
+    
     var userBooksDirectory: URL {
         let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let booksPath = documentsPath.appendingPathComponent("Books")
@@ -28,6 +33,70 @@ class BookService {
             return localBooks
         }
         return try await fetchBooksFromAPI()
+    }
+    
+    // MARK: - 分页加载优化
+    
+    /// 分页加载书籍
+    /// - Parameters:
+    ///   - page: 页码（从0开始）
+    ///   - pageSize: 每页数量，默认20本
+    /// - Returns: 当前页的书籍列表
+    func loadBooks(page: Int, pageSize: Int = 20) async -> [Book] {
+        // 确保缓存已加载
+        await ensureCacheLoaded()
+        
+        return await cacheQueue.sync {
+            let startIndex = page * pageSize
+            let endIndex = min(startIndex + pageSize, cachedBooks.count)
+            
+            guard startIndex < cachedBooks.count else {
+                return []
+            }
+            
+            return Array(cachedBooks[startIndex..<endIndex])
+        }
+    }
+    
+    /// 获取总书籍数量
+    func getTotalBooksCount() async -> Int {
+        await ensureCacheLoaded()
+        return await cacheQueue.sync {
+            cachedBooks.count
+        }
+    }
+    
+    /// 检查是否还有更多书籍
+    /// - Parameters:
+    ///   - page: 当前页码
+    ///   - pageSize: 每页数量
+    /// - Returns: 是否有更多书籍
+    func hasMoreBooks(page: Int, pageSize: Int = 20) async -> Bool {
+        let total = await getTotalBooksCount()
+        return (page + 1) * pageSize < total
+    }
+    
+    /// 刷新缓存
+    func refreshCache() {
+        cacheQueue.sync {
+            isCacheValid = false
+            cachedBooks.removeAll()
+        }
+    }
+    
+    /// 确保缓存已加载
+    private func ensureCacheLoaded() async {
+        let needsLoad = await cacheQueue.sync {
+            !isCacheValid
+        }
+        
+        if needsLoad {
+            let books = loadLocalBooks()
+            await cacheQueue.sync {
+                cachedBooks = books
+                isCacheValid = true
+            }
+        }
     }
     
     func loadLocalBooks() -> [Book] {
