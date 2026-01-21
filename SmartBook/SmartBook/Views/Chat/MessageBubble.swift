@@ -1,9 +1,8 @@
-// MessageComponents.swift - 消息组件
+// MessageBubble.swift - 消息气泡（智能适配简单和增强模式）
 
 import SwiftUI
 import MarkdownUI
 
-// MARK: - 消息气泡（智能适配简单和增强模式）
 struct MessageBubble: View {
     let message: ChatMessage
     let assistant: Assistant?  // 可选，简单模式时为nil
@@ -113,6 +112,8 @@ struct MessageBubble: View {
             }
         }
     }
+    
+    // MARK: - 子视图
     
     // 系统提示词视图
     @ViewBuilder
@@ -357,6 +358,8 @@ struct MessageBubble: View {
         .foregroundColor(colors.secondaryText)
     }
     
+    // MARK: - 辅助方法
+    
     // 格式化 token 数量
     private func formatTokens(_ num: Int) -> String {
         if num >= 1000000 {
@@ -368,121 +371,7 @@ struct MessageBubble: View {
     }
 }
 
-// MARK: - 流式消息气泡（显示打字效果）
-struct StreamingMessageBubble: View {
-    let assistant: Assistant
-    let content: String
-    let thinking: String?
-    var colors: ThemeColors = .dark
-    
-    @State private var isThinkingExpanded = false
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            // AI 头像
-            Circle()
-                .fill(assistant.colorValue.opacity(0.2))
-                .frame(width: 36, height: 36)
-                .overlay {
-                    Text(assistant.avatar)
-                        .font(.system(size: 18))
-                }
-            
-            VStack(alignment: .leading, spacing: 8) {
-                Text(assistant.name)
-                    .font(.caption)
-                    .foregroundColor(colors.secondaryText)
-                
-                VStack(alignment: .leading, spacing: 12) {
-                    // 思考过程（如果有）
-                    if let thinking = thinking, !thinking.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Button(action: { isThinkingExpanded.toggle() }) {
-                                HStack {
-                                    Image(systemName: "brain.head.profile")
-                                        .foregroundColor(.purple)
-                                    Text("Thinking...")
-                                        .font(.caption)
-                                        .fontWeight(.medium)
-                                    Spacer()
-                                    Image(systemName: isThinkingExpanded ? "chevron.down" : "chevron.right")
-                                        .font(.caption)
-                                }
-                                .foregroundColor(colors.primaryText)
-                            }
-                            .buttonStyle(.plain)
-                            
-                            if isThinkingExpanded {
-                                Text(thinking)
-                                    .font(.caption)
-                                    .foregroundColor(colors.secondaryText)
-                                    .padding(8)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color.purple.opacity(0.1))
-                                    )
-                            }
-                        }
-                        .padding(8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.purple.opacity(0.3), lineWidth: 1)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.purple.opacity(0.05))
-                                )
-                        )
-                    }
-                    
-                    // 内容（可能为空，显示打字指示器）
-                    if content.isEmpty {
-                        TypingIndicator(colors: colors)
-                    } else {
-                        Markdown(content)
-                            .markdownTextStyle(\.text) {
-                                FontSize(15)
-                                ForegroundColor(colors.primaryText)
-                            }
-                    }
-                }
-                .padding(12)
-                .background {
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(colors.assistantBubble)
-                }
-                .foregroundColor(colors.primaryText)
-            }
-            
-            Spacer(minLength: 48)
-        }
-    }
-}
-
-// MARK: - 打字指示器
-struct TypingIndicator: View {
-    var colors: ThemeColors = .dark
-    @State private var animating = false
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<3) { index in
-                Circle()
-                    .fill(colors.secondaryText.opacity(0.6))
-                    .frame(width: 8, height: 8)
-                    .scaleEffect(animating ? 1.0 : 0.5)
-                    .animation(
-                        Animation.easeInOut(duration: 0.6)
-                            .repeatForever()
-                            .delay(Double(index) * 0.2),
-                        value: animating
-                    )
-            }
-        }
-        .onAppear {
-            animating = true
-        }
-    }
-}
+// MARK: - Preview
 
 #Preview {
     VStack {
