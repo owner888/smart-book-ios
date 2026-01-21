@@ -106,4 +106,13 @@ class HomeViewModel {
     func refresh() async {
         await loadData()
     }
+    
+    /// 同步 CloudKit 数据
+    func syncCloudKit() async {
+        do {
+            try await checkInService.fetchFromCloudKit()
+        } catch {
+            // 静默处理错误
+        }
+    }
 }

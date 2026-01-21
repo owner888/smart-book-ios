@@ -8,12 +8,16 @@ struct HomeView: View {
     @Environment(BookService.self) var bookService
     @Environment(CheckInService.self) var checkInService
     @Environment(\.colorScheme) var systemColorScheme
-    @State private var recentBooks: [Book] = []
-    @State private var favoriteBooks: [Book] = []
-    @State private var readingStats: ReadingStats = ReadingStats()
-    @State private var selectedBookForReading: Book?
-    @State private var showingCheckInAlert = false
-    @State private var checkInMessage = ""
+    
+    // ViewModel
+    @State private var viewModel: HomeViewModel
+    
+    init() {
+        _viewModel = State(wrappedValue: HomeViewModel(
+            bookService: BookService(),
+            checkInService: CheckInService()
+        ))
+    }
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -27,25 +31,25 @@ struct HomeView: View {
                 ScrollView {
                     VStack(spacing: 24) {
                         // 阅读时间统计
-                        ReadingStatsCard(stats: readingStats, colors: colors)
+                        ReadingStatsCard(stats: viewModel.readingStats, colors: colors)
                             .padding(.horizontal)
                         
                         // 继续阅读
-                        if !recentBooks.isEmpty {
-                            ContinueReadingSection(books: recentBooks, colors: colors) { book in
-                                selectedBookForReading = book
+                        if !viewModel.recentBooks.isEmpty {
+                            ContinueReadingSection(books: viewModel.recentBooks, colors: colors) { book in
+                                viewModel.selectBookForReading(book)
                             }
                         }
                         
                         // 收藏
-                        if !favoriteBooks.isEmpty {
-                            FavoritesSection(books: favoriteBooks, colors: colors) { book in
-                                selectedBookForReading = book
+                        if !viewModel.favoriteBooks.isEmpty {
+                            FavoritesSection(books: viewModel.favoriteBooks, colors: colors) { book in
+                                viewModel.selectBookForReading(book)
                             }
                         }
                         
                         // 空状态
-                        if recentBooks.isEmpty && favoriteBooks.isEmpty {
+                        if viewModel.recentBooks.isEmpty && viewModel.favoriteBooks.isEmpty {
                             EmptyHomeState(colors: colors)
                         }
                     }
@@ -59,15 +63,14 @@ struct HomeView: View {
                     checkInButton
                 }
             }
-            .task {
-                await loadData()
-                loadReadingStats()
-                await syncCloudKit()
+            .task { [viewModel] in
+                await viewModel.loadData()
+                await viewModel.syncCloudKit()
             }
-            .fullScreenCover(item: $selectedBookForReading) { book in
+            .fullScreenCover(item: $viewModel.selectedBookForReading) { book in
                 ReaderView(book: book)
             }
-            .alert(checkInMessage, isPresented: $showingCheckInAlert) {
+            .alert(viewModel.checkInMessage, isPresented: $viewModel.showingCheckInAlert) {
                 Button(L("common.ok"), role: .cancel) { }
             }
         }
@@ -96,29 +99,8 @@ struct HomeView: View {
     
     private func performCheckIn() {
         Task {
-            do {
-                try await checkInService.checkIn()
-                checkInMessage = String(format: L("checkIn.success"), checkInService.currentStreak)
-                showingCheckInAlert = true
-            } catch {
-                checkInMessage = L("checkIn.error")
-                showingCheckInAlert = true
-            }
+            await viewModel.checkIn()
         }
-    }
-    
-    private func syncCloudKit() async {
-        try? await checkInService.fetchFromCloudKit()
-    }
-    
-    func loadData() async {
-        let books = bookService.loadLocalBooks()
-        recentBooks = Array(books.prefix(5))
-        favoriteBooks = books.filter { $0.isFavorite }
-    }
-    
-    func loadReadingStats() {
-        readingStats = bookService.loadReadingStats()
     }
 }
 
