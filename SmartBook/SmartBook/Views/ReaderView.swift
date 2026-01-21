@@ -5,71 +5,88 @@ import SwiftUI
 struct ReaderView: View {
     let book: Book
     @Environment(\.dismiss) private var dismiss
-    @State private var epubContent: EPUBContent?
-    @State private var isLoading = true
-    @State private var currentPageIndex = 0
-    @State private var allPages: [BookPage] = []
+    
+    // ViewModel
+    @State private var viewModel: ReaderViewModel
+    
+    // UI状态
     @State private var showSettings = false
     @State private var showTOC = false
     @State private var showControls = true
-    @State private var settings = ReaderSettings.load()
     @State private var controlsTimer: Timer?
     
-    private var pages: [String] { allPages.map { $0.content } }
+    init(book: Book) {
+        self.book = book
+        _viewModel = State(wrappedValue: ReaderViewModel(book: book))
+    }
+    
+    private var pages: [String] { viewModel.allPages.map { $0.content } }
     
     private var currentChapterIndex: Int {
-        guard currentPageIndex < allPages.count else { return 0 }
-        return allPages[currentPageIndex].chapterIndex
+        guard viewModel.currentPageIndex < viewModel.allPages.count else { return 0 }
+        return viewModel.allPages[viewModel.currentPageIndex].chapterIndex
     }
     
     private var currentChapterTitle: String {
-        guard let content = epubContent, currentChapterIndex < content.chapters.count else { return "" }
+        guard let content = viewModel.epubContent, currentChapterIndex < content.chapters.count else { return "" }
         return content.chapters[currentChapterIndex].title
     }
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                settings.bgColor.ignoresSafeArea()
+                viewModel.settings.bgColor.ignoresSafeArea()
                 
-                if isLoading {
+                if viewModel.isLoading {
                     loadingView
-                } else if let content = epubContent, !content.chapters.isEmpty {
+                } else if let content = viewModel.epubContent, !content.chapters.isEmpty {
                     readerContent(geometry: geometry)
                 } else {
                     errorView
                 }
                 
-                if showControls && !isLoading {
+                if showControls && !viewModel.isLoading {
                     controlsOverlay
                 }
             }
         }
         .navigationBarHidden(true)
         .statusBar(hidden: !showControls)
-        .onAppear { loadBook(); startControlsTimer() }
-        .onDisappear { saveProgress(); controlsTimer?.invalidate() }
+        .onAppear { 
+            Task { await viewModel.loadBook() }
+            startControlsTimer()
+        }
+        .onDisappear { 
+            viewModel.saveProgress()
+            controlsTimer?.invalidate()
+        }
         .sheet(isPresented: $showSettings) {
-            ReaderSettingsView(settings: $settings)
+            ReaderSettingsView(settings: $viewModel.settings)
                 .presentationDetents([.medium])
         }
         .sheet(isPresented: $showTOC) {
-            if let content = epubContent {
+            if let content = viewModel.epubContent {
                 TOCView(chapters: content.chapters, currentIndex: currentChapterIndex) { index in
-                    goToChapter(index)
+                    viewModel.goToChapter(index)
                     showTOC = false
                 }
             }
         }
-        .onChange(of: settings.fontSize) { _, _ in repaginateAndSave() }
-        .onChange(of: settings.lineSpacing) { _, _ in repaginateAndSave() }
-        .onChange(of: settings.backgroundColor) { _, _ in settings.save() }
+        .onChange(of: viewModel.settings.fontSize) { _, _ in 
+            viewModel.repaginateAndSave()
+        }
+        .onChange(of: viewModel.settings.lineSpacing) { _, _ in 
+            viewModel.repaginateAndSave()
+        }
+        .onChange(of: viewModel.settings.backgroundColor) { _, _ in 
+            viewModel.settings.save()
+        }
     }
     
     private var loadingView: some View {
         VStack(spacing: 16) {
-            ProgressView().scaleEffect(1.5).tint(settings.txtColor)
-            Text(L("common.loading")).foregroundColor(settings.txtColor.opacity(0.7))
+            ProgressView().scaleEffect(1.5).tint(viewModel.settings.txtColor)
+            Text(L("common.loading")).foregroundColor(viewModel.settings.txtColor.opacity(0.7))
         }
     }
     
@@ -77,7 +94,7 @@ struct ReaderView: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 50)).foregroundColor(.orange)
-            Text(L("error.loading")).foregroundColor(settings.txtColor)
+            Text(L("error.loading")).foregroundColor(viewModel.settings.txtColor)
             Button(L("common.back")) { dismiss() }.buttonStyle(.bordered)
         }
     }
@@ -88,43 +105,57 @@ struct ReaderView: View {
         let pageHeight = geometry.size.height
         
         ZStack {
-            switch settings.pageTurnStyle {
+            switch viewModel.settings.pageTurnStyle {
             case .curl:
                 PageCurlView(
-                    allPages: allPages,
-                    currentPageIndex: $currentPageIndex,
+                    allPages: viewModel.allPages,
+                    currentPageIndex: $viewModel.currentPageIndex,
                     pageWidth: pageWidth,
                     pageHeight: pageHeight,
-                    settings: settings,
-                    onPageChange: { saveProgress() },
+                    settings: viewModel.settings,
+                    onPageChange: { viewModel.saveProgress() },
                     onTapCenter: { toggleControls() }
                 )
                 
             case .fade:
-                if !pages.isEmpty && currentPageIndex < pages.count {
-                    PageContentView(pageIndex: currentPageIndex, allPages: allPages, settings: settings, width: pageWidth, height: pageHeight)
-                        .transition(.opacity)
-                        .id(currentPageIndex)
-                        .animation(.easeInOut(duration: 0.4), value: currentPageIndex)
+                if !pages.isEmpty && viewModel.currentPageIndex < pages.count {
+                    PageContentView(
+                        pageIndex: viewModel.currentPageIndex,
+                        allPages: viewModel.allPages,
+                        settings: viewModel.settings,
+                        width: pageWidth,
+                        height: pageHeight
+                    )
+                    .transition(.opacity)
+                    .id(viewModel.currentPageIndex)
+                    .animation(.easeInOut(duration: 0.4), value: viewModel.currentPageIndex)
                 }
                 tapAreaOverlay(pageWidth: pageWidth, pageHeight: pageHeight)
                 
             case .slide:
                 if !pages.isEmpty {
-                    TabView(selection: $currentPageIndex) {
+                    TabView(selection: $viewModel.currentPageIndex) {
                         ForEach(Array(pages.enumerated()), id: \.offset) { index, _ in
-                            PageContentView(pageIndex: index, allPages: allPages, settings: settings, width: pageWidth, height: pageHeight)
-                                .tag(index)
+                            PageContentView(
+                                pageIndex: index,
+                                allPages: viewModel.allPages,
+                                settings: viewModel.settings,
+                                width: pageWidth,
+                                height: pageHeight
+                            )
+                            .tag(index)
                         }
                     }
                     .tabViewStyle(.page(indexDisplayMode: .never))
-                    .animation(.easeInOut(duration: 0.3), value: currentPageIndex)
-                    .onChange(of: currentPageIndex) { _, _ in saveProgress() }
+                    .animation(.easeInOut(duration: 0.3), value: viewModel.currentPageIndex)
+                    .onChange(of: viewModel.currentPageIndex) { _, _ in 
+                        viewModel.saveProgress()
+                    }
                 }
                 centerTapArea(pageWidth: pageWidth, pageHeight: pageHeight)
             }
         }
-        .gesture(settings.pageTurnStyle == .fade ? swipeGesture : nil)
+        .gesture(viewModel.settings.pageTurnStyle == .fade ? swipeGesture : nil)
     }
     
     private var swipeGesture: some Gesture {
@@ -133,8 +164,8 @@ struct ReaderView: View {
                 let h = value.translation.width
                 let v = value.translation.height
                 if abs(h) > abs(v) {
-                    if h > 80 { previousPage() }
-                    else if h < -80 { nextPage() }
+                    if h > 80 { viewModel.previousPage() }
+                    else if h < -80 { viewModel.nextPage() }
                 }
             }
     }
@@ -143,11 +174,11 @@ struct ReaderView: View {
     private func tapAreaOverlay(pageWidth: CGFloat, pageHeight: CGFloat) -> some View {
         HStack(spacing: 0) {
             Color.clear.frame(width: pageWidth * 0.25).contentShape(Rectangle())
-                .onTapGesture { previousPage() }
+                .onTapGesture { viewModel.previousPage() }
             Color.clear.frame(width: pageWidth * 0.5).contentShape(Rectangle())
                 .onTapGesture { toggleControls() }
             Color.clear.frame(width: pageWidth * 0.25).contentShape(Rectangle())
-                .onTapGesture { nextPage() }
+                .onTapGesture { viewModel.nextPage() }
         }
         .frame(height: pageHeight)
         .allowsHitTesting(!showControls)
@@ -177,7 +208,7 @@ struct ReaderView: View {
                     .padding(12).background(Color.black.opacity(0.5)).clipShape(Circle())
             }
             Spacer()
-            Text(epubContent?.metadata.title ?? book.title)
+            Text(viewModel.epubContent?.metadata.title ?? book.title)
                 .font(.headline).foregroundColor(.white).lineLimit(1)
             Spacer()
             Button { showTOC = true } label: {
@@ -194,11 +225,11 @@ struct ReaderView: View {
         VStack(spacing: 12) {
             if !pages.isEmpty {
                 VStack(spacing: 4) {
-                    ProgressView(value: Double(currentPageIndex + 1), total: Double(pages.count)).tint(.white)
+                    ProgressView(value: Double(viewModel.currentPageIndex + 1), total: Double(pages.count)).tint(.white)
                     HStack {
                         Text(currentChapterTitle).font(.caption).foregroundColor(.white.opacity(0.8))
                         Spacer()
-                        Text(String(format: L("reader.pageIndicator"), currentPageIndex + 1, pages.count))
+                        Text(String(format: L("reader.pageIndicator"), viewModel.currentPageIndex + 1, pages.count))
                             .font(.caption).foregroundColor(.white.opacity(0.8))
                     }
                 }
@@ -206,7 +237,7 @@ struct ReaderView: View {
             }
             
             HStack(spacing: 30) {
-                Button { previousChapter() } label: {
+                Button { viewModel.previousChapter() } label: {
                     VStack(spacing: 4) {
                         Image(systemName: "chevron.left.2").font(.title2)
                         Text(L("reader.previousPage")).font(.caption2)
@@ -222,125 +253,19 @@ struct ReaderView: View {
                     }.foregroundColor(.white)
                 }
                 
-                Button { nextChapter() } label: {
+                Button { viewModel.nextChapter() } label: {
                     VStack(spacing: 4) {
                         Image(systemName: "chevron.right.2").font(.title2)
                         Text(L("reader.nextChapter")).font(.caption2)
                     }.foregroundColor(.white)
                 }
-                .disabled(currentChapterIndex >= (epubContent?.chapters.count ?? 1) - 1)
-                .opacity(currentChapterIndex >= (epubContent?.chapters.count ?? 1) - 1 ? 0.5 : 1)
+                .disabled(currentChapterIndex >= (viewModel.epubContent?.chapters.count ?? 1) - 1)
+                .opacity(currentChapterIndex >= (viewModel.epubContent?.chapters.count ?? 1) - 1 ? 0.5 : 1)
             }
             .padding(.vertical, 8)
         }
         .padding()
         .background(LinearGradient(colors: [Color.clear, Color.black.opacity(0.7)], startPoint: .top, endPoint: .bottom))
-    }
-    
-    private func loadBook() {
-        isLoading = true
-        DispatchQueue.global(qos: .userInitiated).async {
-            guard let filePath = book.filePath else {
-                DispatchQueue.main.async { isLoading = false }
-                return
-            }
-            let content = EPUBParser.parseContent(from: filePath)
-            DispatchQueue.main.async {
-                epubContent = content
-                paginateEntireBook()
-                if let progress = ReadingProgress.load(for: book.id) {
-                    currentPageIndex = min(progress.pageIndex, allPages.count - 1)
-                }
-                isLoading = false
-            }
-        }
-    }
-    
-    private func paginateEntireBook() {
-        guard let content = epubContent else { allPages = []; return }
-        var newPages: [BookPage] = []
-        for (chapterIndex, chapter) in content.chapters.enumerated() {
-            for pageContent in paginateText(chapter.content) {
-                newPages.append(BookPage(content: pageContent, chapterIndex: chapterIndex, chapterTitle: chapter.title))
-            }
-        }
-        allPages = newPages.isEmpty ? [BookPage(content: "", chapterIndex: 0, chapterTitle: "")] : newPages
-    }
-    
-    private func paginateText(_ text: String) -> [String] {
-        let charsPerPage = Int(3000 / settings.fontSize * 18)
-        guard !text.isEmpty else { return [""] }
-        
-        var pages: [String] = []
-        var currentIndex = text.startIndex
-        
-        while currentIndex < text.endIndex {
-            let endIndex = text.index(currentIndex, offsetBy: charsPerPage, limitedBy: text.endIndex) ?? text.endIndex
-            var actualEndIndex = endIndex
-            
-            if actualEndIndex < text.endIndex {
-                if let paragraphBreak = text[currentIndex..<endIndex].lastIndex(of: "\n") {
-                    actualEndIndex = text.index(after: paragraphBreak)
-                } else if let sentenceBreak = text[currentIndex..<endIndex].lastIndex(where: { "。！？.!?".contains($0) }) {
-                    actualEndIndex = text.index(after: sentenceBreak)
-                }
-            }
-            
-            let pageText = String(text[currentIndex..<actualEndIndex]).trimmingCharacters(in: .whitespacesAndNewlines)
-            if !pageText.isEmpty { pages.append(pageText) }
-            currentIndex = actualEndIndex
-        }
-        return pages.isEmpty ? [""] : pages
-    }
-    
-    private func repaginateAndSave() {
-        let savedPage = currentPageIndex
-        paginateEntireBook()
-        currentPageIndex = min(savedPage, allPages.count - 1)
-        settings.save()
-    }
-    
-    private func nextPage() {
-        guard currentPageIndex < allPages.count - 1 else { return }
-        withAnimation(.easeInOut(duration: 0.25)) { currentPageIndex += 1 }
-        saveProgress()
-    }
-    
-    private func previousPage() {
-        guard currentPageIndex > 0 else { return }
-        withAnimation(.easeInOut(duration: 0.25)) { currentPageIndex -= 1 }
-        saveProgress()
-    }
-    
-    private func nextChapter() {
-        guard let content = epubContent else { return }
-        let nextChapterIndex = currentChapterIndex + 1
-        if nextChapterIndex < content.chapters.count,
-           let pageIndex = allPages.firstIndex(where: { $0.chapterIndex == nextChapterIndex }) {
-            withAnimation(.easeInOut(duration: 0.25)) { currentPageIndex = pageIndex }
-            saveProgress()
-        }
-    }
-    
-    private func previousChapter() {
-        let prevChapterIndex = currentChapterIndex - 1
-        if prevChapterIndex >= 0,
-           let pageIndex = allPages.firstIndex(where: { $0.chapterIndex == prevChapterIndex }) {
-            withAnimation(.easeInOut(duration: 0.25)) { currentPageIndex = pageIndex }
-            saveProgress()
-        }
-    }
-    
-    private func goToChapter(_ index: Int) {
-        guard let content = epubContent, index >= 0 && index < content.chapters.count,
-              let pageIndex = allPages.firstIndex(where: { $0.chapterIndex == index }) else { return }
-        withAnimation(.easeInOut(duration: 0.25)) { currentPageIndex = pageIndex }
-        saveProgress()
-    }
-    
-    private func saveProgress() {
-        ReadingProgress(bookId: book.id, chapterIndex: currentChapterIndex, pageIndex: currentPageIndex, scrollOffset: 0, lastReadDate: Date()).save()
-        hideControls()
     }
     
     private func hideControls() {
