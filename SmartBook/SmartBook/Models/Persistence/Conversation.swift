@@ -9,13 +9,13 @@ import SwiftData
 import Foundation
 
 @Model
-class ConversationModel {
+class Conversation {
     var id: UUID
     var title: String
     var createdAt: Date
 
     @Relationship(deleteRule: .cascade)
-    var messages: [MessageModel] = []
+    var messages: [Message] = []
 
     init(title: String) {
         self.id = UUID()

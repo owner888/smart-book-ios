@@ -8,18 +8,18 @@ import SwiftData
 import Foundation
 
 @Model
-class MessageModel {
+class Message {
     var id: UUID
     var role: Role
     var content: String
     var createdAt: Date
 
-    var conversation: ConversationModel?
+    var conversation: Conversation?
 
     init(
         role: Role,
         content: String,
-        conversation: ConversationModel?
+        conversation: Conversation?
     ) {
         self.id = UUID()
         self.role = role

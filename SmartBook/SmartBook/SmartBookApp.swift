@@ -42,8 +42,8 @@ struct SmartBookApp: App {
         }
         .modelContainer(
             for: [
-                ConversationModel.self,
-                MessageModel.self,
+                Conversation.self,
+                Message.self,
             ]
         )
     }
