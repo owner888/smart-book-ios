@@ -37,9 +37,9 @@ final class EPUBParserTests: XCTestCase {
     
     // MARK: - 内容解析测试
     
-    func testParseContent() {
+    func testParseContent() throws {
         // Given: 有效的 EPUB 文件
-        guard let testEPUBPath = Bundle(for: type(of: self)).path(forResource: "test", ofType: "epub") else {
+        guard Bundle(for: type(of: self)).path(forResource: "test", ofType: "epub") != nil else {
             throw XCTSkip("测试 EPUB 文件不存在")
         }
         
@@ -53,7 +53,7 @@ final class EPUBParserTests: XCTestCase {
     
     // MARK: - 封面提取测试
     
-    func testExtractCover() {
+    func testExtractCover() throws {
         // Given: 有 EPUB 文件
         guard let testEPUBPath = Bundle(for: type(of: self)).path(forResource: "test", ofType: "epub") else {
             throw XCTSkip("测试 EPUB 文件不存在")

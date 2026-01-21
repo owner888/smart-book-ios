@@ -8,12 +8,14 @@ final class ChatViewModelTests: XCTestCase {
     var viewModel: ChatViewModel!
     var mockBookState: BookState!
     
+    @MainActor
     override func setUpWithError() throws {
         viewModel = ChatViewModel()
         mockBookState = BookState()
         viewModel.bookState = mockBookState
     }
     
+    @MainActor
     override func tearDownWithError() throws {
         viewModel = nil
         mockBookState = nil
@@ -21,11 +23,12 @@ final class ChatViewModelTests: XCTestCase {
     
     // MARK: - 初始化测试
     
+    @MainActor
     func testInitialState() {
         // Then: 初始状态应该正确
         XCTAssertTrue(viewModel.messages.isEmpty, "初始消息列表应该为空")
         XCTAssertFalse(viewModel.isLoading, "初始不应该在加载中")
-        XCTAssertNil(viewModel.errorMessage, "初始不应该有错误信息")
+        XCTAssertNil(viewModel.questionMessageId, "初始不应该有问题消息ID")
     }
     
     // MARK: - 消息发送测试
@@ -88,12 +91,16 @@ final class ChatViewModelTests: XCTestCase {
     
     // MARK: - 书籍上下文测试
     
+    @MainActor
     func testSendMessageWithBook() async {
         // Given: 选择了一本书
         let testBook = Book(
             id: "test_book_id",
             title: "测试书籍",
-            author: "测试作者"
+            author: "测试作者",
+            coverURL: nil,
+            filePath: nil,
+            addedDate: Date()
         )
         mockBookState.selectedBook = testBook
         

@@ -71,13 +71,20 @@ final class BookServiceTests: XCTestCase {
             id: "test_id",
             title: "测试书籍",
             author: "测试作者",
-            filePath: Bundle.main.path(forResource: "test", ofType: "epub")
+            coverURL: nil,
+            filePath: Bundle.main.path(forResource: "test", ofType: "epub"),
+            addedDate: Date()
         )
         
         // When: 尝试删除
         // Then: 应该抛出错误
         XCTAssertThrowsError(try bookService.deleteBook(bundleBook)) { error in
-            XCTAssertEqual(error as? APIError, .custom("只能删除用户导入的书籍"))
+            // 验证错误类型和消息
+            if let apiError = error as? APIError {
+                XCTAssertTrue(apiError.localizedDescription.contains("只能删除用户导入的书籍"))
+            } else {
+                XCTFail("错误类型应该是 APIError")
+            }
         }
     }
     
