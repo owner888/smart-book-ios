@@ -22,11 +22,13 @@ enum APIError: LocalizedError {
 
 // MARK: - 搜索结果模型
 struct SearchResult: Codable, Identifiable {
-    var id: String { "\(chapterIndex)-\(score)" }
     let content: String
     let chapterTitle: String?
     let chapterIndex: Int
     let score: Double
+    
+    // Identifiable conformance
+    var id: String { "\(chapterIndex)-\(score)" }
     
     enum CodingKeys: String, CodingKey {
         case content

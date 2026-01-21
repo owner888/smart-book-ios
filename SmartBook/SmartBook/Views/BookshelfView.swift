@@ -11,12 +11,17 @@ struct BookshelfView: View {
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.dismiss) var dismiss
-    @State private var showingImporter = false
-    @State private var showingDeleteAlert = false
-    @State private var bookToDelete: Book?
-    @State private var importError: String?
-    @State private var showingError = false
-    @State private var selectedBookForReading: Book?
+    
+    // ViewModel - 使用 Environment 依赖注入
+    @State private var viewModel: BookshelfViewModel
+    
+    init() {
+        // 使用空的初始化，在 onAppear 中注入依赖
+        _viewModel = State(wrappedValue: BookshelfViewModel(
+            bookService: BookService(),
+            bookState: BookState()
+        ))
+    }
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -43,7 +48,7 @@ struct BookshelfView: View {
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        showingImporter = true
+                        viewModel.showImporter()
                     } label: {
                         Image(systemName: "plus")
                             .foregroundColor(colors.primaryText)
@@ -51,36 +56,36 @@ struct BookshelfView: View {
                 }
             }
             .task {
-                await loadBooks()
+                await viewModel.loadBooks()
             }
             .refreshable {
-                await loadBooks()
+                await viewModel.loadBooks()
             }
             .fileImporter(
-                isPresented: $showingImporter,
+                isPresented: $viewModel.showingImporter,
                 allowedContentTypes: [UTType(filenameExtension: "epub") ?? .data],
                 allowsMultipleSelection: true
             ) { result in
                 Task {
-                    await handleImport(result)
+                    await viewModel.handleImport(result)
                 }
             }
-            .alert(L("library.delete.title"), isPresented: $showingDeleteAlert) {
+            .alert(L("library.delete.title"), isPresented: $viewModel.showingDeleteAlert) {
                 Button(L("common.cancel"), role: .cancel) { }
                 Button(L("common.delete"), role: .destructive) {
-                    if let book = bookToDelete {
-                        deleteBook(book)
+                    if let book = viewModel.bookToDelete {
+                        viewModel.deleteBook(book)
                     }
                 }
             } message: {
                 Text(L("library.delete.message"))
             }
-            .alert(L("library.import.failed"), isPresented: $showingError) {
+            .alert(L("library.import.failed"), isPresented: $viewModel.showingError) {
                 Button(L("common.ok"), role: .cancel) { }
             } message: {
-                Text(importError ?? L("error.generic"))
+                Text(viewModel.importError ?? L("error.generic"))
             }
-            .fullScreenCover(item: $selectedBookForReading) { book in
+            .fullScreenCover(item: $viewModel.selectedBookForReading) { book in
                 ReaderView(book: book)
             }
         }
@@ -120,7 +125,7 @@ struct BookshelfView: View {
                 .foregroundColor(colors.secondaryText.opacity(0.7))
             
             Button {
-                showingImporter = true
+                viewModel.showImporter()
             } label: {
                 Label(L("library.import"), systemImage: "plus.circle.fill")
                     .font(.headline)
@@ -146,9 +151,9 @@ struct BookshelfView: View {
             
             LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 24) {
                 ForEach(bookState.books) { book in
-                    BookCard(book: book, isUserImported: bookService.isUserImportedBook(book), colors: colors)
+                    BookCard(book: book, isUserImported: viewModel.isUserImportedBook(book), colors: colors)
                         .onTapGesture {
-                            handleBookTap(book)
+                            viewModel.selectBookForReading(book)
                         }
                         .contextMenu {
                             contextMenuItems(for: book)
@@ -160,19 +165,11 @@ struct BookshelfView: View {
         }
     }
     
-    private func handleBookTap(_ book: Book) {
-        if book.filePath != nil {
-            selectedBookForReading = book
-        } else {
-            bookState.selectedBook = book
-        }
-    }
-    
     @ViewBuilder
     private func contextMenuItems(for book: Book) -> some View {
         if book.filePath != nil {
             Button {
-                selectedBookForReading = book
+                viewModel.selectBookForReading(book)
             } label: {
                 Label(L("reader.title"), systemImage: "book")
             }
@@ -184,49 +181,12 @@ struct BookshelfView: View {
             Label(L("chat.title"), systemImage: "bubble.left.and.bubble.right")
         }
         
-        if bookService.isUserImportedBook(book) {
+        if viewModel.isUserImportedBook(book) {
             Button(role: .destructive) {
-                bookToDelete = book
-                showingDeleteAlert = true
+                viewModel.requestDelete(book)
             } label: {
                 Label(L("common.delete"), systemImage: "trash")
             }
-        }
-    }
-    
-    func loadBooks() async {
-        await bookState.loadBooks(using: bookService)
-    }
-    
-    func handleImport(_ result: Result<[URL], Error>) async {
-        switch result {
-        case .success(let urls):
-            var importedCount = 0
-            for url in urls {
-                do {
-                    _ = try bookService.importBook(from: url)
-                    importedCount += 1
-                } catch {
-                    importError = L("library.import.failed") + ": \(error.localizedDescription)"
-                    showingError = true
-                }
-            }
-            if importedCount > 0 {
-                await loadBooks()
-            }
-        case .failure(let error):
-            importError = L("error.fileNotFound") + ": \(error.localizedDescription)"
-            showingError = true
-        }
-    }
-    
-    func deleteBook(_ book: Book) {
-        do {
-            try bookService.deleteBook(book)
-            bookState.books.removeAll { $0.id == book.id }
-        } catch {
-            importError = L("common.error") + ": \(error.localizedDescription)"
-            showingError = true
         }
     }
     

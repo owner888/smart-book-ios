@@ -3,14 +3,6 @@
 import Foundation
 import SwiftUI
 
-/// 搜索结果
-struct SearchResult: Identifiable {
-    let id = UUID()
-    let book: Book
-    let matchedText: String
-    let chapterTitle: String
-}
-
 /// 搜索视图模型
 @MainActor
 @Observable
@@ -99,7 +91,8 @@ class SearchViewModel {
     
     /// 选择搜索结果
     /// - Parameter result: 搜索结果
-    func selectResult(_ result: SearchResult) {
-        selectedBook = result.book
+    /// - Parameter book: 对应的书籍
+    func selectResult(_ result: SearchResult, book: Book) {
+        selectedBook = book
     }
 }

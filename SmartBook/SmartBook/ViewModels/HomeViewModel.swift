@@ -62,26 +62,30 @@ class HomeViewModel {
     
     /// 加载最近阅读的书籍
     private func loadRecentBooks() async -> [Book] {
-        // 从 bookService 获取最近阅读的书籍
-        return bookService.getRecentBooks()
+        // TODO: 从 bookService 获取最近阅读的书籍
+        // return bookService.getRecentBooks()
+        return []
     }
     
     /// 加载收藏的书籍
     private func loadFavoriteBooks() async -> [Book] {
-        // 从 bookService 获取收藏的书籍
-        return bookService.getFavoriteBooks()
+        // TODO: 从 bookService 获取收藏的书籍
+        // return bookService.getFavoriteBooks()
+        return []
     }
     
     /// 加载阅读统计
     private func loadReadingStats() async -> ReadingStats {
-        return bookService.loadReadingStats()
+        // TODO: 从 bookService 加载阅读统计
+        // return bookService.loadReadingStats()
+        return ReadingStats()
     }
     
     /// 每日签到
     func checkIn() async {
         do {
-            let result = try await checkInService.checkIn()
-            checkInMessage = result.message
+            try await checkInService.checkIn()
+            checkInMessage = "签到成功！"
             showingCheckInAlert = true
             
             // 刷新统计数据

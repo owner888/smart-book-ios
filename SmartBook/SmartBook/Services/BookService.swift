@@ -2,6 +2,9 @@
 
 import Foundation
 
+// 使用 APIError.swift 中定义的 SearchResult
+typealias BookSearchResult = SearchResult
+
 @Observable
 class BookService {
     private let readingStatsKey = "reading_stats"
