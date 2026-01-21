@@ -27,6 +27,12 @@ class SearchViewModel {
     /// 选中的书籍
     var selectedBook: Book?
     
+    /// 最近搜索历史
+    var recentSearches: [String] = []
+    
+    /// 选中要阅读的书籍
+    var selectedBookForReading: Book?
+    
     // MARK: - 依赖
     
     private let bookService: BookService
@@ -94,5 +100,36 @@ class SearchViewModel {
     /// - Parameter book: 对应的书籍
     func selectResult(_ result: SearchResult, book: Book) {
         selectedBook = book
+    }
+    
+    /// 加载最近搜索历史
+    func loadRecentSearches() async {
+        recentSearches = UserDefaults.standard.stringArray(forKey: "RecentSearches") ?? []
+    }
+    
+    /// 添加到最近搜索
+    /// - Parameter text: 搜索文本
+    func addToRecentSearches(_ text: String) {
+        guard !text.isEmpty else { return }
+        var searches = recentSearches
+        searches.removeAll { $0 == text }
+        searches.insert(text, at: 0)
+        if searches.count > 5 {
+            searches = Array(searches.prefix(5))
+        }
+        recentSearches = searches
+        UserDefaults.standard.set(searches, forKey: "RecentSearches")
+    }
+    
+    /// 清空最近搜索
+    func clearRecentSearches() {
+        recentSearches = []
+        UserDefaults.standard.removeObject(forKey: "RecentSearches")
+    }
+    
+    /// 选择书籍进行阅读
+    /// - Parameter book: 选中的书籍
+    func selectBookForReading(_ book: Book) {
+        selectedBookForReading = book
     }
 }

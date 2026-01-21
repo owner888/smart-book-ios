@@ -6,15 +6,22 @@ struct SearchView: View {
     @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
+    
+    // ViewModel
+    @State private var viewModel: SearchViewModel
+    
+    // UI状态
     @State private var searchText = ""
-    @State private var selectedBookForReading: Book?
-    @State private var recentSearches: [String] = []
     @FocusState private var isSearchFocused: Bool
     @State private var isPresented = false
     
     var previousTabIcon: String = "books.vertical"
     var previousTabName: String = "书架"
     var onBack: (() -> Void)?
+    
+    init() {
+        _viewModel = State(wrappedValue: SearchViewModel(bookService: BookService()))
+    }
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -50,10 +57,10 @@ struct SearchView: View {
             }
             .navigationTitle(L("search.title"))
             .navigationBarTitleDisplayMode(.large)
-            .task {
-                loadRecentSearches()
+            .task { [viewModel] in
+                await viewModel.loadRecentSearches()
             }
-            .fullScreenCover(item: $selectedBookForReading) { book in
+            .fullScreenCover(item: $viewModel.selectedBookForReading) { book in
                 ReaderView(book: book)
             }
         }.searchable(text: $searchText, prompt: L("search.placeholder"))
@@ -71,13 +78,13 @@ struct SearchView: View {
                                 .foregroundColor(colors.primaryText)
                             Spacer()
                             Button(L("search.clear")) {
-                                clearRecentSearches()
+                                viewModel.clearRecentSearches()
                             }
                             .foregroundColor(.red)
                         }
                         .padding(.horizontal)
                         
-                        ForEach(recentSearches, id: \.self) { search in
+                        ForEach(viewModel.recentSearches, id: \.self) { search in
                             RecentSearchRow(text: search, colors: colors)
                                 .onTapGesture {
                                     searchText = search
@@ -122,10 +129,9 @@ struct SearchView: View {
                         ForEach(filteredBooks) { book in
                             SearchResultRow(book: book, searchText: searchText, colors: colors)
                                 .onTapGesture {
-                                    addToRecentSearches(searchText)
-                                    if book.filePath != nil {
-                                        selectedBookForReading = book
-                                    } else {
+                                    viewModel.addToRecentSearches(searchText)
+                                    viewModel.selectBookForReading(book)
+                                    if book.filePath == nil {
                                         bookState.selectedBook = book
                                     }
                                 }
@@ -137,26 +143,6 @@ struct SearchView: View {
         }
     }
     
-    func loadRecentSearches() {
-        recentSearches = UserDefaults.standard.stringArray(forKey: "RecentSearches") ?? []
-    }
-    
-    func addToRecentSearches(_ text: String) {
-        guard !text.isEmpty else { return }
-        var searches = recentSearches
-        searches.removeAll { $0 == text }
-        searches.insert(text, at: 0)
-        if searches.count > 5 {
-            searches = Array(searches.prefix(5))
-        }
-        recentSearches = searches
-        UserDefaults.standard.set(searches, forKey: "RecentSearches")
-    }
-    
-    func clearRecentSearches() {
-        recentSearches = []
-        UserDefaults.standard.removeObject(forKey: "RecentSearches")
-    }
 }
 
 struct CategoryCard: View {
