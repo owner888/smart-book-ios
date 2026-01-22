@@ -122,7 +122,7 @@
 "chat.placeholder" = "Ask about the book...";
 "chat.input.placeholder" = "Ask Anything";
 "chat.send" = "Send";
-"chat.voice.start" = "Start Speaking";
+"chat.voice.start" = "Speaking";
 "chat.voice.stop" = "Stop";
 "chat.sources.title" = "📚 Sources (%d)";
 "chat.systemPrompt.title" = "System Prompt";

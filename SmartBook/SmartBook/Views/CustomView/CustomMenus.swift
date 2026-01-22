@@ -22,7 +22,6 @@ struct MediaMenu: View {
             }
         }
         .padding(.vertical, 6)
-        .frame(width: 176)
     }
     
     func menuItem(_ type: MenuConfig.MediaMenuType) -> some View {
