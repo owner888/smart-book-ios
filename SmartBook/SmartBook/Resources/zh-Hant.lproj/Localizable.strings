@@ -246,3 +246,16 @@
 "error.permissionDenied" = "權限被拒絕";
 "error.storageFull" = "儲存空間不足";
 "error.loading" = "載入失敗";
+
+/* Navigation */
+"nav.library" = "資料庫";
+"nav.recent" = "最近";
+
+/* Menu - Top Functions */
+"menu.top.getSuper" = "Super";
+"menu.top.createVideo" = "建立視訊";
+"menu.top.editPhoto" = "編輯圖像";
+"menu.top.voiceMode" = "語音模式";
+"menu.top.camera" = "開啟相機";
+"menu.top.analysisDocument" = "分析文件";
+"menu.top.custom" = "自訂";

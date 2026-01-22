@@ -250,3 +250,12 @@
 /* Navigation */
 "nav.library" = "资料库";
 "nav.recent" = "最近";
+
+/* Menu - Top Functions */
+"menu.top.getSuper" = "Super";
+"menu.top.createVideo" = "创建视频";
+"menu.top.editPhoto" = "编辑图像";
+"menu.top.voiceMode" = "语音模式";
+"menu.top.camera" = "打开相机";
+"menu.top.analysisDocument" = "分析文档";
+"menu.top.custom" = "自定义";

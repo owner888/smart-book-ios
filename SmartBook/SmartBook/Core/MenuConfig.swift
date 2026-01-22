@@ -52,7 +52,7 @@ class MenuConfig {
         var config: Config {
             switch self {
             case .super:
-                return Config(icon: "bolt.circle", title: "SuperGrok", summary: L("ai.super.summary"))
+                return Config(icon: "bolt.circle", title: "Super", summary: L("ai.super.summary"))
             case .heavy:
                 return Config(icon: "square.grid.2x2", title: "Heavy", summary: "Team of experts")
             case .expert:
@@ -62,7 +62,7 @@ class MenuConfig {
             case .auto:
                 return Config(icon: "airplane", title: "Auto", summary: "Chooses Fast or Expert")
             case .thinking:
-                return Config(icon: "moon", title: "Grok 4.1 Thinking", summary: "Thinks fast")
+                return Config(icon: "moon", title: "4.1 Thinking", summary: "Thinks fast")
             }
         }
     }
@@ -81,19 +81,19 @@ class MenuConfig {
         var config: Config {
             switch self {
             case .getSuper:
-                return Config(icon: "bolt.circle", title: "SuperGrok")
+                return Config(icon: "bolt.circle", title: L("menu.top.getSuper"))
             case .createVideo:
-                return Config(icon: "photo.badge.plus", title: "创建视频")
+                return Config(icon: "photo.badge.plus", title: L("menu.top.createVideo"))
             case .editPhoto:
-                return Config(icon: "square.and.pencil", title: "编辑图像")
+                return Config(icon: "square.and.pencil", title: L("menu.top.editPhoto"))
             case .voiceMode:
-                return Config(icon: "waveform", title: "语音模式")
+                return Config(icon: "waveform", title: L("menu.top.voiceMode"))
             case .camera:
-                return Config(icon: "camera", title: "打开相机")
+                return Config(icon: "camera", title: L("menu.top.camera"))
             case .analysisDocument:
-                return Config(icon: "document", title: "分析文档")
+                return Config(icon: "document", title: L("menu.top.analysisDocument"))
             case .custom:
-                return Config(icon: "slider.horizontal.3", title: "自定义 Grok")
+                return Config(icon: "slider.horizontal.3", title: L("menu.top.custom"))
             }
         }
     }

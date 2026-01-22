@@ -250,3 +250,12 @@
 /* Navigation */
 "nav.library" = "Library";
 "nav.recent" = "Recent";
+
+/* Menu - Top Functions */
+"menu.top.getSuper" = "Super";
+"menu.top.createVideo" = "Create Videos";
+"menu.top.editPhoto" = "Edit Image";
+"menu.top.voiceMode" = "Voice Mode";
+"menu.top.camera" = "Open Camera";
+"menu.top.analysisDocument" = "Analyze Docs";
+"menu.top.custom" = "Custom";
