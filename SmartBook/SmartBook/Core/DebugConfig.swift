@@ -26,12 +26,12 @@ enum DebugConfig {
         print("🎯 AppConfig.defaultAPIBaseURL: \(AppConfig.defaultAPIBaseURL)")
         
         // 4. 打印所有 Info.plist 内容
-        print("\n=== 完整 Info.plist 内容 ===")
-        if let dict = Bundle.main.infoDictionary {
-            for (key, value) in dict.sorted(by: { $0.key < $1.key }) {
-                print("\(key): \(value)")
-            }
-        }
+        // print("\n=== 完整 Info.plist 内容 ===")
+        // if let dict = Bundle.main.infoDictionary {
+        //     for (key, value) in dict.sorted(by: { $0.key < $1.key }) {
+        //         print("\(key): \(value)")
+        //     }
+        // }
         
         print("\n===================")
     }
