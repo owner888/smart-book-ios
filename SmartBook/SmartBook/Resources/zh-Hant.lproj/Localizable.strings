@@ -266,3 +266,6 @@
 "menu.media.file" = "檔案";
 "menu.media.createPhoto" = "創作圖片";
 "menu.media.editPhoto" = "編輯圖像";
+
+/* Menu - Actions */
+"menu.upgrade" = "升級";

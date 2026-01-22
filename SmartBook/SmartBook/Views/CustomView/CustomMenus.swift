@@ -75,7 +75,7 @@ struct AIFunctionMenu: View {
                     }
                     Text(config.summary ?? "").font(.caption).foregroundStyle(.apprBlack).opacity(0.3)
                 }
-                Text("升级").font(.headline).foregroundStyle(.apprWhite).padding(.horizontal, 12).padding(.vertical, 8).background {
+                Text(L("menu.upgrade")).font(.headline).foregroundStyle(.apprWhite).padding(.horizontal, 12).padding(.vertical, 8).background {
                     Color.apprBlack.clipShape(RoundedRectangle(cornerRadius: 18))
                 }
             }

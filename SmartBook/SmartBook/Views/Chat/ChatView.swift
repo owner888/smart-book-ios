@@ -170,7 +170,7 @@ struct ChatView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle("智能对话")
+            .navigationTitle(L("chat.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: { sideObser.jumpToPage(0) }) {

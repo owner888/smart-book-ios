@@ -262,7 +262,10 @@
 
 /* Menu - Media Menu */
 "menu.media.camera" = "Camera";
-"menu.media.photo" = "Photos";
-"menu.media.file" = "Files";
+"menu.media.photo" = "Photo";
+"menu.media.file" = "File";
 "menu.media.createPhoto" = "Create Image";
 "menu.media.editPhoto" = "Edit Image";
+
+/* Menu - Actions */
+"menu.upgrade" = "Upgrade";

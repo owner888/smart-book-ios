@@ -266,3 +266,6 @@
 "menu.media.file" = "文件";
 "menu.media.createPhoto" = "创作图片";
 "menu.media.editPhoto" = "编辑图像";
+
+/* Menu - Actions */
+"menu.upgrade" = "升级";
