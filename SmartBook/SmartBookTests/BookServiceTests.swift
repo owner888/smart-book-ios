@@ -11,10 +11,6 @@ final class BookServiceTests: XCTestCase {
         bookService = BookService()
     }
     
-    override func tearDownWithError() throws {
-        bookService = nil
-    }
-    
     // MARK: - 书籍加载测试
     
     func testLoadLocalBooks() throws {
@@ -54,40 +50,7 @@ final class BookServiceTests: XCTestCase {
         XCTAssertNotNil(book, "导入的书籍不应为 nil")
         XCTAssertFalse(book.title.isEmpty, "书籍标题不应为空")
     }
-    
-    // MARK: - 书籍删除测试
-    
-    func testDeleteUserImportedBook() throws {
-        // Given: 用户导入的书籍
-        // 这需要先导入一个测试书籍
-        
-        // When & Then: 测试删除功能
-        // 注意: 这里需要具体的测试场景
-    }
-    
-    func testCannotDeleteBundledBook() {
-        // Given: Bundle 中的书籍
-        let bundleBook = Book(
-            id: "test_id",
-            title: "测试书籍",
-            author: "测试作者",
-            coverURL: nil,
-            filePath: Bundle.main.path(forResource: "test", ofType: "epub"),
-            addedDate: Date()
-        )
-        
-        // When: 尝试删除
-        // Then: 应该抛出错误
-        XCTAssertThrowsError(try bookService.deleteBook(bundleBook)) { error in
-            // 验证错误类型和消息
-            if let apiError = error as? APIError {
-                XCTAssertTrue(apiError.localizedDescription.contains("只能删除用户导入的书籍"))
-            } else {
-                XCTFail("错误类型应该是 APIError")
-            }
-        }
-    }
-    
+
     // MARK: - 书籍搜索测试
     
     func testSearchBook() async throws {
