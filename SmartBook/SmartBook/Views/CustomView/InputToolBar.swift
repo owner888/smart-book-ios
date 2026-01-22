@@ -77,9 +77,9 @@ struct InputToolBar: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 16, height: 16)
-                            .foregroundStyle(colorScheme == .dark ? Color.apprBlack : Color.apprWhite)
+                            .foregroundStyle(colorScheme == .dark ? Color.apprWhite : Color.apprBlack)
                             .frame(width: 32, height: 32)
-                            .background(colorScheme == .dark ? Color.apprWhite : Color.apprBlack)
+                            .background(colorScheme == .dark ? Color.apprBlack : Color.apprWhite)
                             .clipShape(Circle())
                     }
                     .transition(.scale.combined(with: .opacity))
