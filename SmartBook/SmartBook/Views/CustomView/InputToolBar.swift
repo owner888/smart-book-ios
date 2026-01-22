@@ -14,7 +14,7 @@ struct InputToolBar: View {
     var openModel: (CGRect) -> Void
     var onSend: (() -> Void)?  // 新增：发送回调
 
-
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isRecording = false
     @State private var mediaBtnFrame = CGRect.zero
     @State private var modelBtnFrame = CGRect.zero
@@ -69,19 +69,18 @@ struct InputToolBar: View {
                 
                 // 根据输入内容动态切换按钮
                 if hasInput {
-                    // 发送按钮
+                    // 发送按钮 - 正圆形，根据主题色切换
                     Button {
                         onSend?()
                     } label: {
-                        HStack(spacing: 3) {
-                            Image(systemName: "arrow.up.circle.fill").resizable().frame(
-                                width: 16,
-                                height: 16
-                            ).foregroundStyle(.apprWhite)
-                            Text(L("chat.send")).font(.caption2).foregroundStyle(.apprWhite)
-                        }.padding(.horizontal, 10).padding(.vertical, 6)
-                    }.background {
-                        Color.green.clipShape(RoundedRectangle(cornerRadius: 12))
+                        Image(systemName: "arrow.up")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 16, height: 16)
+                            .foregroundStyle(colorScheme == .dark ? Color.apprBlack : Color.apprWhite)
+                            .frame(width: 32, height: 32)
+                            .background(colorScheme == .dark ? Color.apprWhite : Color.apprBlack)
+                            .clipShape(Circle())
                     }
                     .transition(.scale.combined(with: .opacity))
                 } else {
