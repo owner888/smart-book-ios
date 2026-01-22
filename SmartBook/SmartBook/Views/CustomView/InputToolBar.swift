@@ -50,6 +50,7 @@ struct InputToolBar: View {
                     }
                 }.glassEffect(size: CGSize(width: 32, height: 32))
                 .getFrame($mediaBtnFrame)
+                .padding(.leading, -6)
 
                 Button {
                     openModel(modelBtnFrame)
@@ -82,6 +83,8 @@ struct InputToolBar: View {
                             .background(colorScheme == .dark ? Color.apprBlack : Color.apprWhite)
                             .clipShape(Circle())
                     }
+                    .padding(.trailing, -6)
+                    .padding(.bottom, -6)
                     .transition(.scale.combined(with: .opacity))
                 } else {
                     // 语音输入按钮
@@ -98,6 +101,8 @@ struct InputToolBar: View {
                     }.background {
                         Color.apprBlack.clipShape(RoundedRectangle(cornerRadius: 12))
                     }
+                    .padding(.trailing, -6)
+                    .padding(.bottom, -6)
                     .transition(.scale.combined(with: .opacity))
                 }
             }
