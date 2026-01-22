@@ -41,7 +41,7 @@ struct InputToolBar: View {
                 .scrollContentBackground(.hidden)
             }
 
-            HStack(spacing: 16) {
+            HStack(spacing: 8) {
                 Button {
                     openMedia(mediaBtnFrame)
                 } label: {
