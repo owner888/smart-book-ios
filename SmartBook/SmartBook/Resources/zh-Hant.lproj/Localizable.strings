@@ -259,3 +259,10 @@
 "menu.top.camera" = "開啟相機";
 "menu.top.analysisDocument" = "分析文件";
 "menu.top.custom" = "自訂";
+
+/* Menu - Media Menu */
+"menu.media.camera" = "攝影機";
+"menu.media.photo" = "照片";
+"menu.media.file" = "檔案";
+"menu.media.createPhoto" = "創作圖片";
+"menu.media.editPhoto" = "編輯圖像";

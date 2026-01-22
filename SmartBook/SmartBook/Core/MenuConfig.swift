@@ -26,15 +26,15 @@ class MenuConfig {
         var config: Config {
             switch self {
             case .camera:
-                return Config(icon: "camera", title: "摄像头")
+                return Config(icon: "camera", title: L("menu.media.camera"))
             case .photo:
-                return Config(icon: "photo.on.rectangle.angled", title: "照片")
+                return Config(icon: "photo.on.rectangle.angled", title: L("menu.media.photo"))
             case .file:
-                return Config(icon: "document", title: "文件")
+                return Config(icon: "document", title: L("menu.media.file"))
             case .createPhoto:
-                return Config(icon: "photo.badge.plus", title: "创作图片")
+                return Config(icon: "photo.badge.plus", title: L("menu.media.createPhoto"))
             case .editPhoto:
-                return Config(icon: "square.and.pencil", title: "编辑图像")
+                return Config(icon: "square.and.pencil", title: L("menu.media.editPhoto"))
             }
         }
     }

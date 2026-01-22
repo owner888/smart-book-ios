@@ -259,3 +259,10 @@
 "menu.top.camera" = "Open Camera";
 "menu.top.analysisDocument" = "Analyze Docs";
 "menu.top.custom" = "Custom";
+
+/* Menu - Media Menu */
+"menu.media.camera" = "Camera";
+"menu.media.photo" = "Photos";
+"menu.media.file" = "Files";
+"menu.media.createPhoto" = "Create Image";
+"menu.media.editPhoto" = "Edit Image";
