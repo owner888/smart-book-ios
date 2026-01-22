@@ -93,7 +93,7 @@ struct MessageSourcesView: View {
                 HStack {
                     Image(systemName: "books.vertical")
                         .foregroundColor(.green)
-                    Text("📚 检索来源 (\(sources.count))")
+                    Text(L("chat.sources.title", sources.count))
                         .font(.caption)
                         .fontWeight(.medium)
                     Spacer()

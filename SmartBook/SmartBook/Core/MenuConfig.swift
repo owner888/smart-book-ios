@@ -52,7 +52,7 @@ class MenuConfig {
         var config: Config {
             switch self {
             case .super:
-                return Config(icon: "bolt.circle", title: "SuperGrok", summary: "解锁全部功能")
+                return Config(icon: "bolt.circle", title: "SuperGrok", summary: L("ai.super.summary"))
             case .heavy:
                 return Config(icon: "square.grid.2x2", title: "Heavy", summary: "Team of experts")
             case .expert:

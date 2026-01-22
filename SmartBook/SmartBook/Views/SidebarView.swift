@@ -75,7 +75,7 @@ struct SidebarView: View {
                         }
 
                     VStack(alignment: .leading) {
-                        Text("User")
+                        Text(L("user.name"))
                             .font(.subheadline)
                             .fontWeight(.medium)
                             .foregroundColor(colors.primaryText)

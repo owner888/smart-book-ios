@@ -4,6 +4,9 @@
 "app.name" = "智能阅读";
 "app.description" = "您的智能阅读助手";
 
+/* User */
+"user.name" = "用户";
+
 /* Common */
 "common.ok" = "确定";
 "common.cancel" = "取消";
@@ -117,7 +120,12 @@
 /* Chat */
 "chat.title" = "智能对话";
 "chat.placeholder" = "询问关于书籍的问题...";
+"chat.input.placeholder" = "畅所欲问";
 "chat.send" = "发送";
+"chat.voice.start" = "开始说话";
+"chat.voice.stop" = "停止";
+"chat.sources.title" = "📚 检索来源 (%d)";
+"chat.systemPrompt.title" = "系统提示词";
 "chat.listening" = "正在聆听...";
 "chat.speak" = "语音输入";
 "chat.stopSpeaking" = "停止朗读";
@@ -151,6 +159,7 @@
 "ai.themes" = "主题探讨";
 "ai.quote" = "名句查找";
 "ai.ask" = "问问 AI";
+"ai.super.summary" = "解锁全部功能";
 
 /* Settings */
 "settings.title" = "设置";

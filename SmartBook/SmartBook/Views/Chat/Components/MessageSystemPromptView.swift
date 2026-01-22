@@ -13,7 +13,7 @@ struct MessageSystemPromptView: View {
                 HStack {
                     Image(systemName: "doc.text")
                         .foregroundColor(.blue)
-                    Text("系统提示词")
+                    Text(L("chat.systemPrompt.title"))
                         .font(.caption)
                         .fontWeight(.medium)
                     Spacer()

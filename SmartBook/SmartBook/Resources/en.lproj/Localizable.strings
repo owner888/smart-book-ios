@@ -4,6 +4,9 @@
 "app.name" = "Smart Book";
 "app.description" = "Your intelligent reading companion";
 
+/* User */
+"user.name" = "User";
+
 /* Common */
 "common.ok" = "OK";
 "common.cancel" = "Cancel";
@@ -117,7 +120,12 @@
 /* Chat */
 "chat.title" = "AI Chat";
 "chat.placeholder" = "Ask about the book...";
+"chat.input.placeholder" = "Ask Anything";
 "chat.send" = "Send";
+"chat.voice.start" = "Start Speaking";
+"chat.voice.stop" = "Stop";
+"chat.sources.title" = "📚 Sources (%d)";
+"chat.systemPrompt.title" = "System Prompt";
 "chat.listening" = "Listening...";
 "chat.speak" = "Speak";
 "chat.stopSpeaking" = "Stop Speaking";
@@ -151,6 +159,7 @@
 "ai.themes" = "Themes";
 "ai.quote" = "Quotes";
 "ai.ask" = "Ask AI";
+"ai.super.summary" = "Unlock all capabilities";
 
 /* Settings */
 "settings.title" = "Settings";

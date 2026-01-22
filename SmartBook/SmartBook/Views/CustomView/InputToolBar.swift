@@ -30,7 +30,7 @@ struct InputToolBar: View {
         VStack(alignment: .leading, spacing: 15) {
             ZStack(alignment: .leading) {
                 if inputText.isEmpty {
-                    Text("畅所欲问").font(.callout).foregroundStyle(Color.gray)
+                    Text(L("chat.input.placeholder")).font(.callout).foregroundStyle(Color.gray)
                         .padding(.leading, 5)
                 }
                 TextEditor(text: $inputText).frame(
@@ -78,7 +78,7 @@ struct InputToolBar: View {
                                 width: 16,
                                 height: 16
                             ).foregroundStyle(.apprWhite)
-                            Text("发送").font(.caption2).foregroundStyle(.apprWhite)
+                            Text(L("chat.send")).font(.caption2).foregroundStyle(.apprWhite)
                         }.padding(.horizontal, 10).padding(.vertical, 6)
                     }.background {
                         Color.green.clipShape(RoundedRectangle(cornerRadius: 12))
@@ -94,7 +94,7 @@ struct InputToolBar: View {
                                 width: 12,
                                 height: 12
                             ).foregroundStyle(.apprWhite)
-                            Text(isRecording ? "停止" : "开始说话").font(.caption2).foregroundStyle(.apprWhite)
+                            Text(isRecording ? L("chat.voice.stop") : L("chat.voice.start")).font(.caption2).foregroundStyle(.apprWhite)
                         }.padding(.horizontal, 10).padding(.vertical, 6)
                     }.background {
                         Color.apprBlack.clipShape(RoundedRectangle(cornerRadius: 12))

@@ -4,6 +4,9 @@
 "app.name" = "智慧閱讀";
 "app.description" = "您的智慧閱讀助手";
 
+/* User */
+"user.name" = "用戶";
+
 /* Common */
 "common.ok" = "確定";
 "common.cancel" = "取消";
@@ -117,7 +120,12 @@
 /* Chat */
 "chat.title" = "智慧對話";
 "chat.placeholder" = "詢問關於書籍的問題...";
+"chat.input.placeholder" = "暢所欲問";
 "chat.send" = "傳送";
+"chat.voice.start" = "開始說話";
+"chat.voice.stop" = "停止";
+"chat.sources.title" = "📚 檢索來源 (%d)";
+"chat.systemPrompt.title" = "系統提示詞";
 "chat.listening" = "正在聆聽...";
 "chat.speak" = "語音輸入";
 "chat.stopSpeaking" = "停止朗讀";
@@ -151,6 +159,7 @@
 "ai.themes" = "主題探討";
 "ai.quote" = "名句查詢";
 "ai.ask" = "問問 AI";
+"ai.super.summary" = "解鎖全部功能";
 
 /* Settings */
 "settings.title" = "設定";

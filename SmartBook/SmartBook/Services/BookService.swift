@@ -318,6 +318,7 @@ class BookService {
     
     func searchBook(_ bookId: String, query: String) async throws -> [SearchResult] {
         let url = URL(string: "\(AppConfig.apiBaseURL)/api/books/\(bookId)/search")!
+        Logger.debug("Fetching search results for \(bookId) with query '\(url)'")
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
