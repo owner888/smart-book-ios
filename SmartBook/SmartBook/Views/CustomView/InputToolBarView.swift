@@ -14,6 +14,13 @@ struct InputToolBarView<Content: View>: View {
     var onSend: (() -> Void)?  // 发送回调
     var keyboardHeightChanged: ((CGFloat) -> Void)?
 
+    @Environment(\.colorScheme) private var systemColorScheme
+    @State private var themeManager = ThemeManager.shared
+    
+    private var colors: ThemeColors {
+        themeManager.colors(for: systemColorScheme)
+    }
+
     @State private var showScrollToBottomButton = false  // 控制按钮显示
     @State private var aiFunction = MenuConfig.AIModelFunctionType.auto
     @State private var keyboardHeight: CGFloat = 0
@@ -131,7 +138,7 @@ struct InputToolBarView<Content: View>: View {
                                 .frame(width: 44, height: 44)
                                 .background(
                                     Circle()
-                                        .fill(Color.blue.opacity(0.9))
+                                        .fill(colors.accentColor.opacity(0.9))
                                         .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
                                 )
                         }

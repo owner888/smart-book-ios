@@ -54,6 +54,9 @@ struct ThemeColors {
     // 导航栏
     let navigationBar: Color
     
+    // 强调色
+    let accentColor: Color
+    
     // 暗黑主题
     static let dark = ThemeColors(
         background: Color.black,
@@ -64,7 +67,8 @@ struct ThemeColors {
         userBubble: Color(white: 0.25),
         assistantBubble: Color(white: 0.15),
         separator: Color(white: 0.2),
-        navigationBar: Color.black
+        navigationBar: Color.black,
+        accentColor: Color.blue
     )
     
     // 浅色主题
@@ -77,7 +81,8 @@ struct ThemeColors {
         userBubble: Color(UIColor.systemGray5),
         assistantBubble: Color.white,
         separator: Color(UIColor.separator),
-        navigationBar: Color(UIColor.systemGroupedBackground)
+        navigationBar: Color(UIColor.systemGroupedBackground),
+        accentColor: Color.blue
     )
 }
 

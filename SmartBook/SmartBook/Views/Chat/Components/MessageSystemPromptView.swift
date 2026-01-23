@@ -12,7 +12,7 @@ struct MessageSystemPromptView: View {
             Button(action: { isExpanded.toggle() }) {
                 HStack {
                     Image(systemName: "doc.text")
-                        .foregroundColor(.blue)
+                        .foregroundColor(colors.accentColor)
                     Text(L("chat.systemPrompt.title"))
                         .font(.caption)
                         .fontWeight(.medium)
@@ -31,17 +31,17 @@ struct MessageSystemPromptView: View {
                     .padding(8)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(Color.blue.opacity(0.1))
+                            .fill(colors.accentColor.opacity(0.1))
                     )
             }
         }
         .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                .stroke(colors.accentColor.opacity(0.3), lineWidth: 1)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.blue.opacity(0.05))
+                        .fill(colors.accentColor.opacity(0.05))
                 )
         )
     }

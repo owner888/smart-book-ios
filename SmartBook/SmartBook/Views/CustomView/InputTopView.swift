@@ -9,6 +9,13 @@ import SwiftUI
 
 struct InputTopView: View {
     
+    @Environment(\.colorScheme) private var systemColorScheme
+    @State private var themeManager = ThemeManager.shared
+    
+    private var colors: ThemeColors {
+        themeManager.colors(for: systemColorScheme)
+    }
+    
     var action: (MenuConfig.TopFunctionType) -> Void
     
     var body: some View {
@@ -28,11 +35,11 @@ struct InputTopView: View {
             action(type)
         } label: {
             HStack(spacing: 8) {
-                MenuIcon(config: type.config,size: 18,color: isGet ? .blue : .apprBlack).opacity(isGet ? 1 : 0.6)
-                Text(type.config.title).foregroundStyle(isGet ? .blue : .apprBlack)
+                MenuIcon(config: type.config,size: 18,color: isGet ? colors.accentColor : .apprBlack).opacity(isGet ? 1 : 0.6)
+                Text(type.config.title).foregroundStyle(isGet ? colors.accentColor : .apprBlack)
             }.padding(.all,14).background {
                 if isGet {
-                    Color.blue.opacity(0.2)
+                    colors.accentColor.opacity(0.2)
                 } else {
                     Color.apprBlack.opacity(0.1)
                 }
