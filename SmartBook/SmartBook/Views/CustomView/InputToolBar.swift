@@ -127,6 +127,10 @@ struct InputToolBar: View {
                 )
             }.padding(.vertical,6)
             .animation(.spring(duration: 0.3), value: hasInput)  // 添加动画
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in }
+            )
     }
 }
 
