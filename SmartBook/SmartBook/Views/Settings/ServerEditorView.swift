@@ -63,7 +63,7 @@ struct ServerEditorView: View {
                                     Spacer()
                                     if url == quickURL {
                                         Image(systemName: "checkmark")
-                                            .foregroundColor(.green)
+                                            .foregroundColor(colors.primaryText)
                                     }
                                 }
                                 .padding(12)
@@ -101,7 +101,7 @@ struct ServerEditorView: View {
                         }
                     }
                     .fontWeight(.semibold)
-                    .foregroundColor(.green)
+                    .foregroundColor(colors.primaryText)
                 }
             }
             .onAppear {

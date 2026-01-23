@@ -95,9 +95,9 @@ struct InputBar: View {
                             ? "stop.circle.fill" : "mic.circle"
                     )
                     .font(.title2)
-                    .foregroundColor(
-                        speechService.isRecording ? .red : colors.secondaryText
-                    )
+                            .foregroundColor(
+                                text.isEmpty ? colors.secondaryText : .green
+                            )
                     .symbolEffect(.bounce, value: speechService.isRecording)
                 }
                 .buttonStyle(.glassIcon)

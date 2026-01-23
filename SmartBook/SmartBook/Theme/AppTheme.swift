@@ -57,6 +57,11 @@ struct ThemeColors {
     // 强调色
     let accentColor: Color
     
+    // 状态色
+    let successColor: Color
+    let errorColor: Color
+    let warningColor: Color
+    
     // 暗黑主题
     static let dark = ThemeColors(
         background: Color.black,
@@ -68,7 +73,10 @@ struct ThemeColors {
         assistantBubble: Color(white: 0.15),
         separator: Color(white: 0.2),
         navigationBar: Color.black,
-        accentColor: Color.blue
+        accentColor: Color.blue,
+        successColor: Color.green,
+        errorColor: Color.red,
+        warningColor: Color.orange
     )
     
     // 浅色主题
@@ -82,7 +90,10 @@ struct ThemeColors {
         assistantBubble: Color.white,
         separator: Color(UIColor.separator),
         navigationBar: Color(UIColor.systemGroupedBackground),
-        accentColor: Color.blue
+        accentColor: Color.blue,
+        successColor: Color.green,
+        errorColor: Color.red,
+        warningColor: Color.orange
     )
 }
 
