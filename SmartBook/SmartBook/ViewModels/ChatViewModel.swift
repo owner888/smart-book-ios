@@ -2,13 +2,14 @@
 
 import Foundation
 import SwiftUI
+import Combine
 
 /// 聊天视图模型
-@Observable
-class ChatViewModel {
-    var messages: [ChatMessage] = []
-    var isLoading = false
-    var questionMessageId: UUID?
+class ChatViewModel: ObservableObject {
+    @Published var messages: [ChatMessage] = []
+    @Published var isLoading = false
+    @Published var showScrollToBottom = false
+    @Published var questionMessageId: UUID?
     var scrollProxy: ScrollViewProxy?
 
     var bookState: BookState?
@@ -20,13 +21,16 @@ class ChatViewModel {
             scrollProxy?.scrollTo("bottomAnchor", anchor: .bottom)
         }
     }
+    
+    func stopAnswer() {
+        
+    }
 
     @MainActor
     func sendMessage(_ text: String) async {
         guard let bookState = bookState else { return }
 
         Logger.info("📤 发送消息: \(text)")
-
         let userMessage = ChatMessage(role: .user, content: text)
         messages.append(userMessage)
         questionMessageId = userMessage.id
@@ -79,7 +83,7 @@ class ChatViewModel {
 
             Task { @MainActor in
                 self.isLoading = false
-
+    
                 switch result {
                 case .failure(let error):
                     if messageIndex < self.messages.count {

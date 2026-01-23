@@ -8,7 +8,7 @@ struct ChatView: View {
     @Environment(SpeechService.self) var speechService
     @Environment(TTSService.self) var ttsService
     @Environment(\.colorScheme) var systemColorScheme
-    @State private var viewModel = ChatViewModel()
+    @StateObject private var viewModel = ChatViewModel()
     @State private var inputText = ""
     @State private var isConversationMode = false
     @State private var showBookPicker = false
@@ -16,7 +16,6 @@ struct ChatView: View {
     @State private var showBookshelf = false
     @State private var scrollBottom = 120.0
     @State private var keyboardHeight: CGFloat = 0
-    @State private var showScrollToBottomButton = false
 
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
@@ -74,7 +73,7 @@ struct ChatView: View {
     }
 
     // MARK: - 主聊天内容
-    
+
     var chatContent: some View {
         NavigationStack {
             GeometryReader { proxy in
@@ -83,6 +82,7 @@ struct ChatView: View {
                     VStack(spacing: 0) {
                         // 聊天内容区域
                         InputToolBarView(
+                            viewModel: viewModel,
                             inputText: $inputText,
                             content: {
                                 VStack(spacing: 0) {
@@ -120,12 +120,17 @@ struct ChatView: View {
                                         ZStack(alignment: .bottom) {
                                             // 有消息时显示对话列表
                                             ScrollViewReader { scrollProxy in
-                                                let _ = viewModel.scrollProxy = scrollProxy
+                                                let _ =
+                                                    viewModel.scrollProxy =
+                                                    scrollProxy
                                                 ScrollView {
                                                     LazyVStack(spacing: 12) {
-                                                        ForEach(viewModel.messages) { message in
+                                                        ForEach(
+                                                            viewModel.messages
+                                                        ) { message in
                                                             MessageBubble(
-                                                                message: message,
+                                                                message:
+                                                                    message,
                                                                 colors: colors
                                                             )
                                                             .id(message.id)
@@ -133,21 +138,66 @@ struct ChatView: View {
                                                     }
                                                     .padding(.horizontal, 18)
                                                     .padding(.vertical, 8)
-                                                    Color.clear.frame(height: scrollBottom)
-                                                        .id("bottomAnchor")
-                                                }
-                                                .onChange(of: viewModel.questionMessageId) {
-                                                    if let messageId = viewModel.questionMessageId {
-                                                        scrollBottom = max(0, proxy.size.height - 160)
-                                                        // 延迟一点让UI更新完成
-                                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                                            withAnimation {
-                                                                scrollProxy.scrollTo(
-                                                                    messageId,
-                                                                    anchor: .top
-                                                                )
+                                                    GeometryReader {
+                                                        currentProxy in
+                                                        Color.clear.frame(
+                                                            height: 120
+                                                        ).onChange(
+                                                            of:
+                                                                currentProxy
+                                                                .frame(
+                                                                    in: .global
+                                                                ).maxY,
+                                                            {
+                                                                oldValue,
+                                                                newValue in
+                                                                let height =
+                                                                    proxy.size
+                                                                    .height
+                                                                    + proxy
+                                                                    .safeAreaInsets
+                                                                    .top
+                                                                    - keyboardHeight
+                                                                    + 6
+
+                                                                viewModel
+                                                                    .showScrollToBottom =
+                                                                    newValue
+                                                                    > height
                                                             }
-                                                        }
+                                                        ).id("bottomAnchor")
+                                                    }.frame(height: 120)
+                                                    Color.clear.frame(
+                                                        height: scrollBottom
+                                                    )
+                                                }
+                                                .onChange(
+                                                    of: viewModel
+                                                        .questionMessageId
+                                                ) {
+                                                    if let messageId = viewModel
+                                                        .questionMessageId
+                                                    {
+                                                        scrollBottom = max(
+                                                            0,
+                                                            proxy.size.height
+                                                                - 280
+                                                        )
+                                                        // 延迟一点让UI更新完成
+                                                        DispatchQueue.main
+                                                            .asyncAfter(
+                                                                deadline: .now()
+                                                                    + 0.1
+                                                            ) {
+                                                                withAnimation {
+                                                                    scrollProxy
+                                                                        .scrollTo(
+                                                                            messageId,
+                                                                            anchor:
+                                                                                .top
+                                                                        )
+                                                                }
+                                                            }
                                                     }
                                                 }
                                             }
@@ -159,12 +209,11 @@ struct ChatView: View {
                             onSend: sendMessage,
                             keyboardHeightChanged: { value in
                                 keyboardHeight = value
-                            },
-                            scrollToBottom: {
-                                viewModel.scrollToBottom()
                             }
                         )
-                        colors.background.frame(height: proxy.safeAreaInsets.bottom)
+                        colors.background.frame(
+                            height: proxy.safeAreaInsets.bottom
+                        )
                     }
                     .ignoresSafeArea(.container, edges: .bottom)
                 }
@@ -181,25 +230,37 @@ struct ChatView: View {
                     // 右侧更多菜单按钮
                     Menu {
                         Button(action: { showBookPicker = true }) {
-                            Label(L("chat.menu.selectBook"), systemImage: "book")
+                            Label(
+                                L("chat.menu.selectBook"),
+                                systemImage: "book"
+                            )
                         }
 
                         Divider()
 
                         Button(action: { viewModel.clearMessages() }) {
-                            Label(L("chat.menu.clearHistory"), systemImage: "trash")
+                            Label(
+                                L("chat.menu.clearHistory"),
+                                systemImage: "trash"
+                            )
                         }
                         .disabled(viewModel.messages.isEmpty)
 
                         Button(action: { exportConversation() }) {
-                            Label(L("chat.menu.exportChat"), systemImage: "square.and.arrow.up")
+                            Label(
+                                L("chat.menu.exportChat"),
+                                systemImage: "square.and.arrow.up"
+                            )
                         }
                         .disabled(viewModel.messages.isEmpty)
 
                         Divider()
 
                         Button(action: { showSettings = true }) {
-                            Label(L("chat.menu.settings"), systemImage: "gearshape")
+                            Label(
+                                L("chat.menu.settings"),
+                                systemImage: "gearshape"
+                            )
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -212,7 +273,8 @@ struct ChatView: View {
     // MARK: - 消息发送和处理
 
     func sendMessage() {
-        guard !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else { return }
 
         let text = inputText
         inputText = ""
@@ -224,9 +286,10 @@ struct ChatView: View {
         Task {
             await viewModel.sendMessage(text)
 
-            if isConversationMode, 
-               let lastMessage = viewModel.messages.last,
-               lastMessage.role == .assistant {
+            if isConversationMode,
+                let lastMessage = viewModel.messages.last,
+                lastMessage.role == .assistant
+            {
                 await ttsService.speak(lastMessage.content)
                 startVoiceInput()
             }
@@ -272,7 +335,8 @@ struct ChatView: View {
                 date: .abbreviated,
                 time: .shortened
             )
-            exportText += "**\(role)** (\(timestamp)):\n\(message.content)\n\n---\n\n"
+            exportText +=
+                "**\(role)** (\(timestamp)):\n\(message.content)\n\n---\n\n"
         }
 
         // 使用系统分享
@@ -281,8 +345,10 @@ struct ChatView: View {
             applicationActivities: nil
         )
 
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
+        if let windowScene = UIApplication.shared.connectedScenes.first
+            as? UIWindowScene,
+            let rootVC = windowScene.windows.first?.rootViewController
+        {
             rootVC.present(activityVC, animated: true)
         }
     }

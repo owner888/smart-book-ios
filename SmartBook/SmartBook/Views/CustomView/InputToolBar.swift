@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct InputToolBar: View {
+    @ObservedObject var viewModel: ChatViewModel
     @Binding var aiFunction: MenuConfig.AIModelFunctionType
     @Binding var inputText: String
     var openMedia: (CGRect) -> Void
@@ -68,8 +69,17 @@ struct InputToolBar: View {
 
                 Spacer()
                 
-                // 根据输入内容动态切换按钮
-                if hasInput {
+                if viewModel.isLoading {
+                    Button {
+                        viewModel.isLoading = false
+                    } label: {
+                        Color.apprBlack.frame(width: 36,height: 36).overlay {
+                            Image(systemName: "stop.fill").foregroundStyle(.apprWhite)
+                        }.clipShape(RoundedRectangle(cornerRadius: 18))
+                    }
+
+                    // 根据输入内容动态切换按钮
+                } else if hasInput {
                     // 发送按钮 - 正圆形，根据主题色切换
                     Button {
                         onSend?()

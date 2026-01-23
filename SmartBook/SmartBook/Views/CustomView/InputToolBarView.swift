@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct InputToolBarView<Content: View>: View {
+    @ObservedObject var viewModel: ChatViewModel
     @Binding var inputText: String
     @ViewBuilder var content: Content
     var onSend: (() -> Void)?  // 发送回调
     var keyboardHeightChanged: ((CGFloat) -> Void)?
-    var scrollToBottom: (() -> Void)?  // 滚动到底部回调
-    
+
     @State private var showScrollToBottomButton = false  // 控制按钮显示
     @State private var aiFunction = MenuConfig.AIModelFunctionType.auto
     @State private var keyboardHeight: CGFloat = 0
@@ -34,18 +34,41 @@ struct InputToolBarView<Content: View>: View {
                             InputTopView { function in
                                 // 处理顶部功能
                             }
+                        } else {
+                            if viewModel.showScrollToBottom {
+                                HStack {
+                                    Spacer()
+                                    Button {
+                                        viewModel.scrollToBottom()
+                                    } label: {
+                                        Color.white.opacity(0.001).frame(width: 42,height: 42).overlay {
+                                            Image(systemName: "chevron.down")
+                                                .foregroundStyle(.apprBlack)
+                                        }
+                                    }.glassEffect(
+                                        size: CGSize(width: 42, height: 42)
+                                    )
+                                }.padding(.bottom,2).padding(.trailing, 12)
+                            }
                         }
 
                         InputToolBar(
+                            viewModel: viewModel,
                             aiFunction: $aiFunction,
                             inputText: $inputText,
                             openMedia: { rect in
-                                mediaMenuEdge = buttonRelatively(rect, proxy: proxy)
+                                mediaMenuEdge = buttonRelatively(
+                                    rect,
+                                    proxy: proxy
+                                )
                                 menuObser.willShow()
                                 showMediaMenu = true
                             },
                             openModel: { rect in
-                                modelMenuEdge = buttonRelatively(rect, proxy: proxy)
+                                modelMenuEdge = buttonRelatively(
+                                    rect,
+                                    proxy: proxy
+                                )
                                 menuObser.willShow()
                                 showModelMenu = true
                             },
@@ -58,7 +81,7 @@ struct InputToolBarView<Content: View>: View {
                     .padding(.horizontal, 18)
                 }
                 .padding(.bottom, keyboardHeight)
-                
+
                 if showMediaMenu {
                     CustomMenuView(
                         alignment: .bottomLeading,
@@ -74,13 +97,14 @@ struct InputToolBarView<Content: View>: View {
                     )
                     .environmentObject(menuObser)
                 }
-                
+
                 if showModelMenu {
                     CustomMenuView(
                         alignment: .bottomLeading,
                         edgeInsets: modelMenuEdge,
                         content: {
-                            AIFunctionMenu(currentFunc: $aiFunction) { function in
+                            AIFunctionMenu(currentFunc: $aiFunction) {
+                                function in
                                 aiFunction = function
                                 menuObser.close()
                             }
@@ -91,7 +115,8 @@ struct InputToolBarView<Content: View>: View {
                     )
                     .environmentObject(menuObser)
                 }
-                
+
+                /*
                 // 滚动到底部按钮 - 右下角悬浮
                 VStack {
                     Spacer()
@@ -114,7 +139,7 @@ struct InputToolBarView<Content: View>: View {
                         .padding(.bottom, keyboardHeight + 80)
                         .transition(.scale.combined(with: .opacity))
                     }
-                }
+                }*/
             }
         }
         .contentShape(Rectangle())
@@ -137,7 +162,7 @@ struct InputToolBarView<Content: View>: View {
     }
 
     // MARK: - Helper Methods
-    
+
     func buttonRelatively(_ rect: CGRect, proxy: GeometryProxy) -> EdgeInsets {
         var size = proxy.size
         size.height = size.height + proxy.safeAreaInsets.top
@@ -145,7 +170,7 @@ struct InputToolBarView<Content: View>: View {
     }
 
     // MARK: - Keyboard Observers
-    
+
     private func setupKeyboardObservers() {
         NotificationCenter.default.addObserver(
             forName: UIResponder.keyboardWillShowNotification,
