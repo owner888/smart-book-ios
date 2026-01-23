@@ -57,7 +57,7 @@
 "tab.settings" = "我的";
 
 /* Library */
-"library.title" = "我的书架";
+"library.title" = "书架";
 "library.empty" = "书架为空";
 "library.empty.tip" = "快去导入一些书籍吧";
 "library.import" = "导入书籍";

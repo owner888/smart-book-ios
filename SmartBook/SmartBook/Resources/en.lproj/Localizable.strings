@@ -57,7 +57,7 @@
 "tab.settings" = "Settings";
 
 /* Library */
-"library.title" = "My Library";
+"library.title" = "Library";
 "library.empty" = "No books yet";
 "library.empty.tip" = "Import books to get started";
 "library.import" = "Import Book";
