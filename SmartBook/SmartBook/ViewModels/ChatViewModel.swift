@@ -98,11 +98,24 @@ class ChatViewModel: ObservableObject {
     
                 switch result {
                 case .failure(let error):
-                    if messageIndex < self.messages.count {
-                        self.messages[messageIndex] = ChatMessage(
-                            role: .assistant,
-                            content: "❌ 请求失败: \(error.localizedDescription)"
-                        )
+                    // 检查是否是用户主动取消
+                    let nsError = error as NSError
+                    if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
+                        // 用户主动取消，删除未完成的消息
+                        if messageIndex < self.messages.count {
+                            if self.messages[messageIndex].content.isEmpty {
+                                self.messages.remove(at: messageIndex)
+                            }
+                        }
+                        Logger.info("⏹️ 用户取消了请求")
+                    } else {
+                        // 真正的错误
+                        if messageIndex < self.messages.count {
+                            self.messages[messageIndex] = ChatMessage(
+                                role: .assistant,
+                                content: "❌ 请求失败: \(error.localizedDescription)"
+                            )
+                        }
                     }
                 case .success:
                     // 流式完成，内容已经在事件中更新
