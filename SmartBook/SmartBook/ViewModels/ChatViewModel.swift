@@ -13,8 +13,13 @@ class ChatViewModel: ObservableObject {
     var scrollProxy: ScrollViewProxy?
 
     var bookState: BookState?
-    private let streamingService = StreamingChatService()
+    private let streamingService: StreamingChatService
     private var streamingContent = ""
+    
+    // 依赖注入，方便测试和管理
+    init(streamingService: StreamingChatService = StreamingChatService()) {
+        self.streamingService = streamingService
+    }
     
     func scrollToBottom() {
         withAnimation {
@@ -23,7 +28,8 @@ class ChatViewModel: ObservableObject {
     }
     
     func stopAnswer() {
-        
+        streamingService.stopStreaming()
+        isLoading = false
     }
 
     @MainActor
@@ -53,7 +59,10 @@ class ChatViewModel: ObservableObject {
         ) { [weak self] event in
             guard let self = self else { return }
 
-            Task { @MainActor in
+            // 修复：在 Task 内部也使用 weak self 避免循环引用
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                
                 switch event {
                 case .content(let content):
                     Logger.info("💬 收到内容: \(content)")
@@ -81,7 +90,10 @@ class ChatViewModel: ObservableObject {
         } onComplete: { [weak self] result in
             guard let self = self else { return }
 
-            Task { @MainActor in
+            // 修复：在 Task 内部也使用 weak self 避免循环引用
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                
                 self.isLoading = false
     
                 switch result {
@@ -102,5 +114,6 @@ class ChatViewModel: ObservableObject {
 
     func clearMessages() {
         messages.removeAll()
+        streamingContent = ""
     }
 }

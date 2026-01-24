@@ -10,10 +10,26 @@ class StreamingChatService: NSObject {
     private var receivedData = Data()
     private var onEventHandler: SSEEventHandler?
     private var onCompleteHandler: CompletionHandler?
+    private var buffer = ""  // 添加缓冲区，避免 SSE 数据丢失
+    
+    // 复用 URLSession 实例，避免内存泄漏
+    private var session: URLSession!
     
     // SSE 事件处理闭包
     typealias SSEEventHandler = (SSEEvent) -> Void
     typealias CompletionHandler = (Result<Void, Error>) -> Void
+    
+    override init() {
+        super.init()
+        // 在 init 中创建 session
+        let config = URLSessionConfiguration.default
+        self.session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+    }
+    
+    deinit {
+        // 清理资源
+        session.invalidateAndCancel()
+    }
     
     // 发送消息（SSE 流式）
     func sendMessageStream(
@@ -27,6 +43,7 @@ class StreamingChatService: NSObject {
     ) {
         isStreaming = true
         receivedData = Data()
+        buffer = ""  // 重置缓冲区
         onEventHandler = onEvent
         onCompleteHandler = onComplete
         
@@ -71,11 +88,8 @@ class StreamingChatService: NSObject {
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 300 // 5分钟超时
         
-        // 使用delegate的session来实现真正的流式接收
-        let config = URLSessionConfiguration.default
-        let session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
+        // 使用复用的 session
         let task = session.dataTask(with: request)
-        
         currentTask = task
         task.resume()
     }
@@ -85,17 +99,17 @@ class StreamingChatService: NSObject {
         currentTask?.cancel()
         currentTask = nil
         isStreaming = false
+        buffer = ""  // 清空缓冲区
     }
     
-    // 解析 SSE 数据（增量解析）
-    private func parseSSEData(_ data: Data, onEvent: @escaping SSEEventHandler) {
-        guard let text = String(data: data, encoding: .utf8) else { return }
-        
-        let lines = text.components(separatedBy: "\n")
+    // 解析 SSE 数据（带缓冲区，避免数据丢失）
+    private func parseSSEData(onEvent: @escaping SSEEventHandler) {
+        let lines = buffer.components(separatedBy: "\n")
         var currentEvent: String?
         var dataLines: [String] = []
+        var processedLines = 0
         
-        for line in lines {
+        for (index, line) in lines.enumerated() {
             if line.hasPrefix("event: ") {
                 currentEvent = String(line.dropFirst(7))
                 dataLines = []
@@ -112,7 +126,19 @@ class StreamingChatService: NSObject {
                 
                 currentEvent = nil
                 dataLines = []
+                processedLines = index + 1
             }
+        }
+        
+        // 保留未处理完的数据在缓冲区
+        if processedLines > 0 && processedLines < lines.count {
+            buffer = lines[processedLines...].joined(separator: "\n")
+        } else if processedLines == 0 {
+            // 如果没有处理任何完整事件，保留所有数据
+            // buffer 保持不变
+        } else {
+            // 所有数据都已处理
+            buffer = ""
         }
     }
 }
@@ -120,9 +146,13 @@ class StreamingChatService: NSObject {
 // MARK: - URLSessionDataDelegate
 extension StreamingChatService: URLSessionDataDelegate {
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        // 每次收到数据块就立即处理（实现真正的流式）
+        // 每次收到数据块就累积到缓冲区
+        guard let text = String(data: data, encoding: .utf8) else { return }
+        buffer += text
+        
+        // 解析缓冲区中的完整事件
         if let onEvent = onEventHandler {
-            parseSSEData(data, onEvent: onEvent)
+            parseSSEData(onEvent: onEvent)
         }
     }
     
@@ -142,9 +172,10 @@ extension StreamingChatService: URLSessionDataDelegate {
             self.onEventHandler = nil
             self.onCompleteHandler = nil
             self.receivedData = Data()
+            self.buffer = ""
         }
         
-        session.finishTasksAndInvalidate()
+        // 注意：不再调用 finishTasksAndInvalidate，因为我们复用 session
     }
 }
 
