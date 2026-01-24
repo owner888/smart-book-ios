@@ -71,7 +71,7 @@ struct InputToolBar: View {
                 
                 if viewModel.isLoading {
                     Button {
-                        viewModel.isLoading = false
+                        viewModel.stopAnswer()
                     } label: {
                         Color.apprBlack.frame(width: 36,height: 36).overlay {
                             Image(systemName: "stop.fill").foregroundStyle(.apprWhite)
