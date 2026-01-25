@@ -9,10 +9,10 @@ import Foundation
 
 @Model
 class Message {
-    var id: UUID
-    var role: Role
-    var content: String
-    var createdAt: Date
+    var id: UUID = UUID()
+    var role: Role?
+    var content: String = ""
+    var createdAt: Date = Date()
 
     var conversation: Conversation?
 
@@ -24,7 +24,7 @@ class Message {
         self.id = UUID()
         self.role = role
         self.content = content
-        self.createdAt = .now
+        self.createdAt = Date()
         self.conversation = conversation
     }
 }

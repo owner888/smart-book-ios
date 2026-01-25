@@ -10,16 +10,16 @@ import Foundation
 
 @Model
 class Conversation {
-    var id: UUID
-    var title: String
-    var createdAt: Date
+    var id: UUID = UUID()
+    var title: String = ""
+    var createdAt: Date = Date()
 
     @Relationship(deleteRule: .cascade)
-    var messages: [Message] = []
+    var messages: [Message]? = []
 
     init(title: String) {
         self.id = UUID()
         self.title = title
-        self.createdAt = .now
+        self.createdAt = Date()
     }
 }

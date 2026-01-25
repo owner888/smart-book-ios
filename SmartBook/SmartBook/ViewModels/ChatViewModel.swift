@@ -27,6 +27,7 @@ class ChatViewModel: ObservableObject {
         }
     }
     
+    /// 停止AI响应
     func stopAnswer() {
         streamingService.stopStreaming()
         isLoading = false
