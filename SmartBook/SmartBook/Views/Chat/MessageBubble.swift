@@ -76,6 +76,15 @@ struct MessageBubble: View {
                     // 主要内容
                     MessageContentView(message: message, colors: colors)
                     
+                    
+                    // 停止提示（如果被用户停止）
+                    if message.stoppedByUser == true {
+                        Text(L("chat.stoppedByUser"))
+                            .font(.caption)
+                            .foregroundColor(colors.secondaryText.opacity(0.6))
+                            .italic()
+                            .padding(.top, 4)
+                    }
                     // 检索来源（如果有）
                     if let sources = message.sources, !sources.isEmpty {
                         MessageSourcesView(

@@ -101,11 +101,20 @@ class ChatViewModel: ObservableObject {
                     // 检查是否是用户主动取消
                     let nsError = error as NSError
                     if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
-                        // 用户主动取消，删除未完成的消息
+                        // 用户主动取消，标记消息
                         if messageIndex < self.messages.count {
-                            if self.messages[messageIndex].content.isEmpty {
-                                self.messages.remove(at: messageIndex)
-                            }
+                            let currentMessage = self.messages[messageIndex]
+                            self.messages[messageIndex] = ChatMessage(
+                                id: currentMessage.id,
+                                role: currentMessage.role,
+                                content: currentMessage.content,
+                                timestamp: currentMessage.timestamp,
+                                thinking: currentMessage.thinking,
+                                sources: currentMessage.sources,
+                                usage: currentMessage.usage,
+                                systemPrompt: currentMessage.systemPrompt,
+                                stoppedByUser: true
+                            )
                         }
                         Logger.info("⏹️ 用户取消了请求")
                     } else {

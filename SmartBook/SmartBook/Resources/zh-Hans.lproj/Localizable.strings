@@ -269,3 +269,4 @@
 
 /* Menu - Actions */
 "menu.upgrade" = "升级";
+"chat.stoppedByUser" = "用户已停止响应";
