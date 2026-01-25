@@ -7,8 +7,10 @@ struct ChatView: View {
     @Environment(ThemeManager.self) var themeManager
     @Environment(SpeechService.self) var speechService
     @Environment(TTSService.self) var ttsService
+    @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var systemColorScheme
     @StateObject private var viewModel = ChatViewModel()
+    @State private var historyService: ChatHistoryService?
     @State private var inputText = ""
     @State private var isConversationMode = false
     @State private var showBookPicker = false
@@ -29,6 +31,8 @@ struct ChatView: View {
             // 侧边栏（从左侧滑出，非全屏）
             SidebarView(
                 colors: colors,
+                historyService: historyService,
+                viewModel: viewModel,
                 onSelectChat: {
                     sideObser.jumpToPage(1)
                 },
@@ -68,6 +72,20 @@ struct ChatView: View {
                 .environment(themeManager)
         }
         .onAppear {
+            // 初始化历史服务
+            if historyService == nil {
+                historyService = ChatHistoryService(modelContext: modelContext)
+                viewModel.historyService = historyService
+                
+                // 如果没有当前对话，创建一个新对话
+                if historyService?.currentConversation == nil {
+                    viewModel.startNewConversation()
+                } else {
+                    // 加载当前对话的消息
+                    viewModel.loadCurrentConversation()
+                }
+            }
+            
             viewModel.bookState = bookState
         }
     }
@@ -227,43 +245,52 @@ struct ChatView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    // 右侧更多菜单按钮
-                    Menu {
-                        Button(action: { showBookPicker = true }) {
-                            Label(
-                                L("chat.menu.selectBook"),
-                                systemImage: "book"
-                            )
+                    HStack(spacing: 12) {
+                        // 新对话按钮
+                        Button(action: { 
+                            viewModel.startNewConversation()
+                        }) {
+                            Image(systemName: "square.and.pencil")
                         }
+                        
+                        // 更多菜单按钮
+                        Menu {
+                            Button(action: { showBookPicker = true }) {
+                                Label(
+                                    L("chat.menu.selectBook"),
+                                    systemImage: "book"
+                                )
+                            }
 
-                        Divider()
+                            Divider()
 
-                        Button(action: { viewModel.clearMessages() }) {
-                            Label(
-                                L("chat.menu.clearHistory"),
-                                systemImage: "trash"
-                            )
+                            Button(action: { viewModel.clearMessages() }) {
+                                Label(
+                                    L("chat.menu.clearHistory"),
+                                    systemImage: "trash"
+                                )
+                            }
+                            .disabled(viewModel.messages.isEmpty)
+
+                            Button(action: { exportConversation() }) {
+                                Label(
+                                    L("chat.menu.exportChat"),
+                                    systemImage: "square.and.arrow.up"
+                                )
+                            }
+                            .disabled(viewModel.messages.isEmpty)
+
+                            Divider()
+
+                            Button(action: { showSettings = true }) {
+                                Label(
+                                    L("chat.menu.settings"),
+                                    systemImage: "gearshape"
+                                )
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis")
                         }
-                        .disabled(viewModel.messages.isEmpty)
-
-                        Button(action: { exportConversation() }) {
-                            Label(
-                                L("chat.menu.exportChat"),
-                                systemImage: "square.and.arrow.up"
-                            )
-                        }
-                        .disabled(viewModel.messages.isEmpty)
-
-                        Divider()
-
-                        Button(action: { showSettings = true }) {
-                            Label(
-                                L("chat.menu.settings"),
-                                systemImage: "gearshape"
-                            )
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
                     }
                 }
             }

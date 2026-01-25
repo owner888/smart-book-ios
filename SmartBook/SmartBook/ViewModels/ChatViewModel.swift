@@ -13,6 +13,7 @@ class ChatViewModel: ObservableObject {
     var scrollProxy: ScrollViewProxy?
 
     var bookState: BookState?
+    var historyService: ChatHistoryService?
     private let streamingService: StreamingChatService
     private var streamingContent = ""
     
@@ -20,6 +21,41 @@ class ChatViewModel: ObservableObject {
     init(streamingService: StreamingChatService = StreamingChatService()) {
         self.streamingService = streamingService
     }
+    
+    // MARK: - 历史记录管理
+    
+    /// 加载当前对话的历史消息
+    func loadCurrentConversation() {
+        guard let historyService = historyService else { return }
+        messages = historyService.loadMessages()
+        Logger.info("📖 加载了 \(messages.count) 条历史消息")
+    }
+    
+    /// 创建新对话
+    func startNewConversation() {
+        guard let historyService = historyService else { return }
+        
+        // Book.id 是 String，但 Conversation 需要 UUID，所以暂时不保存 bookId
+        // 只保存书籍标题用于显示
+        let bookTitle = bookState?.selectedBook?.title
+        
+        _ = historyService.createConversation(
+            title: "新对话",
+            bookId: nil,  // 暂时不保存 bookId
+            bookTitle: bookTitle
+        )
+        
+        messages.removeAll()
+        streamingContent = ""
+        Logger.info("✨ 开始新对话")
+    }
+    
+    /// 切换到指定对话
+    func switchToConversation(_ conversation: Conversation) {
+        historyService?.switchToConversation(conversation)
+        loadCurrentConversation()
+    }
+
     
     func scrollToBottom() {
         withAnimation {
@@ -41,6 +77,9 @@ class ChatViewModel: ObservableObject {
         let userMessage = ChatMessage(role: .user, content: text)
         messages.append(userMessage)
         questionMessageId = userMessage.id
+        
+        // 保存用户消息
+        historyService?.saveMessage(userMessage)
 
         isLoading = true
         streamingContent = ""
@@ -129,6 +168,12 @@ class ChatViewModel: ObservableObject {
                     }
                 case .success:
                     // 流式完成，内容已经在事件中更新
+                    // 保存助手消息到数据库
+                    if messageIndex < self.messages.count {
+                        let finalMessage = self.messages[messageIndex]
+                        self.historyService?.saveMessage(finalMessage)
+                        Logger.info("💾 保存助手回复到数据库")
+                    }
                     break
                 }
             }
@@ -136,6 +181,7 @@ class ChatViewModel: ObservableObject {
     }
 
     func clearMessages() {
+        historyService?.clearCurrentConversationMessages()
         messages.removeAll()
         streamingContent = ""
     }

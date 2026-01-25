@@ -5,6 +5,8 @@ import SwiftUI
 // MARK: - 侧边栏视图
 struct SidebarView: View {
     var colors: ThemeColors
+    var historyService: ChatHistoryService?
+    var viewModel: ChatViewModel?
     var onSelectChat: () -> Void
     var onSelectBookshelf: () -> Void
     var onSelectSettings: () -> Void
@@ -36,7 +38,28 @@ struct SidebarView: View {
                     isSelected: true,
                     action: onSelectChat
                 )
-
+            }
+            .padding(.horizontal, 12)
+            .padding(.top)
+            
+            // 历史对话列表
+            if let historyService = historyService, let viewModel = viewModel {
+                ChatHistoryListView(
+                    historyService: historyService,
+                    viewModel: viewModel,
+                    colors: colors,
+                    onSelectConversation: onSelectChat
+                )
+            } else {
+                Spacer()
+            }
+            
+            Divider()
+                .background(colors.secondaryText.opacity(0.3))
+                .padding(.vertical, 8)
+            
+            // 底部菜单
+            VStack(alignment: .leading, spacing: 4) {
                 // 书架
                 SidebarItem(
                     icon: "books.vertical",
@@ -56,9 +79,7 @@ struct SidebarView: View {
                 )
             }
             .padding(.horizontal, 12)
-            .padding(.vertical)
-
-            Spacer()
+            .padding(.bottom)
 
             // 底部用户信息
             VStack(alignment: .leading, spacing: 8) {
