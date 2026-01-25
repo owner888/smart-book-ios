@@ -207,6 +207,18 @@
 "voice.rate" = "语速";
 "voice.rate.value" = "%.1fx";
 
+/* Data Management */
+"data.title" = "数据管理";
+"data.description" = "管理应用数据和缓存";
+"data.resetServer" = "重置服务器地址";
+"data.resetServer.title" = "重置服务器地址";
+"data.resetServer.message" = "将服务器地址重置为默认配置值，确定要继续吗？";
+"data.resetServer.confirm" = "重置";
+"data.clearCache" = "清除缓存";
+"data.clearCache.title" = "清除缓存";
+"data.clearCache.message" = "这将删除所有缓存数据，包括图片和临时文件，确定要继续吗？";
+"data.clearCache.confirm" = "清除";
+
 /* Book Picker */
 "picker.title" = "选择书籍";
 "picker.noBooks" = "暂无可用书籍";

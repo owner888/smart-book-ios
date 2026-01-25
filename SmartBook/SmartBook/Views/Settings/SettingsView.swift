@@ -14,6 +14,8 @@ struct SettingsView: View {
     
     @State private var showServerEditor = false
     @State private var editingURL = ""
+    @State private var showResetAlert = false
+    @State private var showClearCacheAlert = false
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -117,6 +119,47 @@ struct SettingsView: View {
                 }
                 .listRowBackground(colors.cardBackground)
                 
+                // 数据管理
+                Section {
+                    // 重置服务器地址
+                    Button {
+                        showResetAlert = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "arrow.counterclockwise", color: .blue)
+                            Text(L("data.resetServer"))
+                                .foregroundColor(colors.primaryText)
+                            Spacer()
+                            Text(AppConfig.defaultAPIBaseURL)
+                                .font(.caption)
+                                .foregroundColor(colors.secondaryText)
+                                .lineLimit(1)
+                        }
+                    }
+                    
+                    // 清除缓存
+                    Button {
+                        showClearCacheAlert = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "trash", color: .red)
+                            Text(L("data.clearCache"))
+                                .foregroundColor(colors.primaryText)
+                            Spacer()
+                            Text(calculateCacheSize())
+                                .font(.caption)
+                                .foregroundColor(colors.secondaryText)
+                        }
+                    }
+                } header: {
+                    Text(L("data.title"))
+                        .foregroundColor(colors.secondaryText)
+                } footer: {
+                    Text(L("data.description"))
+                        .foregroundColor(colors.secondaryText)
+                }
+                .listRowBackground(colors.cardBackground)
+                
                 // 关于
                 Section {
                     SettingsRow(icon: "info.circle", iconColor: .cyan, title: L("settings.version"), colors: colors) {
@@ -162,10 +205,78 @@ struct SettingsView: View {
                     showServerEditor = false
                 }
             }
+            .alert(L("data.resetServer.title"), isPresented: $showResetAlert) {
+                Button(L("common.cancel"), role: .cancel) { }
+                Button(L("data.resetServer.confirm"), role: .destructive) {
+                    resetServerAddress()
+                }
+            } message: {
+                Text(L("data.resetServer.message"))
+            }
+            .alert(L("data.clearCache.title"), isPresented: $showClearCacheAlert) {
+                Button(L("common.cancel"), role: .cancel) { }
+                Button(L("data.clearCache.confirm"), role: .destructive) {
+                    clearCache()
+                }
+            } message: {
+                Text(L("data.clearCache.message"))
+            }
         }
         .onChange(of: ttsRate) { _, newValue in
             ttsService.rate = Float(newValue)
         }
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// 重置服务器地址到默认值
+    private func resetServerAddress() {
+        apiBaseURL = AppConfig.defaultAPIBaseURL
+    }
+    
+    /// 计算缓存大小
+    private func calculateCacheSize() -> String {
+        guard let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            return "0 KB"
+        }
+        
+        do {
+            let contents = try FileManager.default.contentsOfDirectory(at: cacheURL, includingPropertiesForKeys: [.fileSizeKey], options: .skipsHiddenFiles)
+            let totalSize = contents.reduce(0) { size, url in
+                let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+                return size + fileSize
+            }
+            return formatBytes(totalSize)
+        } catch {
+            return "0 KB"
+        }
+    }
+    
+    /// 清除缓存
+    private func clearCache() {
+        guard let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            return
+        }
+        
+        do {
+            let contents = try FileManager.default.contentsOfDirectory(at: cacheURL, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
+            for fileURL in contents {
+                try? FileManager.default.removeItem(at: fileURL)
+            }
+            
+            // 清除 URLCache
+            URLCache.shared.removeAllCachedResponses()
+        } catch {
+            print("清除缓存失败: \(error)")
+        }
+    }
+    
+    /// 格式化字节大小
+    private func formatBytes(_ bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.allowedUnits = [.useKB, .useMB, .useGB]
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(bytes))
     }
 }
 

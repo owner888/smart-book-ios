@@ -207,6 +207,18 @@
 "voice.rate" = "語速";
 "voice.rate.value" = "%.1fx";
 
+/* Data Management */
+"data.title" = "資料管理";
+"data.description" = "管理應用程式資料和快取";
+"data.resetServer" = "重置伺服器位址";
+"data.resetServer.title" = "重置伺服器位址";
+"data.resetServer.message" = "將伺服器位址重置為預設配置值，確定要繼續嗎？";
+"data.resetServer.confirm" = "重置";
+"data.clearCache" = "清除快取";
+"data.clearCache.title" = "清除快取";
+"data.clearCache.message" = "這將刪除所有快取資料，包括圖片和暫存檔案，確定要繼續嗎？";
+"data.clearCache.confirm" = "清除";
+
 /* Book Picker */
 "picker.title" = "選擇書籍";
 "picker.noBooks" = "暫無可用書籍";

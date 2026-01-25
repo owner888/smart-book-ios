@@ -207,6 +207,18 @@
 "voice.rate" = "Speech Rate";
 "voice.rate.value" = "%.1fx";
 
+/* Data Management */
+"data.title" = "Data Management";
+"data.description" = "Manage app data and cache";
+"data.resetServer" = "Reset Server Address";
+"data.resetServer.title" = "Reset Server Address";
+"data.resetServer.message" = "This will reset the server address to the default configuration value. Continue?";
+"data.resetServer.confirm" = "Reset";
+"data.clearCache" = "Clear Cache";
+"data.clearCache.title" = "Clear Cache";
+"data.clearCache.message" = "This will delete all cached data including images and temporary files. Continue?";
+"data.clearCache.confirm" = "Clear";
+
 /* Book Picker */
 "picker.title" = "Select Book";
 "picker.noBooks" = "No books available";
