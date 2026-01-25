@@ -21,27 +21,7 @@ struct ChatHistoryListView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // 标题栏
-            HStack {
-                Text("聊天历史")
-                    .font(.headline)
-                    .foregroundColor(colors.primaryText)
-                
-                Spacer()
-                
-                Button(action: {
-                    viewModel.startNewConversation()
-                    onSelectConversation()
-                }) {
-                    Image(systemName: "square.and.pencil")
-                        .foregroundColor(colors.accentColor)
-                }
-            }
-            .padding()
-            
-            Divider()
-                .background(colors.secondaryText.opacity(0.3))
-            
+
             // 对话列表
             if historyService.conversations.isEmpty {
                 VStack(spacing: 12) {
@@ -170,7 +150,7 @@ struct ConversationRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(isSelected ? colors.accentColor : colors.cardBackground)
+        .background(isSelected ? colors.cardBackground : Color.clear)
         .cornerRadius(8)
         .onTapGesture(perform: onTap)
     }

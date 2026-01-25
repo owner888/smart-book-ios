@@ -27,22 +27,8 @@ struct SidebarView: View {
 
             Divider()
                 .background(colors.secondaryText.opacity(0.3))
-
-            // 菜单项
-            VStack(alignment: .leading, spacing: 4) {
-                // 当前对话
-                SidebarItem(
-                    icon: "bubble.left.and.bubble.right.fill",
-                    title: L("chat.title"),
-                    colors: colors,
-                    isSelected: true,
-                    action: onSelectChat
-                )
-            }
-            .padding(.horizontal, 12)
-            .padding(.top)
             
-            // 历史对话列表
+            // 历史对话列表（当前对话会在列表中显示为选中状态）
             if let historyService = historyService, let viewModel = viewModel {
                 ChatHistoryListView(
                     historyService: historyService,
@@ -109,7 +95,7 @@ struct SidebarView: View {
                 .padding()
             }
         }
-        .background(colors.cardBackground)
+        .background(colors.background)
     }
 }
 
