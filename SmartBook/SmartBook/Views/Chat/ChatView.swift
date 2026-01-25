@@ -77,12 +77,13 @@ struct ChatView: View {
                 historyService = ChatHistoryService(modelContext: modelContext)
                 viewModel.historyService = historyService
                 
-                // 如果没有当前对话，创建一个新对话
-                if historyService?.currentConversation == nil {
-                    viewModel.startNewConversation()
-                } else {
-                    // 加载当前对话的消息
+                // 如果有当前对话（从历史列表选择的），加载消息
+                // 否则等待用户发送第一条消息时自动创建对话
+                if let currentConversation = historyService?.currentConversation {
                     viewModel.loadCurrentConversation()
+                    Logger.info("📖 加载现有对话: \(currentConversation.title)")
+                } else {
+                    Logger.info("✨ 准备新对话，等待用户发送第一条消息")
                 }
             }
             
@@ -246,11 +247,13 @@ struct ChatView: View {
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
-                        // 新对话按钮
-                        Button(action: { 
-                            viewModel.startNewConversation()
-                        }) {
-                            Image(systemName: "square.and.pencil")
+                        // 新对话按钮（只在有消息时显示）
+                        if !viewModel.messages.isEmpty {
+                            Button(action: { 
+                                viewModel.startNewConversation()
+                            }) {
+                                Image(systemName: "square.and.pencil")
+                            }
                         }
                         
                         // 更多菜单按钮

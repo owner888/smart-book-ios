@@ -100,23 +100,34 @@ class ChatHistoryService: ObservableObject {
     
     /// 保存消息到当前对话
     func saveMessage(_ chatMessage: ChatMessage) {
-        guard let conversation = currentConversation else {
-            Logger.info("⚠️ 没有当前对话，无法保存消息")
+        var conversation = currentConversation
+        
+        // 如果没有当前对话且是用户消息，自动创建新对话
+        if conversation == nil && chatMessage.role == .user {
+            // 使用第一条用户消息作为标题
+            conversation = Conversation(title: "临时")
+            conversation!.generateTitle(from: chatMessage.content)
+            modelContext.insert(conversation!)
+            currentConversation = conversation
+            Logger.info("✅ 自动创建新对话: \(conversation!.title)")
+        }
+        
+        guard let conversation = conversation else {
+            Logger.info("⚠️ 没有当前对话且不是用户消息，跳过保存")
             return
         }
         
         let message = Message(from: chatMessage, conversation: conversation)
         modelContext.insert(message)
         
-        // 更新对话
+        // 更新对话时间
         conversation.touch()
         
-        // 如果是第一条用户消息，自动生成标题
-        if conversation.messages?.count == 0 && chatMessage.role == .user {
-            conversation.generateTitle(from: chatMessage.content)
-        }
-        
         saveContext()
+        
+        // 保存后重新加载对话列表
+        loadConversations()
+        
         Logger.info("💾 保存消息到对话: \(conversation.title)")
     }
     

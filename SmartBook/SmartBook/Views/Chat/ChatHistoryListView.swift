@@ -38,9 +38,9 @@ struct ChatHistoryListView: View {
                 }
             }
             .padding()
-            .background(colors.cardBackground)
             
             Divider()
+                .background(colors.secondaryText.opacity(0.3))
             
             // 对话列表
             if historyService.conversations.isEmpty {

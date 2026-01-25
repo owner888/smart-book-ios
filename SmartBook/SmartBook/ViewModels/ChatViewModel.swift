@@ -31,23 +31,14 @@ class ChatViewModel: ObservableObject {
         Logger.info("📖 加载了 \(messages.count) 条历史消息")
     }
     
-    /// 创建新对话
+    /// 创建新对话（不立即保存到数据库，等待第一条消息）
     func startNewConversation() {
-        guard let historyService = historyService else { return }
-        
-        // Book.id 是 String，但 Conversation 需要 UUID，所以暂时不保存 bookId
-        // 只保存书籍标题用于显示
-        let bookTitle = bookState?.selectedBook?.title
-        
-        _ = historyService.createConversation(
-            title: "新对话",
-            bookId: nil,  // 暂时不保存 bookId
-            bookTitle: bookTitle
-        )
+        // 清空当前对话引用，但不创建数据库记录
+        historyService?.currentConversation = nil
         
         messages.removeAll()
         streamingContent = ""
-        Logger.info("✨ 开始新对话")
+        Logger.info("✨ 准备开始新对话（等待第一条消息）")
     }
     
     /// 切换到指定对话
