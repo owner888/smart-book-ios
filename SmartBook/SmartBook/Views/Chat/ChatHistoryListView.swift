@@ -99,53 +99,44 @@ struct ConversationRow: View {
     let onDelete: () -> Void
     
     var body: some View {
-        HStack(spacing: 12) {
-            // 内容 - 可点击区域
-            VStack(alignment: .leading, spacing: 4) {
-                Text(conversation.title)
-                    .font(.subheadline)
-                    .foregroundColor(colors.primaryText)
-                    .lineLimit(1)
-                
-                HStack(spacing: 4) {
-                    if let bookTitle = conversation.bookTitle {
-                        Text(bookTitle)
-                            .font(.caption2)
-                            .foregroundColor(colors.secondaryText)
-                            .lineLimit(1)
-                        
-                        Text("•")
-                            .font(.caption2)
-                            .foregroundColor(colors.secondaryText)
-                    }
+        VStack(alignment: .leading, spacing: 4) {
+            Text(conversation.title)
+                .font(.subheadline)
+                .foregroundColor(colors.primaryText)
+                .lineLimit(1)
+            
+            HStack(spacing: 4) {
+                if let bookTitle = conversation.bookTitle {
+                    Text(bookTitle)
+                        .font(.caption2)
+                        .foregroundColor(colors.secondaryText)
+                        .lineLimit(1)
                     
-                    Text(conversation.updatedAt.formatted(.relative(presentation: .named)))
+                    Text("•")
                         .font(.caption2)
                         .foregroundColor(colors.secondaryText)
                 }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .onTapGesture(perform: onTap)
-            
-            // 菜单
-            Menu {
-                Button(action: onRename) {
-                    Label("重命名", systemImage: "pencil")
-                }
                 
-                Button(role: .destructive, action: onDelete) {
-                    Label("删除", systemImage: "trash")
-                }
-            } label: {
-                Image(systemName: "ellipsis")
+                Text(conversation.updatedAt.formatted(.relative(presentation: .named)))
+                    .font(.caption2)
                     .foregroundColor(colors.secondaryText)
-                    .padding(8)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(isSelected ? colors.sidebarCardBackground : Color.clear)
         .cornerRadius(8)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onTap)
+        .contextMenu {
+            Button(action: onRename) {
+                Label("重命名", systemImage: "pencil")
+            }
+            
+            Button(role: .destructive, action: onDelete) {
+                Label("删除", systemImage: "trash")
+            }
+        }
     }
 }
