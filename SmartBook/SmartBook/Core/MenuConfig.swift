@@ -4,7 +4,11 @@ import Foundation
 
 class MenuConfig {
     static let medias: [MediaMenuType] = [.camera, .photo, .file, .createPhoto, .editPhoto]
-    static let aiFunctions: [AIModelFunctionType] = [.heavy, .expert, .fast, .auto, .thinking]
+    
+    // AI 模型配置（动态从服务器加载）
+    @MainActor
+    static var aiFunctions: [AIModelFunctionType] = [.heavy, .expert, .fast, .auto, .thinking]
+    
     static let topFunctions: [TopFunctionType] = [.getSuper, .createVideo, .editPhoto, .voiceMode, .camera, .analysisDocument, .custom]
     
     struct Config {
@@ -12,6 +16,50 @@ class MenuConfig {
         var title: String
         var summary: String? = nil
         var builtIn: Bool = true  // icon是否内置
+    }
+    
+    // MARK: - 动态加载 AI 模型
+    
+    /// 从服务器加载 AI 模型配置
+    @MainActor
+    static func loadAIModels() async {
+        do {
+            // 使用 ChatService 的单例 ModelService
+            let modelService = ModelService.shared
+            try await modelService.loadModels()
+            
+            // 将模型转换为 AIModelFunctionType
+            aiFunctions = modelService.models.map { model in
+                // 根据 rate 映射图标
+                let icon: String
+                switch model.rate {
+                case "0x":
+                    icon = "bolt"  // 免费最快
+                case let r where r.hasPrefix("0."):
+                    icon = "hare"  // 轻量级
+                case "1x":
+                    icon = "lightbulb.max"  // 专家
+                case let r where r.hasPrefix("2") || r.hasPrefix("3"):
+                    icon = "brain"  // 超级
+                default:
+                    icon = "cpu"
+                }
+                
+                let dynamicModel: DynamicAIModel = (
+                    id: model.id,
+                    name: model.name,
+                    icon: icon,
+                    summary: model.description ?? "Rate: \(model.rate)"
+                )
+                return .dynamic(dynamicModel)
+            }
+            
+            print("✅ 成功加载 \(modelService.models.count) 个 AI 模型")
+        } catch {
+            print("⚠️ 加载 AI 模型失败，使用默认配置: \(error.localizedDescription)")
+            // 保留静态默认值
+            aiFunctions = [.heavy, .expert, .fast, .auto, .thinking]
+        }
     }
     
     // MARK: - 媒体菜单类型
@@ -41,6 +89,9 @@ class MenuConfig {
     
     // MARK: - AI 模型功能类型
     
+    // 类型别名，避免命名歧义
+    typealias DynamicAIModel = (id: String, name: String, icon: String, summary: String)
+    
     enum AIModelFunctionType: Equatable {
         case `super`
         case heavy
@@ -48,6 +99,7 @@ class MenuConfig {
         case fast
         case auto
         case thinking
+        case dynamic(DynamicAIModel)  // 从服务器动态加载的模型
         
         var config: Config {
             switch self {
@@ -63,6 +115,50 @@ class MenuConfig {
                 return Config(icon: "airplane", title: "Auto", summary: "Chooses Fast or Expert")
             case .thinking:
                 return Config(icon: "moon", title: "4.1 Thinking", summary: "Thinks fast")
+            case .dynamic(let dynamicModel):
+                // 使用元组的 name 字段作为 title
+                return Config(
+                    icon: dynamicModel.icon,
+                    title: dynamicModel.name,
+                    summary: dynamicModel.summary
+                )
+            }
+        }
+        
+        // 获取模型ID（用于API调用）
+        var modelId: String {
+            switch self {
+            case .super:
+                return "gemini-2.5-pro"
+            case .heavy:
+                return "gemini-2.5-pro"
+            case .expert:
+                return "gemini-2.5-flash"
+            case .fast:
+                return "gemini-2.5-flash-lite"
+            case .auto:
+                return "gemini-2.5-flash"
+            case .thinking:
+                return "gemini-2.5-flash"
+            case .dynamic(let model):
+                return model.id
+            }
+        }
+        
+        // Equatable conformance
+        static func == (lhs: AIModelFunctionType, rhs: AIModelFunctionType) -> Bool {
+            switch (lhs, rhs) {
+            case (.super, .super),
+                 (.heavy, .heavy),
+                 (.expert, .expert),
+                 (.fast, .fast),
+                 (.auto, .auto),
+                 (.thinking, .thinking):
+                return true
+            case (.dynamic(let lModel), .dynamic(let rModel)):
+                return lModel.id == rModel.id
+            default:
+                return false
             }
         }
     }

@@ -137,16 +137,18 @@ struct RAGSource: Codable, Identifiable {
 }
 
 // MARK: - AI 模型配置
-struct AIModel: Identifiable, Codable {
+struct AIModel: Identifiable, Codable, Equatable {
     let id: String
     let name: String
     let provider: String
+    let rate: String  // 价格比率，如 "0x", "0.33x", "1x"
+    let description: String?  // 模型描述
     let maxTokens: Int?
     let costPer1MInput: Double?
     let costPer1MOutput: Double?
     
     enum CodingKeys: String, CodingKey {
-        case id, name, provider
+        case id, name, provider, rate, description
         case maxTokens = "max_tokens"
         case costPer1MInput = "cost_per_1m_input"
         case costPer1MOutput = "cost_per_1m_output"
@@ -155,16 +157,21 @@ struct AIModel: Identifiable, Codable {
     var displayName: String {
         name
     }
+    
+    // Equatable conformance - 根据 id 比较
+    static func == (lhs: AIModel, rhs: AIModel) -> Bool {
+        lhs.id == rhs.id
+    }
 }
 
 // MARK: - 默认模型
 extension AIModel {
     static let defaultModels: [AIModel] = [
-        AIModel(id: "gemini-2.0-flash-exp", name: "Gemini 2.0 Flash", provider: "Google", maxTokens: 1000000, costPer1MInput: 0, costPer1MOutput: 0),
-        AIModel(id: "gemini-2.0-flash-thinking-exp-01-21", name: "Gemini 2.0 Flash Thinking", provider: "Google", maxTokens: 32000, costPer1MInput: 0, costPer1MOutput: 0),
-        AIModel(id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", provider: "Google", maxTokens: 2000000, costPer1MInput: 1.25, costPer1MOutput: 5.0),
-        AIModel(id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "Google", maxTokens: 1000000, costPer1MInput: 0.075, costPer1MOutput: 0.30),
-        AIModel(id: "gpt-4o", name: "GPT-4o", provider: "OpenAI", maxTokens: 128000, costPer1MInput: 2.5, costPer1MOutput: 10.0),
-        AIModel(id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", maxTokens: 128000, costPer1MInput: 0.15, costPer1MOutput: 0.60),
+        AIModel(id: "gemini-2.0-flash-exp", name: "Gemini 2.0 Flash", provider: "Google", rate: "0x", description: "Free experimental model", maxTokens: 1000000, costPer1MInput: 0, costPer1MOutput: 0),
+        AIModel(id: "gemini-2.0-flash-thinking-exp-01-21", name: "Gemini 2.0 Flash Thinking", provider: "Google", rate: "0x", description: "Free thinking model", maxTokens: 32000, costPer1MInput: 0, costPer1MOutput: 0),
+        AIModel(id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", provider: "Google", rate: "1x", description: "Expert model", maxTokens: 2000000, costPer1MInput: 1.25, costPer1MOutput: 5.0),
+        AIModel(id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "Google", rate: "0.33x", description: "Fast model", maxTokens: 1000000, costPer1MInput: 0.075, costPer1MOutput: 0.30),
+        AIModel(id: "gpt-4o", name: "GPT-4o", provider: "OpenAI", rate: "2x", description: "OpenAI premium", maxTokens: 128000, costPer1MInput: 2.5, costPer1MOutput: 10.0),
+        AIModel(id: "gpt-4o-mini", name: "GPT-4o Mini", provider: "OpenAI", rate: "0.5x", description: "OpenAI budget", maxTokens: 128000, costPer1MInput: 0.15, costPer1MOutput: 0.60),
     ]
 }

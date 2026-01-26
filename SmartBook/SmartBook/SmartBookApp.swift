@@ -12,7 +12,7 @@ struct SmartBookApp: App {
     
     // AI 服务
     let assistantService = AssistantService()
-    let modelService = ModelService()
+    let modelService = ModelService.shared  // 使用单例
     
     // 业务服务
     let bookService = BookService()
