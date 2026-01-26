@@ -25,6 +25,11 @@ struct SmartBookApp: App {
         #if DEBUG
             DebugConfig.printAllConfiguration()
         #endif
+        
+        // 启动时加载模型列表
+        Task {
+            await MenuConfig.loadAIModels()
+        }
     }
 
     var body: some Scene {
