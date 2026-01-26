@@ -100,34 +100,28 @@ struct ConversationRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // 图标
-            Image(systemName: conversation.bookId != nil ? "book.fill" : "message")
-                .font(.system(size: 16))
-                .foregroundColor(isSelected ? .white : colors.secondaryText)
-                .frame(width: 20)
-            
             // 内容
             VStack(alignment: .leading, spacing: 4) {
                 Text(conversation.title)
                     .font(.subheadline)
-                    .foregroundColor(isSelected ? .white : colors.primaryText)
+                    .foregroundColor(colors.primaryText)
                     .lineLimit(1)
                 
                 HStack(spacing: 4) {
                     if let bookTitle = conversation.bookTitle {
                         Text(bookTitle)
                             .font(.caption2)
-                            .foregroundColor(isSelected ? .white.opacity(0.8) : colors.secondaryText)
+                            .foregroundColor(colors.secondaryText)
                             .lineLimit(1)
                         
                         Text("•")
                             .font(.caption2)
-                            .foregroundColor(isSelected ? .white.opacity(0.6) : colors.secondaryText)
+                            .foregroundColor(colors.secondaryText)
                     }
                     
                     Text(conversation.updatedAt.formatted(.relative(presentation: .named)))
                         .font(.caption2)
-                        .foregroundColor(isSelected ? .white.opacity(0.8) : colors.secondaryText)
+                        .foregroundColor(colors.secondaryText)
                 }
             }
             
@@ -144,13 +138,13 @@ struct ConversationRow: View {
                 }
             } label: {
                 Image(systemName: "ellipsis")
-                    .foregroundColor(isSelected ? .white.opacity(0.8) : colors.secondaryText)
+                    .foregroundColor(colors.secondaryText)
                     .padding(8)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(isSelected ? colors.cardBackground : Color.clear)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(isSelected ? colors.sidebarCardBackground : Color.clear)
         .cornerRadius(8)
         .onTapGesture(perform: onTap)
     }

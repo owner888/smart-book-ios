@@ -38,6 +38,7 @@ struct ThemeColors {
     // 背景色
     let background: Color
     let cardBackground: Color
+    let sidebarCardBackground: Color
     let inputBackground: Color
     
     // 文字色
@@ -66,6 +67,7 @@ struct ThemeColors {
     static let dark = ThemeColors(
         background: Color.black,
         cardBackground: Color(white: 0.11),
+        sidebarCardBackground: Color(white: 0.11),
         inputBackground: Color(white: 0.15),
         primaryText: Color.white,
         secondaryText: Color.gray,
@@ -83,6 +85,7 @@ struct ThemeColors {
     static let light = ThemeColors(
         background: Color(UIColor.systemGroupedBackground),
         cardBackground: Color.white,
+        sidebarCardBackground: Color.gray.opacity(0.1),
         inputBackground: Color(UIColor.secondarySystemGroupedBackground),
         primaryText: Color.black,
         secondaryText: Color.gray,
