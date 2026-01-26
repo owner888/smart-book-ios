@@ -48,7 +48,7 @@ struct SidebarView: View {
             VStack(alignment: .leading, spacing: 4) {
                 // 书架
                 SidebarItem(
-                    icon: "books.vertical",
+                    icon: "book",
                     title: L("library.title"),
                     colors: colors,
                     isSelected: false,
@@ -111,7 +111,7 @@ struct SidebarItem: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.title3)
+                    .font(.system(size: 20))
                     .foregroundColor(isSelected ? .white : colors.primaryText)
                     .frame(width: 28)
 
