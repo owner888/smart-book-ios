@@ -111,7 +111,7 @@ struct SidebarItem: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.system(size: 20))
+                    .font(.title3)
                     .foregroundColor(isSelected ? .white : colors.primaryText)
                     .frame(width: 28)
 
