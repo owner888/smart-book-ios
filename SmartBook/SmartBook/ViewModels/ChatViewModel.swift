@@ -80,13 +80,17 @@ class ChatViewModel: ObservableObject {
         messages.append(streamingMessage)
         let messageIndex = messages.count - 1
 
+        // 获取历史消息上下文（最近10条消息）
+        let recentMessages = Array(messages.suffix(10))
+        
         // 使用流式API
         streamingService.sendMessageStream(
             message: text,
             assistant: Assistant.defaultAssistants.first!,
             bookId: bookState.selectedBook?.id,
             model: "gemini-2.0-flash-exp",
-            ragEnabled: true
+            ragEnabled: true,
+            history: recentMessages
         ) { [weak self] event in
             guard let self = self else { return }
 

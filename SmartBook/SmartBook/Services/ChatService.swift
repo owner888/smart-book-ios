@@ -38,6 +38,7 @@ class StreamingChatService: NSObject {
         bookId: String?,
         model: String = "gemini-2.0-flash-exp",
         ragEnabled: Bool = true,
+        history: [ChatMessage] = [],
         onEvent: @escaping SSEEventHandler,
         onComplete: @escaping CompletionHandler
     ) {
@@ -50,6 +51,14 @@ class StreamingChatService: NSObject {
         var url: URL
         var body: [String: Any]
         
+        // 转换历史消息格式
+        let historyArray = history.map { msg in
+            return [
+                "role": msg.role == .user ? "user" : "assistant",
+                "content": msg.content
+            ] as [String: Any]
+        }
+        
         switch assistant.action {
         case .ask:
             url = URL(string: "\(AppConfig.apiBaseURL)/api/stream/ask")!
@@ -58,7 +67,8 @@ class StreamingChatService: NSObject {
                 "chat_id": UUID().uuidString,
                 "search": false,
                 "rag": ragEnabled,
-                "model": model
+                "model": model,
+                "history": historyArray
             ]
             if let bookId = bookId {
                 body["book_id"] = bookId
@@ -69,7 +79,8 @@ class StreamingChatService: NSObject {
             body = [
                 "book": bookId ?? "",
                 "prompt": message,
-                "model": model
+                "model": model,
+                "history": historyArray
             ]
             
         case .chat:
@@ -78,7 +89,8 @@ class StreamingChatService: NSObject {
                 "message": message,
                 "chat_id": UUID().uuidString,
                 "search": false,
-                "model": model
+                "model": model,
+                "history": historyArray
             ]
         }
         
