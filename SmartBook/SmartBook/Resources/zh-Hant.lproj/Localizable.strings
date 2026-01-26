@@ -282,3 +282,13 @@
 /* Menu - Actions */
 "menu.upgrade" = "升級";
 "chat.stoppedByUser" = "使用者已停止回應";
+
+/* Chat History */
+"chatHistory.empty" = "暫無歷史對話";
+"chatHistory.startNew" = "開始新對話";
+"chatHistory.rename.title" = "重新命名對話";
+"chatHistory.rename.placeholder" = "對話標題";
+"chatHistory.delete.title" = "刪除對話？";
+"chatHistory.delete.message" = "此對話將從您的帳戶中刪除，將在最近刪除中保留30天。";
+"chatHistory.menu.rename" = "重新命名";
+"chatHistory.menu.delete" = "刪除";

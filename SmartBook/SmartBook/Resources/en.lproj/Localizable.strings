@@ -282,3 +282,13 @@
 /* Menu - Actions */
 "menu.upgrade" = "Upgrade";
 "chat.stoppedByUser" = "Response stopped by the user";
+
+/* Chat History */
+"chatHistory.empty" = "No conversations yet";
+"chatHistory.startNew" = "Start New Conversation";
+"chatHistory.rename.title" = "Rename Conversation";
+"chatHistory.rename.placeholder" = "Conversation Title";
+"chatHistory.delete.title" = "Delete Conversation?";
+"chatHistory.delete.message" = "This conversation will be deleted from your account. It will be in Recently Deleted for 30 days.";
+"chatHistory.menu.rename" = "Rename";
+"chatHistory.menu.delete" = "Delete";

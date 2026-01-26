@@ -17,6 +17,8 @@ struct ChatHistoryListView: View {
     
     @State private var editingConversation: Conversation?
     @State private var showRenameAlert = false
+    @State private var showDeleteAlert = false
+    @State private var conversationToDelete: Conversation?
     @State private var newTitle = ""
     
     var body: some View {
@@ -29,7 +31,7 @@ struct ChatHistoryListView: View {
                         .font(.system(size: 50))
                         .foregroundColor(colors.secondaryText)
                     
-                    Text("暂无历史对话")
+                    Text(L("chatHistory.empty"))
                         .font(.subheadline)
                         .foregroundColor(colors.secondaryText)
                     
@@ -37,7 +39,7 @@ struct ChatHistoryListView: View {
                         viewModel.startNewConversation()
                         onSelectConversation()
                     }) {
-                        Text("开始新对话")
+                        Text(L("chatHistory.startNew"))
                             .font(.subheadline)
                             .foregroundColor(.white)
                             .padding(.horizontal, 20)
@@ -66,7 +68,8 @@ struct ChatHistoryListView: View {
                                     showRenameAlert = true
                                 },
                                 onDelete: {
-                                    historyService.deleteConversation(conversation)
+                                    conversationToDelete = conversation
+                                    showDeleteAlert = true
                                 }
                             )
                         }
@@ -77,14 +80,24 @@ struct ChatHistoryListView: View {
             }
         }
         .background(colors.background)
-        .alert("重命名对话", isPresented: $showRenameAlert) {
-            TextField("对话标题", text: $newTitle)
-            Button("取消", role: .cancel) { }
-            Button("确定") {
+        .alert(L("chatHistory.rename.title"), isPresented: $showRenameAlert) {
+            TextField(L("chatHistory.rename.placeholder"), text: $newTitle)
+            Button(L("common.cancel"), role: .cancel) { }
+            Button(L("common.confirm")) {
                 if let conversation = editingConversation {
                     historyService.renameConversation(conversation, newTitle: newTitle)
                 }
             }
+        }
+        .alert(L("chatHistory.delete.title"), isPresented: $showDeleteAlert) {
+            Button(L("common.cancel"), role: .cancel) { }
+            Button(L("common.delete"), role: .destructive) {
+                if let conversation = conversationToDelete {
+                    historyService.deleteConversation(conversation)
+                }
+            }
+        } message: {
+            Text(L("chatHistory.delete.message"))
         }
     }
 }
@@ -131,11 +144,11 @@ struct ConversationRow: View {
         .onTapGesture(perform: onTap)
         .contextMenu {
             Button(action: onRename) {
-                Label("重命名", systemImage: "pencil")
+                Label(L("chatHistory.menu.rename"), systemImage: "pencil")
             }
             
             Button(role: .destructive, action: onDelete) {
-                Label("删除", systemImage: "trash")
+                Label(L("chatHistory.menu.delete"), systemImage: "trash")
             }
         }
     }
