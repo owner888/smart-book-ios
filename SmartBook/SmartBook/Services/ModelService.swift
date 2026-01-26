@@ -49,6 +49,8 @@ class ModelService {
                 
                 struct ModelsData: Codable {
                     let models: [AIModel]
+                    let `default`: String?
+                    let source: String?
                 }
             }
             
@@ -56,17 +58,26 @@ class ModelService {
             if let response = try? JSONDecoder().decode(ModelsResponse.self, from: data) {
                 models = response.data.models
                 cacheTime = Date()
+                
+                // 使用 API 返回的 default 字段设置默认模型
+                if let defaultModelId = response.data.default,
+                   let defaultModel = models.first(where: { $0.id == defaultModelId }) {
+                    currentModel = defaultModel
+                    Logger.debug("✅ Set default model from API: \(defaultModelId)")
+                } else if !models.isEmpty {
+                    currentModel = models.first!
+                }
             }
             // 尝试直接解析数组
             else if let loadedModels = try? JSONDecoder().decode([AIModel].self, from: data),
                !loadedModels.isEmpty {
                 models = loadedModels
                 cacheTime = Date()
-            }
-            
-            // 确保 currentModel 有效
-            if !models.contains(where: { $0.id == currentModel.id }) {
-                currentModel = models.first!
+                
+                // 确保 currentModel 有效
+                if !models.contains(where: { $0.id == currentModel.id }) {
+                    currentModel = models.first!
+                }
             }
         } catch {
             // 使用默认模型，不抛出错误

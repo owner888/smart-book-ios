@@ -15,6 +15,7 @@ struct InputToolBarView<Content: View>: View {
     var keyboardHeightChanged: ((CGFloat) -> Void)?
 
     @Environment(\.colorScheme) private var systemColorScheme
+    @Environment(ModelService.self) private var modelService
     @State private var themeManager = ThemeManager.shared
     
     private var colors: ThemeColors {
@@ -22,7 +23,7 @@ struct InputToolBarView<Content: View>: View {
     }
 
     @State private var showScrollToBottomButton = false  // 控制按钮显示
-    @State private var aiFunction = MenuConfig.AIModelFunctionType.auto
+    @State private var aiFunction: MenuConfig.AIModelFunctionType = .auto
     @State private var keyboardHeight: CGFloat = 0
     @State private var mediaMenuEdge = EdgeInsets()
     @State private var modelMenuEdge = EdgeInsets()
@@ -154,6 +155,9 @@ struct InputToolBarView<Content: View>: View {
             hiddenKeyboard()
         }
         .onAppear {
+            // 设置默认模型
+            updateAIFunction(from: modelService.currentModel.id)
+            
             menuObser.onClose = {
                 if showMediaMenu {
                     showMediaMenu = false
@@ -163,12 +167,25 @@ struct InputToolBarView<Content: View>: View {
             }
             setupKeyboardObservers()
         }
+        .onChange(of: modelService.currentModel.id) { oldValue, newValue in
+            // 监听模型变化，自动更新 aiFunction
+            updateAIFunction(from: newValue)
+        }
         .onDisappear {
             removeKeyboardObservers()
         }
     }
 
     // MARK: - Helper Methods
+    
+    private func updateAIFunction(from modelId: String) {
+        if let matchingFunction = MenuConfig.aiFunctions.first(where: { $0.modelId == modelId }) {
+            aiFunction = matchingFunction
+            Logger.debug("✅ Set aiFunction from model: \(modelId) -> \(matchingFunction.config.title)")
+        } else {
+            Logger.warn("⚠️ No matching aiFunction found for model: \(modelId)")
+        }
+    }
 
     func buttonRelatively(_ rect: CGRect, proxy: GeometryProxy) -> EdgeInsets {
         var size = proxy.size
