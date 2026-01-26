@@ -80,8 +80,8 @@ class ChatViewModel: ObservableObject {
         messages.append(streamingMessage)
         let messageIndex = messages.count - 1
 
-        // 获取历史消息上下文（最近10条消息）
-        let recentMessages = Array(messages.suffix(10))
+        // 获取上下文（摘要 + 最近消息）
+        let (summary, recentMessages) = getContext()
         
         // 使用流式API
         streamingService.sendMessageStream(
@@ -90,6 +90,7 @@ class ChatViewModel: ObservableObject {
             bookId: bookState.selectedBook?.id,
             model: "gemini-2.0-flash-exp",
             ragEnabled: true,
+            summary: summary,
             history: recentMessages
         ) { [weak self] event in
             guard let self = self else { return }
@@ -168,6 +169,9 @@ class ChatViewModel: ObservableObject {
                         let finalMessage = self.messages[messageIndex]
                         self.historyService?.saveMessage(finalMessage)
                         Logger.info("💾 保存助手回复到数据库")
+                        
+                        // 检查是否需要生成摘要
+                        self.checkAndTriggerSummarization()
                     }
                     break
                 }
@@ -179,5 +183,92 @@ class ChatViewModel: ObservableObject {
         historyService?.clearCurrentConversationMessages()
         messages.removeAll()
         streamingContent = ""
+    }
+    
+    // MARK: - 上下文管理
+    
+    /// 获取对话上下文（摘要 + 最近消息）
+    /// 返回：(摘要文本, 最近消息数组)
+    private func getContext() -> (String?, [ChatMessage]) {
+        guard let conversation = historyService?.currentConversation else {
+            return (nil, Array(messages.suffix(10)))
+        }
+        
+        let totalMessages = messages.count
+        let summarizedCount = conversation.summarizedMessageCount
+        
+        // 如果有摘要，返回摘要 + 未摘要的消息
+        if let summary = conversation.summary, summarizedCount > 0 {
+            let unsummarizedMessages = Array(messages.dropFirst(summarizedCount))
+            let recentMessages = Array(unsummarizedMessages.suffix(10))
+            Logger.info("📝 使用摘要 (\(summarizedCount)条) + 最近\(recentMessages.count)条消息")
+            return (summary, recentMessages)
+        }
+        
+        // 没有摘要，返回最近10条
+        let recentMessages = Array(messages.suffix(10))
+        return (nil, recentMessages)
+    }
+    
+    /// 检查是否需要生成摘要
+    /// 当消息数量超过20条且没有摘要时触发
+    private func checkAndTriggerSummarization() {
+        guard let conversation = historyService?.currentConversation else { return }
+        
+        let totalMessages = messages.count
+        let summarizedCount = conversation.summarizedMessageCount
+        let unsummarizedCount = totalMessages - summarizedCount
+        
+        // 超过20条未摘要的消息时触发
+        if unsummarizedCount >= 20 {
+            Task {
+                await generateSummary()
+            }
+        }
+    }
+    
+    /// 生成对话摘要
+    @MainActor
+    private func generateSummary() async {
+        guard let conversation = historyService?.currentConversation else { return }
+        
+        let summarizedCount = conversation.summarizedMessageCount
+        let messagesToSummarize = Array(messages.dropFirst(summarizedCount).prefix(10))
+        
+        if messagesToSummarize.isEmpty {
+            return
+        }
+        
+        Logger.info("🤖 开始生成摘要，处理 \(messagesToSummarize.count) 条消息...")
+        
+        // 构建摘要请求
+        var conversationText = ""
+        if let existingSummary = conversation.summary {
+            conversationText += "【之前的摘要】\n\(existingSummary)\n\n【新对话】\n"
+        }
+        
+        for msg in messagesToSummarize {
+            let role = msg.role == .user ? "用户" : "AI"
+            conversationText += "\(role): \(msg.content)\n\n"
+        }
+        
+        let summarizePrompt = """
+        请将以上对话总结成一个简洁的摘要，保留关键信息和上下文。
+        摘要应该：
+        1. 概括主要讨论的话题
+        2. 记录重要的结论或决定
+        3. 保持简洁，不超过200字
+        """
+        
+        // 调用 AI 生成摘要（使用简单的非流式请求）
+        // 这里简化实现，实际可以调用后端的摘要 API
+        let summaryText = conversationText // 临时：直接使用对话文本
+        
+        // 保存摘要
+        conversation.summary = summaryText
+        conversation.summarizedMessageCount = summarizedCount + messagesToSummarize.count
+        
+        historyService?.saveSummary(summary: summaryText, messageCount: conversation.summarizedMessageCount)
+        Logger.info("✅ 摘要已保存，已摘要消息数: \(conversation.summarizedMessageCount)")
     }
 }

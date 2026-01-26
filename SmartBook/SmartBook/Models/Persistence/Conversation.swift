@@ -18,6 +18,10 @@ class Conversation {
     // 关联的书籍ID（可选）
     var bookId: UUID?
     var bookTitle: String?
+    
+    // 上下文摘要（用于压缩历史对话）
+    var summary: String?
+    var summarizedMessageCount: Int = 0
 
     @Relationship(deleteRule: .cascade)
     var messages: [Message]? = []

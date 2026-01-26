@@ -38,6 +38,7 @@ class StreamingChatService: NSObject {
         bookId: String?,
         model: String = "gemini-2.0-flash-exp",
         ragEnabled: Bool = true,
+        summary: String? = nil,
         history: [ChatMessage] = [],
         onEvent: @escaping SSEEventHandler,
         onComplete: @escaping CompletionHandler
@@ -73,6 +74,9 @@ class StreamingChatService: NSObject {
             if let bookId = bookId {
                 body["book_id"] = bookId
             }
+            if let summary = summary {
+                body["summary"] = summary
+            }
             
         case .continueWriting:
             url = URL(string: "\(AppConfig.apiBaseURL)/api/stream/enhanced-continue")!
@@ -82,6 +86,9 @@ class StreamingChatService: NSObject {
                 "model": model,
                 "history": historyArray
             ]
+            if let summary = summary {
+                body["summary"] = summary
+            }
             
         case .chat:
             url = URL(string: "\(AppConfig.apiBaseURL)/api/stream/chat")!
@@ -92,6 +99,9 @@ class StreamingChatService: NSObject {
                 "model": model,
                 "history": historyArray
             ]
+            if let summary = summary {
+                body["summary"] = summary
+            }
         }
         
         var request = URLRequest(url: url)

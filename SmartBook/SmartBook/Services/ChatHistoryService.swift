@@ -149,6 +149,20 @@ class ChatHistoryService: ObservableObject {
         return sorted.map { $0.toChatMessage() }
     }
     
+    // MARK: - 摘要管理
+    
+    /// 保存对话摘要
+    func saveSummary(summary: String, messageCount: Int) {
+        guard let conversation = currentConversation else { return }
+        
+        conversation.summary = summary
+        conversation.summarizedMessageCount = messageCount
+        conversation.touch()
+        saveContext()
+        
+        Logger.info("💾 保存摘要: 已摘要\(messageCount)条消息")
+    }
+    
     // MARK: - 私有方法
     
     private func saveContext() {
