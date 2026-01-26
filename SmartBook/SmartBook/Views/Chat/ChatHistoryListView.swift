@@ -100,7 +100,7 @@ struct ConversationRow: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // 内容
+            // 内容 - 可点击区域
             VStack(alignment: .leading, spacing: 4) {
                 Text(conversation.title)
                     .font(.subheadline)
@@ -124,8 +124,9 @@ struct ConversationRow: View {
                         .foregroundColor(colors.secondaryText)
                 }
             }
-            
-            Spacer()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTap)
             
             // 菜单
             Menu {
@@ -146,6 +147,5 @@ struct ConversationRow: View {
         .padding(.vertical, 12)
         .background(isSelected ? colors.sidebarCardBackground : Color.clear)
         .cornerRadius(8)
-        .onTapGesture(perform: onTap)
     }
 }
