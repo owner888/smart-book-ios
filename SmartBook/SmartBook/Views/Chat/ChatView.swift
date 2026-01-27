@@ -88,6 +88,10 @@ struct ChatView: View {
             }
             
             viewModel.bookState = bookState
+            viewModel.selectedAssistant = assistantService.currentAssistant
+        }
+        .onChange(of: assistantService.currentAssistant) { _, newAssistant in
+            viewModel.selectedAssistant = newAssistant
         }
     }
 

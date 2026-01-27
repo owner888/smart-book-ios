@@ -69,6 +69,7 @@ class StreamingChatService: NSObject {
                 "search": false,
                 "rag": ragEnabled,
                 "model": model,
+                "assistant_id": assistant.id,
                 "history": historyArray
             ]
             if let bookId = bookId {
@@ -84,6 +85,7 @@ class StreamingChatService: NSObject {
                 "book": bookId ?? "",
                 "prompt": message,
                 "model": model,
+                "assistant_id": assistant.id,
                 "history": historyArray
             ]
             if let summary = summary {
@@ -97,6 +99,7 @@ class StreamingChatService: NSObject {
                 "chat_id": UUID().uuidString,
                 "search": false,
                 "model": model,
+                "assistant_id": assistant.id,
                 "history": historyArray
             ]
             if let summary = summary {
@@ -109,6 +112,21 @@ class StreamingChatService: NSObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 300 // 5分钟超时
+        
+        // 🐛 调试：打印发送的请求数据
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print("📤 发送聊天请求到后端")
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        print("🌐 URL: \(url.absoluteString)")
+        print("🤖 Assistant ID: \(assistant.id)")
+        print("📋 Assistant Name: \(assistant.name)")
+        print("🎯 Action: \(assistant.action)")
+        print("📦 Request Body:")
+        if let jsonData = try? JSONSerialization.data(withJSONObject: body, options: .prettyPrinted),
+           let jsonString = String(data: jsonData, encoding: .utf8) {
+            print(jsonString)
+        }
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         
         // 使用复用的 session
         let task = session.dataTask(with: request)

@@ -59,7 +59,7 @@ extension Assistant {
             useRAG: false
         ),
         Assistant(
-            id: "book",
+            id: "ask",
             name: "书籍问答",
             avatar: "📚",
             color: "#4caf50",

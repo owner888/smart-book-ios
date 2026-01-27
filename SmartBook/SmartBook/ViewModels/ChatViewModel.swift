@@ -22,6 +22,7 @@ class ChatViewModel: ObservableObject {
 
     var bookState: BookState?
     var historyService: ChatHistoryService?
+    var selectedAssistant: Assistant?
     private let streamingService: StreamingChatService
     private var streamingContent = ""
     private var answerContents = [String]()
@@ -105,9 +106,10 @@ class ChatViewModel: ObservableObject {
         let (summary, recentMessages) = getContext()
         
         // 使用流式API
+        let assistant = selectedAssistant ?? Assistant.defaultAssistants.first!
         streamingService.sendMessageStream(
             message: text,
-            assistant: Assistant.defaultAssistants.first!,
+            assistant: assistant,
             bookId: bookState.selectedBook?.id,
             model: "gemini-2.0-flash",
             ragEnabled: true,
