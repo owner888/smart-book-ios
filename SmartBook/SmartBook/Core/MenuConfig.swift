@@ -40,11 +40,7 @@ class MenuConfig {
                 )
                 return .dynamic(dynamicAssistant)
             }
-            
-            print("✅ 成功加载 \(assistantService.assistants.count) 个助手")
-            print("✅ MenuConfig.assistants已更新: \(assistants.map { $0.config.title })")
         } catch {
-            print("⚠️ 加载助手失败，使用默认配置: \(error.localizedDescription)")
             // 保留静态默认值
             assistants = [.chat, .book, .continue]
         }
