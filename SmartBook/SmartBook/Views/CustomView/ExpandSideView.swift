@@ -8,6 +8,7 @@
 import SwiftUI
 import Combine
 import UIKit
+import SwiftUIIntrospect
 
 struct ExpandSideView<Side: View, Content: View>: View {
     @ViewBuilder var side: Side
@@ -52,22 +53,17 @@ struct ExpandSideView<Side: View, Content: View>: View {
                                 })
                             )
                         }.id(1)
-                    }.background(
-                        GeometryReader {
-                            Color.clear.preference(
-                                key: ScrollOffsetPreferenceKey.self,
-                                value: -$0.frame(in: .named("scroll")).origin
-                                    .scrollOffset(.horizontal)
-                            )
-                        }
-                    ).onPreferenceChange(ScrollOffsetPreferenceKey.self) {
-                        scrollOffset = $0
                     }
                 }
-                .coordinateSpace(name: "scroll")
                 .scrollTargetBehavior(.paging)
                 .scrollPosition(id: $obser.currentPage)
-                .onAppear(perform: {
+                .onScrollGeometryChange(for: CGFloat.self, of: { geo in
+                    geo.contentOffset.x
+                }, action: { _, newValue in
+                    scrollOffset = newValue
+                }).introspect(.scrollView, on: .iOS(.v18,.v26)) { scrollView in
+                    scrollView.bounces = false
+                }.onAppear(perform: {
                     obser.jumpToPage(1, animate: false)
                 })
             })
@@ -101,6 +97,8 @@ extension CGPoint {
         return axes == .vertical ? y : x
     }
 }
+
+
 
 struct ScrollBouncerDisabler: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView {

@@ -47,6 +47,7 @@ struct InputToolBarView<Content: View>: View {
                                 HStack {
                                     Spacer()
                                     Button {
+                                        viewModel.forceScrollToBottom = true
                                         viewModel.scrollToBottom()
                                     } label: {
                                         Color.white.opacity(0.001).frame(width: 42,height: 42).overlay {
@@ -204,6 +205,7 @@ struct InputToolBarView<Content: View>: View {
             if let keyboardFrame = notification.userInfo?[
                 UIResponder.keyboardFrameEndUserInfoKey
             ] as? CGRect {
+                viewModel.isKeyboardChange = true
                 // 获取键盘在屏幕坐标系中的高度
                 let window = UIApplication.shared.connectedScenes
                     .compactMap { $0 as? UIWindowScene }
@@ -229,6 +231,13 @@ struct InputToolBarView<Content: View>: View {
                         self.keyboardHeight = adjustedKeyboardHeight
                     }
                 }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+                    if !viewModel.showScrollToBottom && viewModel.forceScrollToBottom{
+                        viewModel.scrollToBottom()
+                    }
+                    viewModel.isKeyboardChange = false
+                    viewModel.showedKeyboard = true
+                })
             }
         }
 
@@ -237,10 +246,18 @@ struct InputToolBarView<Content: View>: View {
             object: nil,
             queue: .main
         ) { _ in
+            viewModel.isKeyboardChange = true
             keyboardHeightChanged?(0)
             withAnimation(.easeOut(duration: 0.25)) {
                 self.keyboardHeight = 0
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
+                if !viewModel.showScrollToBottom && viewModel.forceScrollToBottom {
+                    viewModel.scrollToBottom()
+                }
+                viewModel.isKeyboardChange = false
+                viewModel.showedKeyboard = false
+            })
         }
     }
 

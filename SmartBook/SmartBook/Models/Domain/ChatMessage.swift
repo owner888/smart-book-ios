@@ -17,9 +17,13 @@ struct ChatMessage: Identifiable, Codable {
     var sources: [RAGSource]?
     var usage: UsageInfo?
     var systemPrompt: String?
+
     var stoppedByUser: Bool?  // 是否被用户停止
+    var isStreaming: Bool
     
-    init(id: UUID = UUID(), role: Role, content: String, timestamp: Date = Date(), thinking: String? = nil, sources: [RAGSource]? = nil, usage: UsageInfo? = nil, systemPrompt: String? = nil, stoppedByUser: Bool? = nil) {
+
+    init(id: UUID = UUID(), role: Role, content: String, timestamp: Date = Date(), thinking: String? = nil, sources: [RAGSource]? = nil, usage: UsageInfo? = nil, systemPrompt: String? = nil,stoppedByUser: Bool? = nil, isStreaming: Bool = false) {
+
         self.id = id
         self.role = role
         self.content = content
@@ -29,5 +33,6 @@ struct ChatMessage: Identifiable, Codable {
         self.usage = usage
         self.systemPrompt = systemPrompt
         self.stoppedByUser = stoppedByUser
+        self.isStreaming = isStreaming
     }
 }

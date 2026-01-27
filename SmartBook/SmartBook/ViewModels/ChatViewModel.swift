@@ -9,13 +9,26 @@ class ChatViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var isLoading = false
     @Published var showScrollToBottom = false
+    @Published var scrollBottom = 0.0
     @Published var questionMessageId: UUID?
+    @Published var scrollBottomOffset = 0.0
+    @Published var showedKeyboard = false
     var scrollProxy: ScrollViewProxy?
+    var isKeyboardChange = false
+   
+    //强制滚动到底部
+    var forceScrollToBottom = false
+    
 
     var bookState: BookState?
     var historyService: ChatHistoryService?
     private let streamingService: StreamingChatService
     private var streamingContent = ""
+    private var answerContents = [String]()
+    private var contentIndex = 0
+    private var wordIndex = 0
+    private var currentMessageIndex = 0
+    private var wordTimer: Timer?
     
     // 依赖注入，方便测试和管理
     init(streamingService: StreamingChatService = StreamingChatService()) {
@@ -48,8 +61,12 @@ class ChatViewModel: ObservableObject {
     }
 
     
-    func scrollToBottom() {
-        withAnimation {
+    func scrollToBottom(animate: Bool = true) {
+        if animate {
+            withAnimation {
+                scrollProxy?.scrollTo("bottomAnchor", anchor: .bottom)
+            }
+        } else {
             scrollProxy?.scrollTo("bottomAnchor", anchor: .bottom)
         }
     }
@@ -74,11 +91,15 @@ class ChatViewModel: ObservableObject {
 
         isLoading = true
         streamingContent = ""
+        answerContents.removeAll()
+        contentIndex = 0
+        cancelDisplay()
 
         // 创建一个临时的助手消息用于流式更新
         let streamingMessage = ChatMessage(role: .assistant, content: "")
         messages.append(streamingMessage)
         let messageIndex = messages.count - 1
+        currentMessageIndex = messageIndex
 
         // 获取上下文（摘要 + 最近消息）
         let (summary, recentMessages) = getContext()
@@ -103,16 +124,12 @@ class ChatViewModel: ObservableObject {
                 case .content(let content):
                     Logger.info("💬 收到内容: \(content)")
                     // 逐步更新内容
-                    self.streamingContent += content
-                    if messageIndex < self.messages.count {
-                        self.messages[messageIndex] = ChatMessage(
-                            role: .assistant,
-                            content: self.streamingContent
-                        )
-                    }
+                    self.answerContents.append(content)
+                    self.wordByWordDisplay()
 
                 case .error(let error):
                     if messageIndex < self.messages.count {
+                        self.cancelDisplay()
                         self.messages[messageIndex] = ChatMessage(
                             role: .assistant,
                             content: "❌ 错误: \(error)"
@@ -125,15 +142,14 @@ class ChatViewModel: ObservableObject {
             }
         } onComplete: { [weak self] result in
             guard let self = self else { return }
-
             // 修复：在 Task 内部也使用 weak self 避免循环引用
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 
-                self.isLoading = false
-    
                 switch result {
                 case .failure(let error):
+                    self.isLoading = false
+                    self.cancelDisplay()
                     // 检查是否是用户主动取消
                     let nsError = error as NSError
                     if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
@@ -166,7 +182,8 @@ class ChatViewModel: ObservableObject {
                     // 流式完成，内容已经在事件中更新
                     // 保存助手消息到数据库
                     if messageIndex < self.messages.count {
-                        let finalMessage = self.messages[messageIndex]
+                        let messageContent = self.answerContents.joined()
+                        let finalMessage = ChatMessage(role: .assistant, content: messageContent)
                         self.historyService?.saveMessage(finalMessage)
                         Logger.info("💾 保存助手回复到数据库")
                         
@@ -270,5 +287,48 @@ class ChatViewModel: ObservableObject {
         
         historyService?.saveSummary(summary: summaryText, messageCount: conversation.summarizedMessageCount)
         Logger.info("✅ 摘要已保存，已摘要消息数: \(conversation.summarizedMessageCount)")
+    }
+    
+    func wordByWordDisplay() {
+        if wordTimer == nil {
+            wordTimer = Timer.scheduledTimer(withTimeInterval: 0.12, repeats: true, block: { _ in
+                if self.contentIndex < self.answerContents.count {
+                    let content = self.answerContents[self.contentIndex]
+                    let words = content.map { String($0) }
+                    if self.wordIndex < words.count {
+                        let remainingCount = words.count - self.wordIndex
+                        let takeCount = min(3, remainingCount)
+                        let wordChars = words[self.wordIndex..<(self.wordIndex + takeCount)]
+                        let word = wordChars.joined()
+                        if self.currentMessageIndex < self.messages.count {
+                            self.streamingContent += word
+                            self.messages[self.currentMessageIndex] = ChatMessage(
+                                role: .assistant,
+                                content: self.streamingContent,
+                                isStreaming: true
+                            )
+                            self.wordIndex += takeCount
+                        }
+                    } else {
+                        self.wordIndex = 0
+                        self.contentIndex += 1
+                    }
+                } else {
+                    self.messages[self.currentMessageIndex] = ChatMessage(
+                        role: .assistant,
+                        content: self.streamingContent,
+                        isStreaming: false
+                    )
+                    self.isLoading = false
+                    self.cancelDisplay()
+                    self.scrollBottom = 0
+                }
+            })
+        }
+    }
+    
+    func cancelDisplay() {
+        wordTimer?.invalidate()
+        wordTimer = nil
     }
 }

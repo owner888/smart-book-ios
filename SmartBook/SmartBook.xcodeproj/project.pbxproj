@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		227CCC332F2882B3009E0BD0 /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 227CCC322F2882B3009E0BD0 /* SwiftUIIntrospect */; };
 		22F036192F1ADE1A00A47787 /* Secrets.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 22F036182F1ADE1A00A47787 /* Secrets.xcconfig */; };
 		22F03A542F1C0B6400A47787 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 22F03A532F1C0B6400A47787 /* MarkdownUI */; };
 /* End PBXBuildFile section */
@@ -72,6 +73,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				22F03A542F1C0B6400A47787 /* MarkdownUI in Frameworks */,
+				227CCC332F2882B3009E0BD0 /* SwiftUIIntrospect in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,6 +136,7 @@
 			name = SmartBook;
 			packageProductDependencies = (
 				22F03A532F1C0B6400A47787 /* MarkdownUI */,
+				227CCC322F2882B3009E0BD0 /* SwiftUIIntrospect */,
 			);
 			productName = SmartBook;
 			productReference = 22B210192F10FD990078D1EA /* SmartBook.app */;
@@ -221,6 +224,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				22F03A522F1C0B6400A47787 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+				227CCC312F2882B3009E0BD0 /* XCRemoteSwiftPackageReference "swiftui-introspect" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 22B2101A2F10FD990078D1EA /* Products */;
@@ -620,6 +624,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		227CCC312F2882B3009E0BD0 /* XCRemoteSwiftPackageReference "swiftui-introspect" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/siteline/swiftui-introspect";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 26.0.0;
+			};
+		};
 		22F03A522F1C0B6400A47787 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
@@ -631,6 +643,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		227CCC322F2882B3009E0BD0 /* SwiftUIIntrospect */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 227CCC312F2882B3009E0BD0 /* XCRemoteSwiftPackageReference "swiftui-introspect" */;
+			productName = SwiftUIIntrospect;
+		};
 		22F03A532F1C0B6400A47787 /* MarkdownUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 22F03A522F1C0B6400A47787 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;

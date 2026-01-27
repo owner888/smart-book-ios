@@ -16,7 +16,6 @@ struct ChatView: View {
     @State private var showBookPicker = false
     @State private var showSettings = false
     @State private var showBookshelf = false
-    @State private var scrollBottom = 120.0
     @State private var keyboardHeight: CGFloat = 0
 
     @FocusState private var isInputFocused: Bool
@@ -136,6 +135,7 @@ struct ChatView: View {
                                         Color.clear.frame(height: 70)
                                         Spacer()
                                     } else {
+
                                         ZStack(alignment: .bottom) {
                                             // 有消息时显示对话列表
                                             ScrollViewReader { scrollProxy in
@@ -161,15 +161,20 @@ struct ChatView: View {
                                                         currentProxy in
                                                         Color.clear.frame(
                                                             height: 120
-                                                        ).onChange(
+                                                        )
+                                                        .onChange(
                                                             of:
                                                                 currentProxy
                                                                 .frame(
                                                                     in: .global
-                                                                ).maxY,
+                                                                ).maxY
+                                                        ) { _, newValue in
+                                                            viewModel
+                                                                .scrollBottomOffset =
+                                                                newValue
+                                                            if !viewModel
+                                                                .isKeyboardChange
                                                             {
-                                                                oldValue,
-                                                                newValue in
                                                                 let height =
                                                                     proxy.size
                                                                     .height
@@ -178,38 +183,78 @@ struct ChatView: View {
                                                                     .top
                                                                     - keyboardHeight
                                                                     + 6
-
-                                                                viewModel
-                                                                    .showScrollToBottom =
+                                                                let isShow =
                                                                     newValue
                                                                     > height
+                                                                if viewModel
+                                                                    .isLoading
+                                                                {
+                                                                    if isShow {
+                                                                        viewModel
+                                                                            .scrollToBottom(
+                                                                                animate:
+                                                                                    false
+                                                                            )
+                                                                        viewModel
+                                                                            .showScrollToBottom =
+                                                                            false
+
+                                                                        viewModel
+                                                                            .forceScrollToBottom =
+                                                                            true
+                                                                    }
+                                                                } else {
+                                                                    viewModel
+                                                                        .showScrollToBottom =
+                                                                        isShow
+                                                                }
+
                                                             }
-                                                        ).id("bottomAnchor")
-                                                    }.frame(height: 120)
+                                                        }.id("bottomAnchor")
+                                                    }.frame(height: 110)
                                                     Color.clear.frame(
-                                                        height: scrollBottom
+                                                        height: viewModel
+                                                            .scrollBottom
                                                     )
+                                                }
+                                                .onScrollPhaseChange {
+                                                    oldPhase,
+                                                    newPhase in
+                                                    // 检测用户手指拖曳滚动
+                                                    if newPhase == .interacting
+                                                    {
+                                                        viewModel
+                                                            .forceScrollToBottom =
+                                                            false
+                                                    }
                                                 }
                                                 .onChange(
                                                     of: viewModel
                                                         .questionMessageId
-                                                ) {
+                                                ) { _, _ in
                                                     if let messageId = viewModel
                                                         .questionMessageId
                                                     {
-                                                        scrollBottom = max(
-                                                            0,
-                                                            proxy.size.height
-                                                                - 280
-                                                        )
+                                                        viewModel.scrollBottom =
+                                                            max(
+                                                                0,
+                                                                proxy.size
+                                                                    .height
+                                                                    - 280
+                                                            )
+                                                        viewModel
+                                                            .forceScrollToBottom =
+                                                            false
                                                         // 延迟一点让UI更新完成
                                                         DispatchQueue.main
                                                             .asyncAfter(
                                                                 deadline: .now()
                                                                     + 0.1
                                                             ) {
+                                                                // 使用 viewModel.scrollProxy 而不是局部变量
                                                                 withAnimation {
-                                                                    scrollProxy
+                                                                    viewModel
+                                                                        .scrollProxy?
                                                                         .scrollTo(
                                                                             messageId,
                                                                             anchor:
@@ -225,16 +270,22 @@ struct ChatView: View {
                                     }
                                 }
                             },
-                            onSend: sendMessage,
+                            onSend: { sendMessage() },
                             keyboardHeightChanged: { value in
                                 keyboardHeight = value
                             }
                         )
+                        .environmentObject(sideObser)
                         colors.background.frame(
                             height: proxy.safeAreaInsets.bottom
                         )
                     }
                     .ignoresSafeArea(.container, edges: .bottom)
+                }.onChange(of: viewModel.showedKeyboard) {
+                    let height = proxy.size.height + proxy.safeAreaInsets.top - keyboardHeight + 6
+                    viewModel.showScrollToBottom =
+                        viewModel.scrollBottomOffset
+                        > height
                 }
             }
             .navigationBarTitleDisplayMode(.inline)

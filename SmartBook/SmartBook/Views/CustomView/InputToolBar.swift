@@ -119,7 +119,12 @@ struct InputToolBar: View {
         }.padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background {
-                GaussianBlurView().opacity(0.9).clipShape(RoundedRectangle(cornerRadius: 20))
+                if #available(iOS 26, *) {
+                    Color.clear.glassEffect(.regular,in: .rect(cornerRadius: 20))
+                } else {
+                    GaussianBlurView().opacity(0.9).clipShape(RoundedRectangle(cornerRadius: 20))
+                }
+                
             }.overlay {
                 RoundedRectangle(cornerRadius: 20).stroke(
                     .gray.opacity(0.3),
