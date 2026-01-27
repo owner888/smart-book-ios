@@ -107,6 +107,21 @@ struct BooksResponse: Codable {
     let error: String?
 }
 
+struct SelectBookResponse: Codable {
+    let success: Bool?
+    let message: String?
+    let error: String?
+    let book: String?
+    let contextCache: ContextCacheStatus?
+}
+
+struct ContextCacheStatus: Codable {
+    let exists: Bool?
+    let created: Bool?
+    let tokenCount: Int?
+    let error: String?
+}
+
 // MARK: - 设置模型
 struct AppSettings: Codable {
     var apiBaseURL: String

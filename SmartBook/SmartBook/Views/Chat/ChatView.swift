@@ -4,6 +4,7 @@ import SwiftUI
 
 struct ChatView: View {
     @Environment(BookState.self) var bookState
+    @Environment(BookService.self) var bookService
     @Environment(ThemeManager.self) var themeManager
     @Environment(SpeechService.self) var speechService
     @Environment(TTSService.self) var ttsService
@@ -56,10 +57,20 @@ struct ChatView: View {
         .environmentObject(sideObser)
         .sheet(isPresented: $showBookPicker) {
             BookPickerView(colors: colors) { book in
-                withAnimation {
-                    bookState.selectedBook = book
+                // 选择书籍时调用后端 API
+                Task {
+                    do {
+                        try await bookService.selectBook(book)
+                        await MainActor.run {
+                            withAnimation {
+                                bookState.selectedBook = book
+                            }
+                            showBookPicker = false
+                        }
+                    } catch {
+                        Logger.error("选择书籍失败: \(error.localizedDescription)")
+                    }
                 }
-                showBookPicker = false
             }
         }
         .sheet(isPresented: $showSettings) {

@@ -337,6 +337,41 @@ class BookService {
         return searchResponse.results ?? []
     }
     
+    // MARK: - 书籍选择
+    
+    /// 选择书籍（通知后端）
+    func selectBook(_ book: Book) async throws {
+        // 从书籍路径中提取文件名
+        guard let filePath = book.filePath else {
+            throw APIError.custom("书籍路径不存在")
+        }
+        
+        let filename = URL(fileURLWithPath: filePath).lastPathComponent
+        
+        let url = URL(string: "\(AppConfig.apiBaseURL)/api/books/select")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let body = ["book": filename]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200 else {
+            throw APIError.serverError
+        }
+        
+        // 解析响应（可选）
+        let result = try JSONDecoder().decode(SelectBookResponse.self, from: data)
+        if let error = result.error {
+            throw APIError.custom(error)
+        }
+        
+        Logger.info("✅ 书籍已选择: \(filename)")
+    }
+    
     // MARK: - 阅读统计功能
     
     func loadReadingStats() -> ReadingStats {

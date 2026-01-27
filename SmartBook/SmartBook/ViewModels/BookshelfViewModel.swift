@@ -106,7 +106,16 @@ class BookshelfViewModel {
         if book.filePath != nil {
             selectedBookForReading = book
         } else {
-            bookState.selectedBook = book
+            // 选择远程书籍，需要通知后端
+            Task {
+                do {
+                    try await bookService.selectBook(book)
+                    bookState.selectedBook = book
+                } catch {
+                    importError = "选择书籍失败: \(error.localizedDescription)"
+                    showingError = true
+                }
+            }
         }
     }
     
