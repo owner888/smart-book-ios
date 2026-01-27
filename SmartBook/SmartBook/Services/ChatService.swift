@@ -72,17 +72,13 @@ class StreamingChatService: NSObject {
                 "assistant_id": assistant.id,
                 "history": historyArray
             ]
-            if let bookId = bookId {
-                body["book_id"] = bookId
-            }
             if let summary = summary {
                 body["summary"] = summary
             }
             
         case .continueWriting:
-            url = URL(string: "\(AppConfig.apiBaseURL)/api/stream/enhanced-continue")!
+            url = URL(string: "\(AppConfig.apiBaseURL)/api/stream/continue")!
             body = [
-                "book": bookId ?? "",
                 "prompt": message,
                 "model": model,
                 "assistant_id": assistant.id,
