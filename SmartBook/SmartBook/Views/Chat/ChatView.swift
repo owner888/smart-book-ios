@@ -7,6 +7,7 @@ struct ChatView: View {
     @Environment(ThemeManager.self) var themeManager
     @Environment(SpeechService.self) var speechService
     @Environment(TTSService.self) var ttsService
+    @Environment(AssistantService.self) var assistantService
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var systemColorScheme
     @StateObject private var viewModel = ChatViewModel()
@@ -114,6 +115,15 @@ struct ChatView: View {
                                             }
                                         }
                                     }
+                                    
+                                    // 系统提示词显示（如果有）
+                                    if !assistantService.currentAssistant.systemPrompt.isEmpty {
+                                        AssistantPromptBar(
+                                            assistant: assistantService.currentAssistant,
+                                            colors: colors
+                                        )
+                                    }
+                                    
                                     // 对话列表（始终显示，无论是否选择书籍）
                                     if viewModel.messages.isEmpty {
                                         Spacer()

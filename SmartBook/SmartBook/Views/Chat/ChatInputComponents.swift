@@ -38,6 +38,55 @@ struct BookContextBar: View {
     }
 }
 
+// MARK: - 助手系统提示词栏
+struct AssistantPromptBar: View {
+    let assistant: Assistant
+    var colors: ThemeColors = .dark
+    @State private var isExpanded = false
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // 标题栏（可点击展开/折叠）
+            Button(action: { withAnimation { isExpanded.toggle() } }) {
+                HStack(spacing: 8) {
+                    Text(assistant.avatar)
+                        .font(.title3)
+                    
+                    Text(assistant.name)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(colors.primaryText.opacity(0.9))
+                    
+                    Spacer()
+                    
+                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                        .font(.caption2)
+                        .foregroundColor(colors.secondaryText)
+                }
+                .padding(.horizontal)
+                .padding(.vertical, 8)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            
+            // 系统提示词内容（可展开）
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 4) {
+                    Divider()
+                        .background(colors.secondaryText.opacity(0.2))
+                    
+                    Text(assistant.systemPrompt)
+                        .font(.caption2)
+                        .foregroundColor(colors.secondaryText)
+                        .padding(.horizontal)
+                        .padding(.vertical, 8)
+                }
+            }
+        }
+        .background(assistant.colorValue.opacity(0.1))
+    }
+}
+
 // MARK: - 输入栏
 struct InputBar: View {
     @Binding var text: String

@@ -16,6 +16,7 @@ struct InputToolBarView<Content: View>: View {
 
     @Environment(\.colorScheme) private var systemColorScheme
     @Environment(ModelService.self) private var modelService
+    @Environment(AssistantService.self) private var assistantService
     @State private var themeManager = ThemeManager.shared
     
     private var colors: ThemeColors {
@@ -152,6 +153,8 @@ struct InputToolBarView<Content: View>: View {
                             AssistantMenu(currentAssistant: $assistant) {
                                 assistantType in
                                 assistant = assistantType
+                                // 同步更新 AssistantService
+                                updateAssistant(assistantType)
                                 menuObser.close()
                             }
                         },
@@ -171,8 +174,9 @@ struct InputToolBarView<Content: View>: View {
             VIPUpgradeView()
         }
         .onAppear {
-            // 设置默认模型
+            // 设置默认模型和助手
             updateAIFunction(from: modelService.currentModel.id)
+            updateAssistantFromService()
             
             menuObser.onClose = {
                 if showMediaMenu {
@@ -189,6 +193,10 @@ struct InputToolBarView<Content: View>: View {
             // 监听模型变化，自动更新 aiFunction
             updateAIFunction(from: newValue)
         }
+        .onChange(of: assistantService.currentAssistant.id) { oldValue, newValue in
+            // 监听助手变化，自动更新 UI
+            updateAssistantFromService()
+        }
         .onDisappear {
             removeKeyboardObservers()
         }
@@ -202,6 +210,36 @@ struct InputToolBarView<Content: View>: View {
             Logger.debug("✅ Set aiFunction from model: \(modelId) -> \(matchingFunction.config.title)")
         } else {
             Logger.warn("⚠️ No matching aiFunction found for model: \(modelId)")
+        }
+    }
+    
+    private func updateAssistant(_ assistantType: MenuConfig.AssistantType) {
+        // 根据 AssistantType 查找对应的 Assistant
+        if let matchingAssistant = assistantService.assistants.first(where: { 
+            switch assistantType {
+            case .chat: return $0.id == "chat"
+            case .book: return $0.id == "book"
+            case .continue: return $0.id == "continue"
+            case .dynamic(let dynamicAssistant): return $0.id == dynamicAssistant.id
+            }
+        }) {
+            assistantService.switchItem(matchingAssistant)
+            Logger.debug("✅ Switched to assistant: \(matchingAssistant.name)")
+        }
+    }
+    
+    private func updateAssistantFromService() {
+        // 从 AssistantService 同步到本地 assistant 状态
+        let currentAssistantId = assistantService.currentAssistant.id
+        if let matchingType = MenuConfig.assistants.first(where: {
+            switch $0 {
+            case .chat: return currentAssistantId == "chat"
+            case .book: return currentAssistantId == "book"
+            case .continue: return currentAssistantId == "continue"
+            case .dynamic(let dynamicAssistant): return currentAssistantId == dynamicAssistant.id
+            }
+        }) {
+            assistant = matchingType
         }
     }
 
