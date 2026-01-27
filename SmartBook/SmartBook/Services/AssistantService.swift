@@ -4,11 +4,13 @@ import Foundation
 
 @Observable
 class AssistantService {
+    static let shared = AssistantService()
+    
     var assistants: [Assistant]
     var currentAssistant: Assistant
     var isLoading = false
     
-    init() {
+    private init() {
         self.assistants = Assistant.defaultAssistants
         // 默认选中通用聊天（id: "chat"）
         self.currentAssistant = Assistant.defaultAssistants.first(where: { $0.id == "chat" }) ?? Assistant.defaultAssistants.first!

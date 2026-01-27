@@ -11,7 +11,7 @@ struct SmartBookApp: App {
     let themeManager = ThemeManager.shared
     
     // AI 服务
-    let assistantService = AssistantService()
+    let assistantService = AssistantService.shared  // 使用单例
     let modelService = ModelService.shared  // 使用单例
     
     // 业务服务
