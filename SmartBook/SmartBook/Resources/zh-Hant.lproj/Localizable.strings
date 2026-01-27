@@ -292,3 +292,19 @@
 "chatHistory.delete.message" = "此對話將從您的帳戶中刪除，將在最近刪除中保留30天。";
 "chatHistory.menu.rename" = "重新命名";
 "chatHistory.menu.delete" = "刪除";
+
+/* VIP Upgrade */
+"vip.title" = "升級到 SmartBook Pro";
+"vip.subtitle" = "解鎖更強大的AI模型和功能";
+"vip.feature.pro.title" = "Gemini 2.5 Pro";
+"vip.feature.pro.desc" = "最強大的AI模型，適合複雜任務";
+"vip.feature.unlimited.title" = "無限制對話";
+"vip.feature.unlimited.desc" = "不再受日常使用次數限制";
+"vip.feature.priority.title" = "優先回應";
+"vip.feature.priority.desc" = "更快的AI回應速度";
+"vip.feature.context.title" = "更大上下文";
+"vip.feature.context.desc" = "支援更長的對話歷史";
+"vip.price" = "$1.99/月";
+"vip.trial" = "1週免費試用";
+"vip.subscribe" = "立即訂閱";
+"vip.cancelAnytime" = "訂閱後可隨時取消";

@@ -13,93 +13,132 @@ struct VIPUpgradeView: View {
     
     var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 30) {
-                    // 标题区域
-                    VStack(spacing: 12) {
-                        Image(systemName: "bolt.circle.fill")
-                            .font(.system(size: 80))
-                            .foregroundStyle(.yellow)
-                        
-                        Text("升级到 SmartBook Pro")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                        
-                        Text("解锁更强大的AI模型和功能")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.top, 40)
-                    
-                    // 功能列表
-                    VStack(spacing: 20) {
-                        FeatureRow(
-                            icon: "brain",
-                            title: "Gemini 2.5 Pro",
-                            description: "最强大的AI模型，适合复杂任务"
-                        )
-                        
-                        FeatureRow(
-                            icon: "sparkles",
-                            title: "无限制对话",
-                            description: "不再受日常使用次数限制"
-                        )
-                        
-                        FeatureRow(
-                            icon: "clock.arrow.circlepath",
-                            title: "优先响应",
-                            description: "更快的AI响应速度"
-                        )
-                        
-                        FeatureRow(
-                            icon: "doc.text.magnifyingglass",
-                            title: "更大上下文",
-                            description: "支持更长的对话历史"
-                        )
-                    }
-                    .padding(.horizontal)
-                    
-                    // 价格区域
-                    VStack(spacing: 16) {
-                        Text("¥58/月")
-                            .font(.system(size: 48, weight: .bold))
-                        
-                        Text("首月 5 折优惠")
-                            .font(.subheadline)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(Color.yellow.opacity(0.2))
-                            .clipShape(Capsule())
-                    }
-                    .padding(.top, 20)
-                    
-                    // 订阅按钮
-                    Button {
-                        // TODO: 实现订阅逻辑
-                    } label: {
-                        Text("立即订阅")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(
+            VStack(spacing: 16) {
+                // 标题区域
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(
                                 LinearGradient(
-                                    colors: [.blue, .purple],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
+                                    colors: [.yellow.opacity(0.3), .orange.opacity(0.2)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
                                 )
                             )
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .frame(width: 80, height: 80)
+                        
+                        Image(systemName: "bolt.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.yellow, .orange],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
                     }
-                    .padding(.horizontal)
                     
-                    // 说明文本
-                    Text("订阅后可随时取消")
-                        .font(.caption)
+                    Text(L("vip.title"))
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
+                    
+                    Text(L("vip.subtitle"))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    
-                    Spacer()
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                 }
+                .padding(.top, 20)
+                
+                // 功能列表 - 卡片样式
+                VStack(spacing: 14) {
+                    FeatureRow(
+                        icon: "brain",
+                        iconColor: .purple,
+                        title: L("vip.feature.pro.title"),
+                        description: L("vip.feature.pro.desc")
+                    )
+                    
+                    FeatureRow(
+                        icon: "sparkles",
+                        iconColor: .orange,
+                        title: L("vip.feature.unlimited.title"),
+                        description: L("vip.feature.unlimited.desc")
+                    )
+                    
+                    FeatureRow(
+                        icon: "clock.arrow.circlepath",
+                        iconColor: .green,
+                        title: L("vip.feature.priority.title"),
+                        description: L("vip.feature.priority.desc")
+                    )
+                    
+                    FeatureRow(
+                        icon: "doc.text.magnifyingglass",
+                        iconColor: .blue,
+                        title: L("vip.feature.context.title"),
+                        description: L("vip.feature.context.desc")
+                    )
+                }
+                .padding(.vertical, 14)
+                .padding(.horizontal, 18)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground))
+                        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                )
+                .padding(.horizontal)
+                    
+                // 价格区域
+                VStack(spacing: 8) {
+                    Text(L("vip.price"))
+                        .font(.system(size: 36, weight: .bold))
+                    
+                    Text(L("vip.trial"))
+                        .font(.caption)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.green.opacity(0.2))
+                        .clipShape(Capsule())
+                }
+                .padding(.top, 8)
+                
+                // 订阅按钮
+                Button {
+                    // TODO: 实现订阅逻辑
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "bolt.fill")
+                            .font(.headline)
+                        Text(L("vip.subscribe"))
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                    }
+                    .foregroundStyle(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        LinearGradient(
+                            colors: [.blue, .purple],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+                }
+                .buttonStyle(ScaleButtonStyle())
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
+                
+                // 说明文本
+                Text(L("vip.cancelAnytime"))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                
+                Spacer(minLength: 20)
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -116,31 +155,46 @@ struct VIPUpgradeView: View {
     }
 }
 
+// 按钮缩放样式
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.2), value: configuration.isPressed)
+    }
+}
+
 // 功能行组件
 struct FeatureRow: View {
     let icon: String
+    var iconColor: Color = .blue
     let title: String
     let description: String
     
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(.blue)
+                .foregroundStyle(iconColor)
                 .frame(width: 40, height: 40)
-                .background(Color.blue.opacity(0.1))
-                .clipShape(Circle())
+                .background(
+                    Circle()
+                        .fill(iconColor.opacity(0.15))
+                )
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
+                    .fontWeight(.semibold)
                 
                 Text(description)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.85)
             }
             
-            Spacer()
+            Spacer(minLength: 0)
         }
     }
 }

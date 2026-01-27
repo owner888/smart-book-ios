@@ -67,7 +67,7 @@ class AssistantService {
             if !loadedAssistants.isEmpty {
                 // 直接使用数组顺序，不需要排序
                 assistants = loadedAssistants
-                
+
                 if !assistants.contains(where: { $0.id == currentAssistant.id }) {
                     currentAssistant = assistants.first!
                 }

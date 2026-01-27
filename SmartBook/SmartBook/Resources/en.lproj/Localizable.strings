@@ -292,3 +292,19 @@
 "chatHistory.delete.message" = "This conversation will be deleted from your account. It will be in Recently Deleted for 30 days.";
 "chatHistory.menu.rename" = "Rename";
 "chatHistory.menu.delete" = "Delete";
+
+/* VIP Upgrade */
+"vip.title" = "Upgrade to SmartBook Pro";
+"vip.subtitle" = "Unlock more powerful AI models and features";
+"vip.feature.pro.title" = "Gemini 2.5 Pro";
+"vip.feature.pro.desc" = "The most powerful AI model for complex tasks";
+"vip.feature.unlimited.title" = "Unlimited Conversations";
+"vip.feature.unlimited.desc" = "No daily usage limits";
+"vip.feature.priority.title" = "Priority Response";
+"vip.feature.priority.desc" = "Faster AI response time";
+"vip.feature.context.title" = "Larger Context";
+"vip.feature.context.desc" = "Support for longer conversation history";
+"vip.price" = "$1.99/month";
+"vip.trial" = "1 Week Free Trial";
+"vip.subscribe" = "Subscribe Now";
+"vip.cancelAnytime" = "Cancel anytime after subscription";
