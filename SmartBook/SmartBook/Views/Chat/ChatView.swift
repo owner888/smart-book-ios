@@ -20,6 +20,8 @@ struct ChatView: View {
     @State private var showSettings = false
     @State private var showBookshelf = false
     @State private var keyboardHeight: CGFloat = 0
+    @State private var uploadProgress: Double = 0
+    @State private var isUploading = false
 
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
@@ -60,15 +62,49 @@ struct ChatView: View {
                 // 选择书籍时调用后端 API
                 Task {
                     do {
-                        try await bookService.selectBook(book)
+                        isUploading = true
+                        uploadProgress = 0
+                        
+                        try await bookService.selectBook(book) { progress in
+                            uploadProgress = progress
+                        }
+                        
                         await MainActor.run {
+                            isUploading = false
                             withAnimation {
                                 bookState.selectedBook = book
                             }
                             showBookPicker = false
                         }
                     } catch {
+                        await MainActor.run {
+                            isUploading = false
+                        }
                         Logger.error("选择书籍失败: \(error.localizedDescription)")
+                    }
+                }
+            }
+            .overlay {
+                if isUploading {
+                    ZStack {
+                        Color.black.opacity(0.4)
+                            .ignoresSafeArea()
+                        
+                        VStack(spacing: 16) {
+                            ProgressView(value: uploadProgress)
+                                .progressViewStyle(.linear)
+                                .frame(width: 200)
+                                .tint(.green)
+                            
+                            Text("📤 上传书籍中... \(Int(uploadProgress * 100))%")
+                                .font(.caption)
+                                .foregroundColor(.white)
+                        }
+                        .padding(24)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(colors.cardBackground)
+                        )
                     }
                 }
             }

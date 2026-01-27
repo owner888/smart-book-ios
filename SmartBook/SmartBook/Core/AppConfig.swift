@@ -33,7 +33,7 @@ enum AppConfig {
     // MARK: - 默认值
     
     enum DefaultValues {
-        static let apiBaseURL = "http://localhost:8080"
+        static let apiBaseURL = "http://localhost:8081"
         static let autoTTS = true
         static let ttsRate = 1.0
     }

@@ -340,7 +340,7 @@ class BookService {
     // MARK: - 书籍选择
     
     /// 选择书籍（通知后端）
-    func selectBook(_ book: Book) async throws {
+    func selectBook(_ book: Book, onProgress: ((Double) -> Void)? = nil) async throws {
         // 从书籍路径中提取文件名
         guard let filePath = book.filePath else {
             throw APIError.custom("书籍路径不存在")
@@ -356,20 +356,121 @@ class BookService {
         let body = ["book": filename]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw APIError.serverError
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIError.serverError
+            }
+            
+            // 如果是 404，说明服务器没有这本书，需要上传
+            if httpResponse.statusCode == 404 || httpResponse.statusCode == 500 {
+                Logger.info("📤 服务器没有该书籍，开始上传: \(filename)")
+                try await uploadBook(filePath: filePath, onProgress: onProgress)
+                
+                // 上传成功后重新选择
+                let (data2, response2) = try await URLSession.shared.data(for: request)
+                guard let httpResponse2 = response2 as? HTTPURLResponse,
+                      httpResponse2.statusCode == 200 else {
+                    throw APIError.serverError
+                }
+                
+                let result = try JSONDecoder().decode(SelectBookResponse.self, from: data2)
+                if let error = result.error {
+                    throw APIError.custom(error)
+                }
+                
+                Logger.info("✅ 书籍已选择（上传后）: \(filename)")
+                return
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                throw APIError.serverError
+            }
+            
+            // 解析响应
+            let result = try JSONDecoder().decode(SelectBookResponse.self, from: data)
+            if let error = result.error {
+                throw APIError.custom(error)
+            }
+            
+            Logger.info("✅ 书籍已选择: \(filename)")
+            
+        } catch let error as APIError {
+            throw error
+        } catch {
+            throw APIError.custom("选择书籍失败: \(error.localizedDescription)")
         }
+    }
+    
+    /// 上传书籍到服务器
+    private func uploadBook(filePath: String, onProgress: ((Double) -> Void)?) async throws {
+        let fileURL = URL(fileURLWithPath: filePath)
+        let filename = fileURL.lastPathComponent
         
-        // 解析响应（可选）
-        let result = try JSONDecoder().decode(SelectBookResponse.self, from: data)
-        if let error = result.error {
-            throw APIError.custom(error)
+        Logger.info("📤 准备上传书籍: \(filename)")
+        
+        let url = URL(string: "\(AppConfig.apiBaseURL)/api/books/upload")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 300 // 5分钟超时
+        
+        // 创建 multipart/form-data
+        let boundary = "Boundary-\(UUID().uuidString)"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        
+        // 添加文件数据
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
+        
+        let fileData = try Data(contentsOf: fileURL)
+        Logger.info("📦 文件大小: \(fileData.count / 1024) KB")
+        
+        body.append(fileData)
+        body.append("\r\n".data(using: .utf8)!)
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        Logger.info("🚀 开始上传...")
+        
+        do {
+            // 创建自定义 URLSession 用于进度跟踪
+            let configuration = URLSessionConfiguration.default
+            let delegate = UploadProgressDelegate(onProgress: onProgress)
+            let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
+            
+            let (data, response) = try await session.upload(for: request, from: body)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                Logger.error("❌ 无效的响应类型")
+                throw APIError.serverError
+            }
+            
+            Logger.info("📡 响应状态码: \(httpResponse.statusCode)")
+            
+            if httpResponse.statusCode != 200 {
+                if let errorText = String(data: data, encoding: .utf8) {
+                    Logger.error("❌ 服务器错误响应: \(errorText)")
+                }
+                throw APIError.serverError
+            }
+            
+            let result = try JSONDecoder().decode(UploadResponse.self, from: data)
+            if result.success != true {
+                Logger.error("❌ 上传失败: \(result.error ?? "未知错误")")
+                throw APIError.custom(result.error ?? "上传失败")
+            }
+            
+            Logger.info("✅ 书籍上传成功: \(filename)")
+            
+        } catch let error as APIError {
+            throw error
+        } catch {
+            Logger.error("❌ 上传异常: \(error.localizedDescription)")
+            throw APIError.custom("上传失败: \(error.localizedDescription)")
         }
-        
-        Logger.info("✅ 书籍已选择: \(filename)")
     }
     
     // MARK: - 阅读统计功能
@@ -425,4 +526,29 @@ class BookService {
     func toggleFavorite(_ book: Book) {
         // 暂不支持
     }
+}
+
+// MARK: - 上传进度代理
+class UploadProgressDelegate: NSObject, URLSessionTaskDelegate {
+    let onProgress: ((Double) -> Void)?
+    
+    init(onProgress: ((Double) -> Void)?) {
+        self.onProgress = onProgress
+    }
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+        let progress = Double(totalBytesSent) / Double(totalBytesExpectedToSend)
+        DispatchQueue.main.async {
+            self.onProgress?(progress)
+        }
+    }
+}
+
+// MARK: - 上传响应模型
+struct UploadResponse: Codable {
+    let success: Bool?
+    let message: String?
+    let error: String?
+    let file: String?
+    let existed: Bool?
 }

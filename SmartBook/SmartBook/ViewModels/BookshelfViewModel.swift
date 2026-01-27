@@ -109,7 +109,10 @@ class BookshelfViewModel {
             // 选择远程书籍，需要通知后端
             Task {
                 do {
-                    try await bookService.selectBook(book)
+                    try await bookService.selectBook(book) { progress in
+                        // 可以在这里处理进度，如果需要的话
+                        Logger.debug("上传进度: \(Int(progress * 100))%")
+                    }
                     bookState.selectedBook = book
                 } catch {
                     importError = "选择书籍失败: \(error.localizedDescription)"
