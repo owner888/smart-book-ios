@@ -8,6 +8,7 @@ struct ChatView: View {
     @Environment(SpeechService.self) var speechService
     @Environment(TTSService.self) var ttsService
     @Environment(AssistantService.self) var assistantService
+    @Environment(ModelService.self) var modelService
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var systemColorScheme
     @StateObject private var viewModel = ChatViewModel()
@@ -89,9 +90,13 @@ struct ChatView: View {
             
             viewModel.bookState = bookState
             viewModel.selectedAssistant = assistantService.currentAssistant
+            viewModel.selectedModel = modelService.currentModel.id
         }
         .onChange(of: assistantService.currentAssistant) { _, newAssistant in
             viewModel.selectedAssistant = newAssistant
+        }
+        .onChange(of: modelService.currentModel) { _, newModel in
+            viewModel.selectedModel = newModel.id
         }
     }
 

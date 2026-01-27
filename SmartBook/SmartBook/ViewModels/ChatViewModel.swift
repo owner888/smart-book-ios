@@ -23,6 +23,7 @@ class ChatViewModel: ObservableObject {
     var bookState: BookState?
     var historyService: ChatHistoryService?
     var selectedAssistant: Assistant?
+    var selectedModel: String = "gemini-2.0-flash"
     private let streamingService: StreamingChatService
     private var streamingContent = ""
     private var answerContents = [String]()
@@ -111,7 +112,7 @@ class ChatViewModel: ObservableObject {
             message: text,
             assistant: assistant,
             bookId: bookState.selectedBook?.id,
-            model: "gemini-2.0-flash",
+            model: selectedModel,
             ragEnabled: true,
             summary: summary,
             history: recentMessages
