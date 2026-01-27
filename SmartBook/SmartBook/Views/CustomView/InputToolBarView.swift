@@ -130,6 +130,11 @@ struct InputToolBarView<Content: View>: View {
                                 currentFunc: $aiFunction,
                                 action: { function in
                                     aiFunction = function
+                                    // 同步切换 ModelService 的模型
+                                    if let model = modelService.models.first(where: { $0.id == function.modelId }) {
+                                        modelService.switchModel(model)
+                                        Logger.debug("✅ Switched to model: \(model.id)")
+                                    }
                                     menuObser.close()
                                 },
                                 onUpgrade: {

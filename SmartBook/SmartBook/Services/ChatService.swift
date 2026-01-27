@@ -121,6 +121,7 @@ class StreamingChatService: NSObject {
         print("🤖 Assistant ID: \(assistant.id)")
         print("📋 Assistant Name: \(assistant.name)")
         print("🎯 Action: \(assistant.action)")
+        print("🎯 Model: \(model)")
         print("📦 Request Body:")
         if let jsonData = try? JSONSerialization.data(withJSONObject: body, options: .prettyPrinted),
            let jsonString = String(data: jsonData, encoding: .utf8) {
