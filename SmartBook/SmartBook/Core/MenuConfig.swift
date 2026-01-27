@@ -59,8 +59,21 @@ class MenuConfig {
             // 先保留固定的4个选项
             var functions: [AIModelFunctionType] = [.heavy, .expert, .fast, .auto]
             
-            // 将从服务器获取的模型转换为 dynamic 类型并追加
-            let dynamicModels = modelService.models.map { model -> AIModelFunctionType in
+            // 固定按钮对应的模型ID
+            let fixedModelIds = [
+                "gemini-2.5-pro",           // Heavy
+                "gemini-2.5-flash",         // Expert
+                "gemini-2.5-flash-lite",    // Fast
+                "gemini-2.0-flash"          // Auto
+            ]
+            
+            // 将从服务器获取的模型分为两类：
+            // 1. 固定的4个模型（用于覆盖默认配置）- 不显示，只用于更新按钮信息
+            // 2. 其他模型（如Gemini 3系列）- 显示为dynamic类型
+            let dynamicModels = modelService.models.filter { model in
+                // 过滤掉固定的4个模型，只保留额外的模型（如Gemini 3系列）
+                !fixedModelIds.contains(model.id)
+            }.map { model -> AIModelFunctionType in
                 // 根据 rate 映射图标
                 let icon: String
                 switch model.rate {
@@ -85,14 +98,14 @@ class MenuConfig {
                 return .dynamic(dynamicModel)
             }
             
-            // 追加动态模型到固定选项后面
+            // 追加动态模型（额外的模型）到固定选项后面
             functions.append(contentsOf: dynamicModels)
             aiFunctions = functions
             
-            print("✅ 成功加载 4个固定选项 + \(modelService.models.count) 个动态模型")
+            print("✅ 成功加载 4个固定按钮 + \(dynamicModels.count) 个额外模型（从API: \(modelService.models.count)个）")
         } catch {
             print("⚠️ 加载 AI 模型失败，使用默认配置: \(error.localizedDescription)")
-            // 保留静态默认值
+            // 网络异常，保留静态默认值（4个固定按钮）
             aiFunctions = [.heavy, .expert, .fast, .auto]
         }
     }
