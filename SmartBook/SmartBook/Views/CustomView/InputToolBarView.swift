@@ -32,6 +32,7 @@ struct InputToolBarView<Content: View>: View {
     @State private var showMediaMenu = false
     @State private var showModelMenu = false
     @State private var showAssistantMenu = false
+    @State private var showVIPSheet = false
     @State private var hiddenTopView = false
     @StateObject private var menuObser = CustomMenuObservable()
 
@@ -124,11 +125,17 @@ struct InputToolBarView<Content: View>: View {
                         alignment: .bottomLeading,
                         edgeInsets: modelMenuEdge,
                         content: {
-                            AIFunctionMenu(currentFunc: $aiFunction) {
-                                function in
-                                aiFunction = function
-                                menuObser.close()
-                            }
+                            AIFunctionMenu(
+                                currentFunc: $aiFunction,
+                                action: { function in
+                                    aiFunction = function
+                                    menuObser.close()
+                                },
+                                onUpgrade: {
+                                    menuObser.close()
+                                    showVIPSheet = true
+                                }
+                            )
                         },
                         label: {
                             Color.clear.frame(width: 60, height: 30)
@@ -154,36 +161,14 @@ struct InputToolBarView<Content: View>: View {
                     )
                     .environmentObject(menuObser)
                 }
-
-                /*
-                // 滚动到底部按钮 - 右下角悬浮
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button {
-                            scrollToBottom?()
-                        } label: {
-                            Image(systemName: "arrow.down.circle.fill")
-                                .font(.title2)
-                                .foregroundStyle(.white)
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    Circle()
-                                        .fill(colors.accentColor.opacity(0.9))
-                                        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
-                                )
-                        }
-                        .padding(.trailing, 24)
-                        .padding(.bottom, keyboardHeight + 80)
-                        .transition(.scale.combined(with: .opacity))
-                    }
-                }*/
             }
         }
         .contentShape(Rectangle())
         .onTapGesture {
             hiddenKeyboard()
+        }
+        .sheet(isPresented: $showVIPSheet) {
+            VIPUpgradeView()
         }
         .onAppear {
             // 设置默认模型

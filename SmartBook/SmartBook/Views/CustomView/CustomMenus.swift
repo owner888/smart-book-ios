@@ -46,6 +46,7 @@ struct MediaMenu: View {
 struct AIFunctionMenu: View {
     @Binding var currentFunc: MenuConfig.AIModelFunctionType
     var action: (MenuConfig.AIModelFunctionType) -> Void
+    var onUpgrade: (() -> Void)?  // 新增：升级VIP回调
     
     var body: some View {
         ScrollView {
@@ -64,7 +65,7 @@ struct AIFunctionMenu: View {
     var upgradeView: some View {
         let config = MenuConfig.AIModelFunctionType.super.config
         return Button {
-            action(.super)
+            onUpgrade?()  // 调用升级回调，跳转到VIP页面
         } label: {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 6) {
