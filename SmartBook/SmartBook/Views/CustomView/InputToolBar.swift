@@ -10,15 +10,18 @@ import SwiftUI
 struct InputToolBar: View {
     @ObservedObject var viewModel: ChatViewModel
     @Binding var aiFunction: MenuConfig.AIModelFunctionType
+    @Binding var assistant: MenuConfig.AssistantType
     @Binding var inputText: String
     var openMedia: (CGRect) -> Void
     var openModel: (CGRect) -> Void
+    var openAssistant: (CGRect) -> Void
     var onSend: (() -> Void)?  // 新增：发送回调
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var isRecording = false
     @State private var mediaBtnFrame = CGRect.zero
     @State private var modelBtnFrame = CGRect.zero
+    @State private var assistantBtnFrame = CGRect.zero
 
     
     // 判断是否有输入内容
@@ -52,6 +55,15 @@ struct InputToolBar: View {
                 }.glassEffect(size: CGSize(width: 32, height: 32))
                 .getFrame($mediaBtnFrame)
                 .padding(.leading, -6)
+
+                Button {
+                    openAssistant(assistantBtnFrame)
+                } label: {
+                    Color.clear.frame(width: 32, height: 32).overlay {
+                        Text(assistant.config.icon).font(.title3)
+                    }
+                }.glassEffect(size: CGSize(width: 32, height: 32))
+                .getFrame($assistantBtnFrame)
 
                 Button {
                     openModel(modelBtnFrame)

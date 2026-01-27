@@ -9,6 +9,10 @@ class MenuConfig {
     @MainActor
     static var aiFunctions: [AIModelFunctionType] = [.heavy, .expert, .fast, .auto, .thinking]
     
+    // 助手配置（动态从服务器加载）
+    @MainActor
+    static var assistants: [AssistantType] = [.chat, .book, .continue]
+    
     static let topFunctions: [TopFunctionType] = [.getSuper, .createVideo, .editPhoto, .voiceMode, .camera, .analysisDocument, .custom]
     
     struct Config {
@@ -16,6 +20,33 @@ class MenuConfig {
         var title: String
         var summary: String? = nil
         var builtIn: Bool = true  // icon是否内置
+    }
+    
+    // MARK: - 动态加载助手
+    
+    /// 从服务器加载助手配置
+    @MainActor
+    static func loadAssistants() async {
+        do {
+            let assistantService = AssistantService()
+            try await assistantService.loadAssistants()
+            
+            // 将助手转换为 AssistantType
+            assistants = assistantService.assistants.map { assistant in
+                let dynamicAssistant: DynamicAssistant = (
+                    id: assistant.id,
+                    name: assistant.name,
+                    avatar: assistant.avatar
+                )
+                return .dynamic(dynamicAssistant)
+            }
+            
+            print("✅ 成功加载 \(assistantService.assistants.count) 个助手")
+        } catch {
+            print("⚠️ 加载助手失败，使用默认配置: \(error.localizedDescription)")
+            // 保留静态默认值
+            assistants = [.chat, .book, .continue]
+        }
     }
     
     // MARK: - 动态加载 AI 模型
@@ -157,6 +188,63 @@ class MenuConfig {
                 return true
             case (.dynamic(let lModel), .dynamic(let rModel)):
                 return lModel.id == rModel.id
+            default:
+                return false
+            }
+        }
+    }
+    
+    // MARK: - 助手类型
+    
+    // 类型别名
+    typealias DynamicAssistant = (id: String, name: String, avatar: String)
+    
+    enum AssistantType: Equatable {
+        case chat
+        case book
+        case `continue`
+        case dynamic(DynamicAssistant)  // 从服务器动态加载的助手
+        
+        var config: Config {
+            switch self {
+            case .chat:
+                return Config(icon: "💬", title: "通用聊天", builtIn: false)
+            case .book:
+                return Config(icon: "📚", title: "书籍问答", builtIn: false)
+            case .continue:
+                return Config(icon: "✍️", title: "续写小说", builtIn: false)
+            case .dynamic(let assistant):
+                return Config(
+                    icon: assistant.avatar,
+                    title: assistant.name,
+                    builtIn: false
+                )
+            }
+        }
+        
+        // 获取助手ID（用于API调用）
+        var assistantId: String {
+            switch self {
+            case .chat:
+                return ""
+            case .book:
+                return "book-qa"
+            case .continue:
+                return "novel-continue"
+            case .dynamic(let assistant):
+                return assistant.id
+            }
+        }
+        
+        // Equatable conformance
+        static func == (lhs: AssistantType, rhs: AssistantType) -> Bool {
+            switch (lhs, rhs) {
+            case (.chat, .chat),
+                 (.book, .book),
+                 (.continue, .continue):
+                return true
+            case (.dynamic(let lAssistant), .dynamic(let rAssistant)):
+                return lAssistant.id == rAssistant.id
             default:
                 return false
             }

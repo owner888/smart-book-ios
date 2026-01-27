@@ -10,7 +10,8 @@ class AssistantService {
     
     init() {
         self.assistants = Assistant.defaultAssistants
-        self.currentAssistant = Assistant.defaultAssistants.first!
+        // 默认选中通用聊天（id: "chat"）
+        self.currentAssistant = Assistant.defaultAssistants.first(where: { $0.id == "chat" }) ?? Assistant.defaultAssistants.first!
     }
     
     // 加载助手配置（从API）

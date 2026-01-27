@@ -24,11 +24,14 @@ struct InputToolBarView<Content: View>: View {
 
     @State private var showScrollToBottomButton = false  // 控制按钮显示
     @State private var aiFunction: MenuConfig.AIModelFunctionType = .auto
+    @State private var assistant: MenuConfig.AssistantType = .chat
     @State private var keyboardHeight: CGFloat = 0
     @State private var mediaMenuEdge = EdgeInsets()
     @State private var modelMenuEdge = EdgeInsets()
+    @State private var assistantMenuEdge = EdgeInsets()
     @State private var showMediaMenu = false
     @State private var showModelMenu = false
+    @State private var showAssistantMenu = false
     @State private var hiddenTopView = false
     @StateObject private var menuObser = CustomMenuObservable()
 
@@ -64,6 +67,7 @@ struct InputToolBarView<Content: View>: View {
                         InputToolBar(
                             viewModel: viewModel,
                             aiFunction: $aiFunction,
+                            assistant: $assistant,
                             inputText: $inputText,
                             openMedia: { rect in
                                 mediaMenuEdge = buttonRelatively(
@@ -80,6 +84,14 @@ struct InputToolBarView<Content: View>: View {
                                 )
                                 menuObser.willShow()
                                 showModelMenu = true
+                            },
+                            openAssistant: { rect in
+                                assistantMenuEdge = buttonRelatively(
+                                    rect,
+                                    proxy: proxy
+                                )
+                                menuObser.willShow()
+                                showAssistantMenu = true
                             },
                             onSend: {
                                 hiddenTopView = true
@@ -115,6 +127,24 @@ struct InputToolBarView<Content: View>: View {
                             AIFunctionMenu(currentFunc: $aiFunction) {
                                 function in
                                 aiFunction = function
+                                menuObser.close()
+                            }
+                        },
+                        label: {
+                            Color.clear.frame(width: 60, height: 30)
+                        }
+                    )
+                    .environmentObject(menuObser)
+                }
+                
+                if showAssistantMenu {
+                    CustomMenuView(
+                        alignment: .bottomLeading,
+                        edgeInsets: assistantMenuEdge,
+                        content: {
+                            AssistantMenu(currentAssistant: $assistant) {
+                                assistantType in
+                                assistant = assistantType
                                 menuObser.close()
                             }
                         },
@@ -164,6 +194,8 @@ struct InputToolBarView<Content: View>: View {
                     showMediaMenu = false
                 } else if showModelMenu {
                     showModelMenu = false
+                } else if showAssistantMenu {
+                    showAssistantMenu = false
                 }
             }
             setupKeyboardObservers()

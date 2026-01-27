@@ -47,8 +47,18 @@ enum AssistantAction: String, Codable {
 extension Assistant {
     static let defaultAssistants: [Assistant] = [
         Assistant(
+            id: "chat",
+            name: "通用聊天",
+            avatar: "💬",
+            color: "#2196f3",
+            description: "我是通用聊天助手，可以与您讨论各种话题",
+            systemPrompt: "你是一个友好的AI助手，可以与用户讨论各种话题。",
+            action: .chat,
+            useRAG: false
+        ),
+        Assistant(
             id: "book",
-            name: "书籍问答助手",
+            name: "书籍问答",
             avatar: "📚",
             color: "#4caf50",
             description: "我是书籍问答助手，可以帮助您理解和分析书籍内容",
@@ -64,26 +74,6 @@ extension Assistant {
             description: "我是小说续写助手，可以根据书籍风格继续创作",
             systemPrompt: "你是一个专业的小说续写助手，能够模仿书籍的写作风格进行续写。",
             action: .continueWriting,
-            useRAG: false
-        ),
-        Assistant(
-            id: "chat",
-            name: "通用聊天",
-            avatar: "💬",
-            color: "#2196f3",
-            description: "我是通用聊天助手，可以与您讨论各种话题",
-            systemPrompt: "你是一个友好的AI助手，可以与用户讨论各种话题。",
-            action: .chat,
-            useRAG: false
-        ),
-        Assistant(
-            id: "default",
-            name: "Default Assistant",
-            avatar: "⭐",
-            color: "#9c27b0",
-            description: "默认助手",
-            systemPrompt: "你是一个通用AI助手。",
-            action: .chat,
             useRAG: false
         )
     ]

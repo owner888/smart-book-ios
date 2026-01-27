@@ -133,6 +133,48 @@ struct MenuIcon: View {
     }
 }
 
+// MARK: - 助手菜单
+struct AssistantMenu: View {
+    @Binding var currentAssistant: MenuConfig.AssistantType
+    var action: (MenuConfig.AssistantType) -> Void
+    
+    var body: some View {
+        VStack(spacing: 3) {
+            ForEach(0..<MenuConfig.assistants.count, id: \.self) { i in
+                menuItem(MenuConfig.assistants[i])
+            }
+        }
+        .padding(.all, 6)
+    }
+    
+    func menuItem(_ type: MenuConfig.AssistantType) -> some View {
+        let config = type.config
+        let isSelected = type == currentAssistant
+        return Button {
+            action(type)
+        } label: {
+            HStack(spacing: 12) {
+                Text(config.icon)
+                    .font(.title2)
+                Text(config.title).foregroundStyle(.apprBlack).opacity(0.8)
+                Spacer()
+                if isSelected {
+                    Image(systemName: "checkmark").resizable().scaledToFit().foregroundStyle(.apprBlack).frame(width: 16, height: 16)
+                }
+            }
+            .padding(.all, 12)
+            .background {
+                if isSelected {
+                    Color.apprBlack.opacity(0.08).clipShape(RoundedRectangle(cornerRadius: 16))
+                } else {
+                    Color.white.opacity(0.001)
+                }
+            }
+        }
+        .buttonStyle(MenuButtonStyle())
+    }
+}
+
 // MARK: - 菜单按钮样式
 struct MenuButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {

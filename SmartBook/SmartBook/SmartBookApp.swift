@@ -26,9 +26,10 @@ struct SmartBookApp: App {
             DebugConfig.printAllConfiguration()
         #endif
         
-        // 启动时加载模型列表
+        // 启动时加载模型列表和助手列表
         Task {
             await MenuConfig.loadAIModels()
+            await MenuConfig.loadAssistants()
         }
     }
 
