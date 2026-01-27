@@ -3,100 +3,67 @@
 import Foundation
 
 @Observable
-class ModelService {
+class ModelService: ConfigService<AIModel> {
     static let shared = ModelService()  // 单例
     
-    var models: [AIModel]
-    var currentModel: AIModel
-    var isLoading = false
-    
-    // 缓存机制
-    private var cacheTime: Date?
-    private let cacheInterval: TimeInterval = 300  // 5分钟缓存
-
-    private init() {  // private 防止外部创建实例
-        self.models = AIModel.defaultModels
-        self.currentModel = AIModel.defaultModels.first!
+    private init() {
+        super.init(
+            apiEndpoint: "/api/models",
+            cacheInterval: 300,  // 5分钟缓存
+            defaultItemId: nil
+        )
     }
-
-    // 加载模型列表（从API）
+    
+    // MARK: - 便捷访问属性
+    var models: [AIModel] {
+        get { items }
+        set { items = newValue }
+    }
+    
+    var currentModel: AIModel {
+        get { currentItem }
+        set { currentItem = newValue }
+    }
+    
+    // MARK: - 加载模型列表（从API）
     func loadModels() async throws {
-        // 检查缓存
-        if let cacheTime = cacheTime,
-           Date().timeIntervalSince(cacheTime) < cacheInterval,
-           !models.isEmpty && models != AIModel.defaultModels {
-            return  // 使用缓存
+        try await loadItems()
+    }
+    
+    // MARK: - 切换模型
+    func switchModel(_ model: AIModel) {
+        switchItem(model)
+    }
+    
+    // MARK: - 根据ID获取模型
+    func getModel(id: String) -> AIModel? {
+        getItem(id: id)
+    }
+    
+    // MARK: - 重写解析方法以支持额外的 default 字段
+    override func parseResponse(_ data: Data) throws -> [AIModel]? {
+        // 尝试解析带有 default 字段的响应
+        struct ModelsResponse: Codable {
+            let data: ModelsData
+            
+            struct ModelsData: Codable {
+                let list: [AIModel]
+                let `default`: String?
+                let source: String?
+            }
         }
         
-        isLoading = true
-        defer { isLoading = false }
-
-        let url = URL(string: "\(AppConfig.apiBaseURL)/api/models")!
-
-        do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
-                // 使用默认模型
-                return
+        if let response = try? JSONDecoder().decode(ModelsResponse.self, from: data) {
+            // 使用 API 返回的 default 字段设置默认模型
+            if let defaultModelId = response.data.default,
+               let defaultModel = response.data.list.first(where: { $0.id == defaultModelId }) {
+                currentModel = defaultModel
+                Logger.debug("✅ Set default model from API: \(defaultModelId)")
             }
-
-            // 支持 ResponseMiddleware 包装的格式
-            struct ModelsResponse: Codable {
-                let success: Bool
-                let data: ModelsData
-                
-                struct ModelsData: Codable {
-                    let models: [AIModel]
-                    let `default`: String?
-                    let source: String?
-                }
-            }
-            
-            // 尝试解析包装格式
-            if let response = try? JSONDecoder().decode(ModelsResponse.self, from: data) {
-                models = response.data.models
-                cacheTime = Date()
-                
-                // 使用 API 返回的 default 字段设置默认模型
-                if let defaultModelId = response.data.default,
-                   let defaultModel = models.first(where: { $0.id == defaultModelId }) {
-                    currentModel = defaultModel
-                    Logger.debug("✅ Set default model from API: \(defaultModelId)")
-                } else if !models.isEmpty {
-                    currentModel = models.first!
-                }
-            }
-            // 尝试直接解析数组
-            else if let loadedModels = try? JSONDecoder().decode([AIModel].self, from: data),
-               !loadedModels.isEmpty {
-                models = loadedModels
-                cacheTime = Date()
-                
-                // 确保 currentModel 有效
-                if !models.contains(where: { $0.id == currentModel.id }) {
-                    currentModel = models.first!
-                }
-            }
-        } catch {
-            // 使用默认模型，不抛出错误
-            Logger.error("Failed to load models: \(error)")
+            return response.data.list
         }
-    }
-    
-    // 清除缓存
-    func clearCache() {
-        cacheTime = nil
-    }
-    
-    // 切换模型
-    func switchModel(_ model: AIModel) {
-        currentModel = model
-    }
-    
-    // 根据ID获取模型
-    func getModel(id: String) -> AIModel? {
-        models.first(where: { $0.id == id })
+        
+        // 回退到基类的解析方法
+        return try super.parseResponse(data)
     }
 }

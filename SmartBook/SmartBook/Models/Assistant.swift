@@ -4,7 +4,7 @@ import Foundation
 import SwiftUI
 
 // MARK: - 助手配置
-struct Assistant: Identifiable, Codable {
+struct Assistant: Identifiable, Codable, ConfigItem {
     let id: String
     let name: String
     let avatar: String
@@ -45,6 +45,8 @@ enum AssistantAction: String, Codable {
 
 // MARK: - 默认助手配置
 extension Assistant {
+    static var defaultItems: [Assistant] { defaultAssistants }
+    
     static let defaultAssistants: [Assistant] = [
         Assistant(
             id: "chat",
@@ -127,7 +129,7 @@ struct RAGSource: Codable, Identifiable {
 }
 
 // MARK: - AI 模型配置
-struct AIModel: Identifiable, Codable, Equatable {
+struct AIModel: Identifiable, Codable, Equatable, ConfigItem {
     let id: String
     let name: String
     let provider: String
@@ -156,6 +158,8 @@ struct AIModel: Identifiable, Codable, Equatable {
 
 // MARK: - 默认模型
 extension AIModel {
+    static var defaultItems: [AIModel] { defaultModels }
+    
     static let defaultModels: [AIModel] = [
         AIModel(id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", provider: "Google", rate: "0x", description: "Free model (Auto)", maxTokens: 1000000, costPer1MInput: 0, costPer1MOutput: 0),
         AIModel(id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", rate: "0x", description: "Free experimental model", maxTokens: 1000000, costPer1MInput: 0, costPer1MOutput: 0),

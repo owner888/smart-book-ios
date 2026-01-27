@@ -3,85 +3,66 @@
 import Foundation
 
 @Observable
-class AssistantService {
+class AssistantService: ConfigService<Assistant> {
     static let shared = AssistantService()
 
-    var assistants: [Assistant]
-    var currentAssistant: Assistant
-    var isLoading = false
-
     private init() {
-        self.assistants = Assistant.defaultAssistants
-        // 默认选中通用聊天（id: "chat"）
-        self.currentAssistant =
-            Assistant.defaultAssistants.first(where: { $0.id == "chat" }) ?? Assistant.defaultAssistants.first!
+        super.init(
+            apiEndpoint: "/api/assistants",
+            cacheInterval: 0,  // 不缓存，每次都从服务器加载最新配置
+            defaultItemId: "chat"  // 默认选中通用聊天
+        )
     }
 
-    // 加载助手配置（从API）
+    // MARK: - 便捷访问属性
+    var assistants: [Assistant] {
+        get { items }
+        set { items = newValue }
+    }
+    
+    var currentAssistant: Assistant {
+        get { currentItem }
+        set { currentItem = newValue }
+    }
+
+    // MARK: - 加载助手配置（从API）
     func loadAssistants() async throws {
-        isLoading = true
-        defer { isLoading = false }
-
-        let url = URL(string: "\(AppConfig.apiBaseURL)/api/assistants")!
-        let (data, response) = try await URLSession.shared.data(from: url)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-            httpResponse.statusCode == 200
-        else {
-            throw APIError.serverError
-        }
-
-        // 解析助手配置（现在是数组格式，保持PHP返回的顺序）
-        if let jsonRoot = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let assistantsData = jsonRoot["data"] as? [[String: Any]]
-        {
-            var loadedAssistants: [Assistant] = []
-
-            for config in assistantsData {
-                if let id = config["id"] as? String,
-                    let name = config["name"] as? String,
-                    let avatar = config["avatar"] as? String,
-                    let color = config["color"] as? String,
-                    let description = config["description"] as? String,
-                    let systemPrompt = config["systemPrompt"] as? String,
-                    let actionStr = config["action"] as? String,
-                    let action = AssistantAction(rawValue: actionStr)
-                {
-
-                    let useRAG = (config["useRAG"] as? Bool) ?? false
-
-                    let assistant = Assistant(
-                        id: id,
-                        name: name,
-                        avatar: avatar,
-                        color: color,
-                        description: description,
-                        systemPrompt: systemPrompt,
-                        action: action,
-                        useRAG: useRAG
-                    )
-                    loadedAssistants.append(assistant)
-                }
-            }
-
-            if !loadedAssistants.isEmpty {
-                // 直接使用数组顺序，不需要排序
-                assistants = loadedAssistants
-
-                if !assistants.contains(where: { $0.id == currentAssistant.id }) {
-                    currentAssistant = assistants.first!
-                }
-            }
-        }
+        try await loadItems()
     }
 
-    // 切换助手
+    // MARK: - 切换助手
     func switchAssistant(_ assistant: Assistant) {
-        currentAssistant = assistant
+        switchItem(assistant)
     }
 
-    // 根据ID获取助手
+    // MARK: - 根据ID获取助手
     func getAssistant(id: String) -> Assistant? {
-        assistants.first(where: { $0.id == id })
+        getItem(id: id)
+    }
+    
+    // MARK: - 重写解析方法以支持额外的 default 字段
+    override func parseResponse(_ data: Data) throws -> [Assistant]? {
+        // 尝试解析带有 default 字段的响应
+        struct AssistantsResponse: Codable {
+            let data: AssistantsData
+            
+            struct AssistantsData: Codable {
+                let list: [Assistant]
+                let `default`: String?
+            }
+        }
+        
+        if let response = try? JSONDecoder().decode(AssistantsResponse.self, from: data) {
+            // 使用 API 返回的 default 字段设置默认助手
+            if let defaultAssistantId = response.data.default,
+               let defaultAssistant = response.data.list.first(where: { $0.id == defaultAssistantId }) {
+                currentAssistant = defaultAssistant
+                Logger.debug("✅ Set default assistant from API: \(defaultAssistantId)")
+            }
+            return response.data.list
+        }
+        
+        // 回退到基类的解析方法
+        return try super.parseResponse(data)
     }
 }
