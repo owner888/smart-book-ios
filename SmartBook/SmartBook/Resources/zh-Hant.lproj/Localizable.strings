@@ -293,6 +293,21 @@
 "chatHistory.menu.rename" = "重新命名";
 "chatHistory.menu.delete" = "刪除";
 
+/* AI Models */
+"model.heavy" = "Heavy";
+"model.heavy.summary" = "團隊專家協作";
+"model.expert" = "Expert";
+"model.expert.summary" = "深度思考推理";
+"model.fast" = "Fast";
+"model.fast.summary" = "快速響應";
+"model.auto" = "Auto";
+"model.auto.summary" = "智能選擇模型";
+
+/* Assistants */
+"assistant.chat" = "通用聊天";
+"assistant.book" = "書籍問答";
+"assistant.continue" = "續寫小說";
+
 /* VIP Upgrade */
 "vip.title" = "升級到 SmartBook Pro";
 "vip.subtitle" = "解鎖更強大的AI模型和功能";
@@ -300,8 +315,8 @@
 "vip.feature.pro.desc" = "最強大的AI模型，適合複雜任務";
 "vip.feature.unlimited.title" = "無限制對話";
 "vip.feature.unlimited.desc" = "不再受日常使用次數限制";
-"vip.feature.priority.title" = "優先回應";
-"vip.feature.priority.desc" = "更快的AI回應速度";
+"vip.feature.priority.title" = "優先響應";
+"vip.feature.priority.desc" = "更快的AI響應速度";
 "vip.feature.context.title" = "更大上下文";
 "vip.feature.context.desc" = "支援更長的對話歷史";
 "vip.price" = "$1.99/月";

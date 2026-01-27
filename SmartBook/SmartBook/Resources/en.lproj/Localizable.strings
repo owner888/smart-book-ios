@@ -293,6 +293,21 @@
 "chatHistory.menu.rename" = "Rename";
 "chatHistory.menu.delete" = "Delete";
 
+/* AI Models */
+"model.heavy" = "Heavy";
+"model.heavy.summary" = "Team of experts";
+"model.expert" = "Expert";
+"model.expert.summary" = "Thinks hard";
+"model.fast" = "Fast";
+"model.fast.summary" = "Quick responses";
+"model.auto" = "Auto";
+"model.auto.summary" = "Chooses Fast or Expert";
+
+/* Assistants */
+"assistant.chat" = "General Chat";
+"assistant.book" = "Book Q&A";
+"assistant.continue" = "Continue Writing";
+
 /* VIP Upgrade */
 "vip.title" = "Upgrade to SmartBook Pro";
 "vip.subtitle" = "Unlock more powerful AI models and features";

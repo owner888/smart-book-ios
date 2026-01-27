@@ -167,13 +167,13 @@ class MenuConfig {
             case .super:
                 return Config(icon: "bolt.circle", title: "Super", summary: L("ai.super.summary"))
             case .heavy:
-                return Config(icon: "square.grid.2x2", title: "Heavy", summary: "Team of experts")
+                return Config(icon: "square.grid.2x2", title: L("model.heavy"), summary: L("model.heavy.summary"))
             case .expert:
-                return Config(icon: "lightbulb.max", title: "Expert", summary: "Thinks hard")
+                return Config(icon: "lightbulb.max", title: L("model.expert"), summary: L("model.expert.summary"))
             case .fast:
-                return Config(icon: "bolt", title: "Fast", summary: "Quick responses")
+                return Config(icon: "bolt", title: L("model.fast"), summary: L("model.fast.summary"))
             case .auto:
-                return Config(icon: "airplane", title: "Auto", summary: "Chooses Fast or Expert")
+                return Config(icon: "airplane", title: L("model.auto"), summary: L("model.auto.summary"))
             case .dynamic(let dynamicModel):
                 // 使用元组的 name 字段作为 title
                 return Config(
@@ -233,11 +233,11 @@ class MenuConfig {
         var config: Config {
             switch self {
             case .chat:
-                return Config(icon: "💬", title: "通用聊天", builtIn: false)
+                return Config(icon: "💬", title: L("assistant.chat"), builtIn: false)
             case .book:
-                return Config(icon: "📚", title: "书籍问答", builtIn: false)
+                return Config(icon: "📚", title: L("assistant.book"), builtIn: false)
             case .continue:
-                return Config(icon: "✍️", title: "续写小说", builtIn: false)
+                return Config(icon: "✍️", title: L("assistant.continue"), builtIn: false)
             case .dynamic(let assistant):
                 return Config(
                     icon: assistant.avatar,

@@ -293,6 +293,21 @@
 "chatHistory.menu.rename" = "重命名";
 "chatHistory.menu.delete" = "删除";
 
+/* AI Models */
+"model.heavy" = "Heavy";
+"model.heavy.summary" = "团队专家协作";
+"model.expert" = "Expert";
+"model.expert.summary" = "深度思考推理";
+"model.fast" = "Fast";
+"model.fast.summary" = "快速响应";
+"model.auto" = "Auto";
+"model.auto.summary" = "智能选择模型";
+
+/* Assistants */
+"assistant.chat" = "通用聊天";
+"assistant.book" = "书籍问答";
+"assistant.continue" = "续写小说";
+
 /* VIP Upgrade */
 "vip.title" = "升级到 SmartBook Pro";
 "vip.subtitle" = "解锁更强大的AI模型和功能";
