@@ -62,11 +62,14 @@ struct ChatView: View {
                 // 选择书籍时调用后端 API
                 Task {
                     do {
-                        isUploading = true
-                        uploadProgress = 0
-                        
                         try await bookService.selectBook(book) { progress in
-                            uploadProgress = progress
+                            // 只有在上传时才显示进度（progress > 0 表示正在上传）
+                            await MainActor.run {
+                                if progress > 0 {
+                                    isUploading = true
+                                    uploadProgress = progress
+                                }
+                            }
                         }
                         
                         await MainActor.run {
