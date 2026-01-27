@@ -31,16 +31,30 @@ class MenuConfig {
             let assistantService = AssistantService.shared
             try await assistantService.loadAssistants()
             
-            // 将助手转换为 AssistantType
+            // 将助手转换为 AssistantType，并保持静态枚举映射
             assistants = assistantService.assistants.map { assistant in
-                let dynamicAssistant: DynamicAssistant = (
-                    id: assistant.id,
-                    name: assistant.name,
-                    avatar: assistant.avatar
-                )
-                return .dynamic(dynamicAssistant)
+                // 对于已知的静态助手 ID，使用静态枚举以保持兼容性
+                switch assistant.id {
+                case "chat":
+                    return .chat
+                case "book":
+                    return .book
+                case "continue":
+                    return .continue
+                default:
+                    // 其他助手使用 dynamic 类型
+                    let dynamicAssistant: DynamicAssistant = (
+                        id: assistant.id,
+                        name: assistant.name,
+                        avatar: assistant.avatar
+                    )
+                    return .dynamic(dynamicAssistant)
+                }
             }
+            
+            Logger.debug("✅ 成功加载 \(assistants.count) 个助手")
         } catch {
+            Logger.error("⚠️ 加载助手失败，使用默认配置: \(error.localizedDescription)")
             // 保留静态默认值
             assistants = [.chat, .book, .continue]
         }
