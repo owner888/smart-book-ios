@@ -157,8 +157,8 @@ struct AIModel: Identifiable, Codable, Equatable {
 // MARK: - 默认模型
 extension AIModel {
     static let defaultModels: [AIModel] = [
-        AIModel(id: "gemini-2.0-flash-exp", name: "Gemini 2.0 Flash", provider: "Google", rate: "0x", description: "Free experimental model", maxTokens: 1000000, costPer1MInput: 0, costPer1MOutput: 0),
-        AIModel(id: "gemini-2.0-flash-thinking-exp-01-21", name: "Gemini 2.0 Flash Thinking", provider: "Google", rate: "0x", description: "Free thinking model", maxTokens: 32000, costPer1MInput: 0, costPer1MOutput: 0),
+        AIModel(id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", rate: "0x", description: "Free experimental model", maxTokens: 1000000, costPer1MInput: 0, costPer1MOutput: 0),
+        AIModel(id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash-Lite", provider: "Google", rate: "0x", description: "Free lite model", maxTokens: 32000, costPer1MInput: 0, costPer1MOutput: 0),
         AIModel(id: "gemini-1.5-pro", name: "Gemini 1.5 Pro", provider: "Google", rate: "1x", description: "Expert model", maxTokens: 2000000, costPer1MInput: 1.25, costPer1MOutput: 5.0),
         AIModel(id: "gemini-1.5-flash", name: "Gemini 1.5 Flash", provider: "Google", rate: "0.33x", description: "Fast model", maxTokens: 1000000, costPer1MInput: 0.075, costPer1MOutput: 0.30),
         AIModel(id: "gpt-4o", name: "GPT-4o", provider: "OpenAI", rate: "2x", description: "OpenAI premium", maxTokens: 128000, costPer1MInput: 2.5, costPer1MOutput: 10.0),

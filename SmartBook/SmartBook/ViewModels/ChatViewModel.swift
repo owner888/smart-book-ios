@@ -109,7 +109,7 @@ class ChatViewModel: ObservableObject {
             message: text,
             assistant: Assistant.defaultAssistants.first!,
             bookId: bookState.selectedBook?.id,
-            model: "gemini-2.0-flash-exp",
+            model: "gemini-2.0-flash",
             ragEnabled: true,
             summary: summary,
             history: recentMessages

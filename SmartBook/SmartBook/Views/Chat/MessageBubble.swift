@@ -158,7 +158,7 @@ struct MessageBubble: View {
                 usage: UsageInfo(
                     tokens: TokenInfo(input: 1000, output: 500, total: 1500),
                     cost: 0.0023,
-                    model: "gemini-2.0-flash-exp"
+                    model: "gemini-2.0-flash"
                 )
             ),
             assistant: Assistant.defaultAssistants[0],
