@@ -56,8 +56,11 @@ class MenuConfig {
             let modelService = ModelService.shared
             try await modelService.loadModels()
             
-            // 将模型转换为 AIModelFunctionType
-            aiFunctions = modelService.models.map { model in
+            // 先保留固定的4个选项
+            var functions: [AIModelFunctionType] = [.heavy, .expert, .fast, .auto]
+            
+            // 将从服务器获取的模型转换为 dynamic 类型并追加
+            let dynamicModels = modelService.models.map { model -> AIModelFunctionType in
                 // 根据 rate 映射图标
                 let icon: String
                 switch model.rate {
@@ -82,7 +85,11 @@ class MenuConfig {
                 return .dynamic(dynamicModel)
             }
             
-            print("✅ 成功加载 \(modelService.models.count) 个 AI 模型")
+            // 追加动态模型到固定选项后面
+            functions.append(contentsOf: dynamicModels)
+            aiFunctions = functions
+            
+            print("✅ 成功加载 4个固定选项 + \(modelService.models.count) 个动态模型")
         } catch {
             print("⚠️ 加载 AI 模型失败，使用默认配置: \(error.localizedDescription)")
             // 保留静态默认值
