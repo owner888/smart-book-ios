@@ -64,7 +64,7 @@ struct ChatView: View {
                     do {
                         try await bookService.selectBook(book) { progress in
                             // 只有在上传时才显示进度（progress > 0 表示正在上传）
-                            await MainActor.run {
+                            DispatchQueue.main.async {
                                 if progress > 0 {
                                     isUploading = true
                                     uploadProgress = progress
