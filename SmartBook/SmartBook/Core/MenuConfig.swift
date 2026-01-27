@@ -7,7 +7,7 @@ class MenuConfig {
     
     // AI 模型配置（动态从服务器加载）
     @MainActor
-    static var aiFunctions: [AIModelFunctionType] = [.heavy, .expert, .fast, .auto, .thinking]
+    static var aiFunctions: [AIModelFunctionType] = [.heavy, .expert, .fast, .auto]
     
     // 助手配置（动态从服务器加载）
     @MainActor
@@ -86,7 +86,7 @@ class MenuConfig {
         } catch {
             print("⚠️ 加载 AI 模型失败，使用默认配置: \(error.localizedDescription)")
             // 保留静态默认值
-            aiFunctions = [.heavy, .expert, .fast, .auto, .thinking]
+            aiFunctions = [.heavy, .expert, .fast, .auto]
         }
     }
     
@@ -126,7 +126,6 @@ class MenuConfig {
         case expert
         case fast
         case auto
-        case thinking
         case dynamic(DynamicAIModel)  // 从服务器动态加载的模型
         
         var config: Config {
@@ -138,11 +137,9 @@ class MenuConfig {
             case .expert:
                 return Config(icon: "lightbulb.max", title: "Expert", summary: "Thinks hard")
             case .fast:
-                return Config(icon: "bolt", title: "Fast", summary: "Quick responses by 4.1")
+                return Config(icon: "bolt", title: "Fast", summary: "Quick responses")
             case .auto:
                 return Config(icon: "airplane", title: "Auto", summary: "Chooses Fast or Expert")
-            case .thinking:
-                return Config(icon: "moon", title: "4.1 Thinking", summary: "Thinks fast")
             case .dynamic(let dynamicModel):
                 // 使用元组的 name 字段作为 title
                 return Config(
@@ -159,15 +156,13 @@ class MenuConfig {
             case .super:
                 return "gemini-2.5-pro"
             case .heavy:
-                return "gemini-2.5-pro"
+                return "gemini-2.5-pro"  // Heavy -> gemini-2.5-pro
             case .expert:
-                return "gemini-2.5-flash"
+                return "gemini-2.5-flash"  // Expert -> gemini-2.5-flash
             case .fast:
-                return "gemini-2.5-flash-lite"
+                return "gemini-2.5-flash-lite"  // Fast -> gemini-2.5-flash-lite
             case .auto:
-                return "gemini-2.5-flash"
-            case .thinking:
-                return "gemini-2.5-flash"
+                return "gemini-2.0-flash"  // Auto -> gemini-2.0-flash (免费)
             case .dynamic(let model):
                 return model.id
             }
@@ -180,8 +175,7 @@ class MenuConfig {
                  (.heavy, .heavy),
                  (.expert, .expert),
                  (.fast, .fast),
-                 (.auto, .auto),
-                 (.thinking, .thinking):
+                 (.auto, .auto):
                 return true
             case (.dynamic(let lModel), .dynamic(let rModel)):
                 return lModel.id == rModel.id
