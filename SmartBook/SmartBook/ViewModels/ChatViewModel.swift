@@ -280,16 +280,49 @@ class ChatViewModel: ObservableObject {
         3. 保持简洁，不超过200字
         """
         
-        // 调用 AI 生成摘要（使用简单的非流式请求）
-        // 这里简化实现，实际可以调用后端的摘要 API
-        let summaryText = conversationText // 临时：直接使用对话文本
+        // 调用 AI 生成摘要（使用流式 API）
+        var generatedSummary = ""
         
-        // 保存摘要
-        conversation.summary = summaryText
-        conversation.summarizedMessageCount = summarizedCount + messagesToSummarize.count
+        await withCheckedContinuation { continuation in
+            // 使用通用聊天助手生成摘要
+            let chatAssistant = Assistant(
+                id: "summarize",
+                name: "摘要助手",
+                action: .chat,
+                icon: "doc.text",
+                systemPrompt: "你是一个专业的对话摘要助手。"
+            )
+            
+            streamingService.sendMessageStream(
+                message: conversationText + "\n\n" + summarizePrompt,
+                assistant: chatAssistant,
+                bookId: nil,
+                model: "gemini-2.0-flash",  // 使用快速模型生成摘要
+                ragEnabled: false,
+                summary: nil,
+                history: []  // 摘要请求不需要历史
+            ) { event in
+                // 收集摘要内容
+                if case .content(let content) = event {
+                    generatedSummary += content
+                }
+            } onComplete: { result in
+                // 摘要生成完成
+                continuation.resume()
+            }
+        }
         
-        historyService?.saveSummary(summary: summaryText, messageCount: conversation.summarizedMessageCount)
-        Logger.info("✅ 摘要已保存，已摘要消息数: \(conversation.summarizedMessageCount)")
+        // 保存生成的摘要
+        if !generatedSummary.isEmpty {
+            conversation.summary = generatedSummary
+            conversation.summarizedMessageCount = summarizedCount + messagesToSummarize.count
+            
+            historyService?.saveSummary(summary: generatedSummary, messageCount: conversation.summarizedMessageCount)
+            Logger.info("✅ AI 摘要已保存，已摘要消息数: \(conversation.summarizedMessageCount)")
+            Logger.info("📝 摘要内容: \(generatedSummary.prefix(100))...")
+        } else {
+            Logger.error("❌ 摘要生成失败，内容为空")
+        }
     }
     
     func wordByWordDisplay() {
