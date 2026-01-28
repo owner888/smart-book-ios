@@ -247,20 +247,6 @@ class MenuConfig {
             }
         }
         
-        // 获取助手ID（用于API调用）
-        var assistantId: String {
-            switch self {
-            case .chat:
-                return ""
-            case .book:
-                return "book-qa"
-            case .continue:
-                return "novel-continue"
-            case .dynamic(let assistant):
-                return assistant.id
-            }
-        }
-        
         // Equatable conformance
         static func == (lhs: AssistantType, rhs: AssistantType) -> Bool {
             switch (lhs, rhs) {

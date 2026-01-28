@@ -214,7 +214,6 @@ class ChatViewModel: ObservableObject {
             return (nil, Array(messages.suffix(10)))
         }
         
-        let totalMessages = messages.count
         let summarizedCount = conversation.summarizedMessageCount
         
         // 如果有摘要，返回摘要 + 未摘要的消息
@@ -283,14 +282,17 @@ class ChatViewModel: ObservableObject {
         // 调用 AI 生成摘要（使用流式 API）
         var generatedSummary = ""
         
-        await withCheckedContinuation { continuation in
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             // 使用通用聊天助手生成摘要
             let chatAssistant = Assistant(
                 id: "summarize",
                 name: "摘要助手",
+                avatar: "📝",
+                color: "#9c27b0",
+                description: "对话摘要助手",
+                systemPrompt: "你是一个专业的对话摘要助手。",
                 action: .chat,
-                icon: "doc.text",
-                systemPrompt: "你是一个专业的对话摘要助手。"
+                useRAG: false
             )
             
             streamingService.sendMessageStream(

@@ -64,7 +64,7 @@ extension Assistant {
             avatar: "📚",
             color: "#4caf50",
             description: "我是书籍问答助手，可以帮助您理解和分析书籍内容",
-            systemPrompt: "你是一个专业的书籍问答助手，能够帮助用户理解和分析书籍内容。",
+            systemPrompt: "",  // 由服务器端配置（Context Cache）
             action: .ask,
             useRAG: true
         ),
