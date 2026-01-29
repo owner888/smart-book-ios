@@ -195,13 +195,27 @@ struct InputToolBar: View {
                 await asrStreamService.startRecording { text, isFinal in
                     inputText = text
                     
-                    // 最终结果时自动停止录音
+                    // 最终结果时自动停止并发送
                     if isFinal {
                         isRecording = false
+                        
+                        // 停止录音和断开连接
+                        Task {
+                            await asrStreamService.stopRecording()
+                            await asrStreamService.disconnect()
+                        }
+                        
+                        // 自动发送消息
+                        if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            // 延迟一点，确保 UI 更新
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                onSend?()
+                            }
+                        }
                     }
                 }
             }
-            Logger.info("🎙️ 使用 Deepgram 流式识别（实时断句）")
+            Logger.info("🎙️ 使用 Deepgram 流式识别（实时断句 + 自动发送）")
         }
     }
     
@@ -214,8 +228,8 @@ struct InputToolBar: View {
             speechService.stopRecording()
         default:
             Task {
+                // 停止录音和断开 WebSocket 连接
                 await asrStreamService.stopRecording()
-                // 断开 WebSocket 连接
                 await asrStreamService.disconnect()
             }
         }
