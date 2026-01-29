@@ -109,14 +109,21 @@ class ChatViewModel: ObservableObject {
         // 获取上下文（摘要 + 最近消息）
         let (summary, recentMessages) = getContext()
         
-        // 如果启用 TTS，启动流式 TTS
+        // 如果启用 TTS，启动流式 TTS（等待就绪）
+        var ttsReady = !enableTTS  // 如果不启用 TTS，标记为已就绪
+        
         if enableTTS {
             Task {
                 if !ttsStreamService.isConnected {
                     await ttsStreamService.connect()
                 }
                 await ttsStreamService.startTTS()
-                Logger.info("🔊 TTS 已启用")
+                
+                // 等待一点时间确保 Deepgram 握手成功
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+                
+                ttsReady = true
+                Logger.info("🔊 TTS 已就绪")
             }
         }
         
