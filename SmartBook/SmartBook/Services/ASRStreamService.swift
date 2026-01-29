@@ -68,19 +68,10 @@ class ASRStreamService: NSObject, ObservableObject {
         // 开始接收消息
         receiveMessage()
         
-        // 发送开始消息
-        let startMessage: [String: Any] = [
-            "type": "start",
-            "language": language,
-            "model": model
-        ]
-        
-        await sendMessage(startMessage)
-        
         // 启动心跳保持连接
         startHeartbeat()
         
-        Logger.info("WebSocket 连接成功，已发送 start 消息，心跳已启动")
+        Logger.info("WebSocket 连接成功，心跳已启动")
     }
     
     @MainActor
@@ -201,6 +192,8 @@ class ASRStreamService: NSObject, ObservableObject {
     
     @MainActor
     func startRecording(
+        language: String = "zh-CN",
+        model: String = "nova-2",
         onDeepgramReady: @escaping () -> Void,
         onTranscriptUpdate: @escaping (String, Bool) -> Void
     ) {
@@ -210,6 +203,17 @@ class ASRStreamService: NSObject, ObservableObject {
         guard isConnected else {
             self.error = "WebSocket 未连接"
             return
+        }
+        
+        // 发送 start 消息，触发 Deepgram 连接
+        Task {
+            let startMessage: [String: Any] = [
+                "type": "start",
+                "language": language,
+                "model": model
+            ]
+            await sendMessage(startMessage)
+            Logger.info("已发送 start 消息，等待 Deepgram 连接...")
         }
         
         // 配置音频会话
@@ -279,7 +283,13 @@ class ASRStreamService: NSObject, ObservableObject {
         }
         
         isRecording = false
-        Logger.info("停止录音")
+        
+        // 发送 stop 消息，让服务器断开 Deepgram
+        Task {
+            let stopMessage: [String: Any] = ["type": "stop"]
+            await sendMessage(stopMessage)
+            Logger.info("停止录音，已发送 stop 消息")
+        }
     }
     
     // MARK: - 音频处理
