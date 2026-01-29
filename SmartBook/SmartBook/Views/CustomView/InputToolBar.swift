@@ -168,16 +168,25 @@ struct InputToolBar: View {
                     .onChanged { _ in }
             )
             .onAppear {
-                // 视图加载时预连接 Deepgram（如果使用 Deepgram）
+                // 视图加载时预连接 ASR 和 TTS（如果使用 Deepgram）
                 if asrProvider != "native" {
                     Task {
                         // 延迟一点，避免阻塞 UI 初始化
                         try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
                         
+                        // 预连接 ASR
                         if !asrStreamService.isConnected {
                             await asrStreamService.connect()
-                            Logger.info("🚀 Deepgram 预连接完成，随时可用")
+                            Logger.info("🚀 Deepgram ASR 预连接完成")
                         }
+                        
+                        // 预连接 TTS
+                        if !viewModel.ttsStreamService.isConnected {
+                            await viewModel.ttsStreamService.connect()
+                            Logger.info("🚀 Deepgram TTS 预连接完成")
+                        }
+                        
+                        Logger.info("✅ ASR 和 TTS 都已就绪，随时可用")
                     }
                 }
             }
@@ -242,11 +251,15 @@ struct InputToolBar: View {
                                 await asrStreamService?.stopRecording()
                                 // 不断开连接，保持 WebSocket 活跃
                                 
-                                // 自动发送消息
+                                // 自动发送消息（语音模式，启用 TTS）
                                 if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                     // 延迟一点，确保清理完成
                                     try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
-                                    onSend?()
+                                    
+                                    // 语音模式发送，启用 TTS
+                                    Task { @MainActor in
+                                        await viewModel.sendMessage(text, enableTTS: true)
+                                    }
                                 }
                             }
                         }

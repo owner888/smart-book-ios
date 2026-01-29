@@ -32,6 +32,9 @@ class ChatViewModel: ObservableObject {
     private var currentMessageIndex = 0
     private var wordTimer: Timer?
     
+    // 流式 TTS 服务
+    @Published var ttsStreamService = TTSStreamService()
+    
     // 依赖注入，方便测试和管理
     init(streamingService: StreamingChatService = StreamingChatService()) {
         self.streamingService = streamingService
@@ -80,10 +83,10 @@ class ChatViewModel: ObservableObject {
     }
 
     @MainActor
-    func sendMessage(_ text: String) async {
+    func sendMessage(_ text: String, enableTTS: Bool = false) async {
         guard let bookState = bookState else { return }
 
-        Logger.info("📤 发送消息: \(text)")
+        Logger.info("📤 发送消息: \(text), TTS: \(enableTTS)")
         let userMessage = ChatMessage(role: .user, content: text)
         messages.append(userMessage)
         questionMessageId = userMessage.id
@@ -105,6 +108,17 @@ class ChatViewModel: ObservableObject {
 
         // 获取上下文（摘要 + 最近消息）
         let (summary, recentMessages) = getContext()
+        
+        // 如果启用 TTS，启动流式 TTS
+        if enableTTS {
+            Task {
+                if !ttsStreamService.isConnected {
+                    await ttsStreamService.connect()
+                }
+                await ttsStreamService.startTTS()
+                Logger.info("🔊 TTS 已启用")
+            }
+        }
         
         // 使用流式API
         let assistant = selectedAssistant ?? Assistant.defaultAssistants.first!
@@ -129,6 +143,13 @@ class ChatViewModel: ObservableObject {
                     // 逐步更新内容
                     self.answerContents.append(content)
                     self.wordByWordDisplay()
+                    
+                    // 只在启用 TTS 时发送给 TTS
+                    if enableTTS {
+                        Task {
+                            await self.ttsStreamService.sendText(content)
+                        }
+                    }
 
                 case .error(let error):
                     if messageIndex < self.messages.count {
@@ -183,6 +204,14 @@ class ChatViewModel: ObservableObject {
                     }
                 case .success:
                     // 流式完成，内容已经在事件中更新
+                    
+                    // 只在启用 TTS 时发送 flush
+                    if enableTTS {
+                        Task {
+                            await self.ttsStreamService.flush()
+                        }
+                    }
+                    
                     // 保存助手消息到数据库
                     if messageIndex < self.messages.count {
                         let messageContent = self.answerContents.joined()
