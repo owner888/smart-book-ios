@@ -201,7 +201,16 @@ class ASRStreamService: NSObject, ObservableObject {
         onDeepgramReady: @escaping () -> Void,
         onTranscriptUpdate: @escaping (String, Bool) -> Void
     ) {
-        self.onDeepgramReady = onDeepgramReady
+        // 保存回调，等待 Deepgram 就绪后再启动音频引擎
+        self.onDeepgramReady = { [weak self] in
+            guard let self = self else { return }
+            // Deepgram 就绪，启动音频引擎
+            Task { @MainActor in
+                self.startAudioEngine()
+                // 调用外部的就绪回调
+                onDeepgramReady()
+            }
+        }
         self.onTranscriptUpdate = onTranscriptUpdate
         
         guard isConnected else {
@@ -217,9 +226,13 @@ class ASRStreamService: NSObject, ObservableObject {
                 "model": model
             ]
             await sendMessage(startMessage)
-            Logger.info("已发送 start 消息，等待 Deepgram 连接...")
+            Logger.info("已发送 start 消息，等待 Deepgram 就绪...")
         }
-        
+    }
+    
+    // 启动音频引擎（Deepgram 就绪后调用）
+    @MainActor
+    private func startAudioEngine() {
         // 配置音频会话
         let audioSession = AVAudioSession.sharedInstance()
         do {
@@ -240,7 +253,7 @@ class ASRStreamService: NSObject, ObservableObject {
             commonFormat: .pcmFormatInt16,
             sampleRate: 16000,
             channels: 1,
-            interleaved: true  // ✅ 修改为 true！Deepgram 需要交错格式
+            interleaved: true  // ✅ Deepgram 需要交错格式
         ) else {
             self.error = "无法创建音频格式"
             return
@@ -266,7 +279,7 @@ class ASRStreamService: NSObject, ObservableObject {
         do {
             try audioEngine.start()
             isRecording = true
-            Logger.info("开始录音（流式识别）")
+            Logger.info("✅ 音频引擎已启动，开始录音")
         } catch {
             Logger.error("音频引擎启动失败: \(error)")
             self.error = "无法启动录音"
