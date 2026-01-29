@@ -21,6 +21,7 @@ struct InputToolBar: View {
     @AppStorage(AppConfig.Keys.asrProvider) private var asrProvider = AppConfig.DefaultValues.asrProvider
     
     @State private var isRecording = false
+    @State private var isConnecting = false  // 新增：连接中状态
     @State private var mediaBtnFrame = CGRect.zero
     @State private var modelBtnFrame = CGRect.zero
     @State private var assistantBtnFrame = CGRect.zero
@@ -119,15 +120,28 @@ struct InputToolBar: View {
                         toggleRecording()
                     } label: {
                         HStack(spacing: 3) {
-                            Image(systemName: isRecording ? "stop.fill" : "waveform").resizable().frame(
-                                width: 12,
-                                height: 12
-                            ).foregroundStyle(.apprWhite)
-                            Text(isRecording ? L("chat.voice.stop") : L("chat.voice.start")).font(.caption2).foregroundStyle(.apprWhite)
+                            // 根据状态显示不同图标
+                            if isConnecting {
+                                // 连接中显示转圈圈的 icon
+                                Image(systemName: "arrow.triangle.2.circlepath")
+                                    .resizable()
+                                    .frame(width: 12, height: 12)
+                                    .foregroundStyle(.apprWhite)
+                                    .rotationEffect(.degrees(isConnecting ? 360 : 0))
+                                    .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isConnecting)
+                                Text(L("chat.voice.start")).font(.caption2).foregroundStyle(.apprWhite)
+                            } else {
+                                Image(systemName: isRecording ? "stop.fill" : "waveform")
+                                    .resizable()
+                                    .frame(width: 12, height: 12)
+                                    .foregroundStyle(.apprWhite)
+                                Text(isRecording ? L("chat.voice.stop") : L("chat.voice.start")).font(.caption2).foregroundStyle(.apprWhite)
+                            }
                         }.padding(.horizontal, 10).padding(.vertical, 6)
                     }.background {
                         Color.apprBlack.clipShape(RoundedRectangle(cornerRadius: 12))
                     }
+                    .disabled(isConnecting)  // 连接中禁用按钮
                     .padding(.trailing, -6)
                     .padding(.bottom, -6)
                     .transition(.scale.combined(with: .opacity))
@@ -166,11 +180,11 @@ struct InputToolBar: View {
     }
     
     private func startRecording() {
-        isRecording = true
-        
         // 根据配置选择语音识别服务
         switch asrProvider {
         case "native":
+            isRecording = true  // iOS 原生立即更新状态
+            
             // 使用 iOS 原生语音识别
             speechService.startRecording(
                 onInterim: { text in
@@ -186,34 +200,46 @@ struct InputToolBar: View {
         default:
             // 使用 Deepgram 流式识别（实时断句）
             Task {
+                // 显示连接中状态
+                isConnecting = true
+                
                 // 如果未连接，先连接
                 if !asrStreamService.isConnected {
                     await asrStreamService.connect()
                 }
                 
                 // 开始录音和流式识别
-                await asrStreamService.startRecording { [weak asrStreamService] text, isFinal in
-                    inputText = text
-                    
-                    // 最终结果时自动停止并发送
-                    if isFinal {
-                        // 停止录音和断开连接
-                        Task { @MainActor in
-                            isRecording = false
-                            await asrStreamService?.stopRecording()
-                            await asrStreamService?.disconnect()
-                            
-                            // 自动发送消息
-                            if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                // 延迟一点，确保清理完成
-                                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
-                                onSend?()
+                // 等待 Deepgram 就绪后才更新按钮状态
+                await asrStreamService.startRecording(
+                    onDeepgramReady: { @MainActor in
+                        // Deepgram 连接成功，开始接收音频
+                        isConnecting = false  // 取消连接中状态
+                        isRecording = true    // 开始录音状态
+                        Logger.info("✅ Deepgram 就绪，开始录音")
+                    },
+                    onTranscriptUpdate: { [weak asrStreamService] text, isFinal in
+                        inputText = text
+                        
+                        // 最终结果时自动停止并发送
+                        if isFinal {
+                            // 停止录音和断开连接
+                            Task { @MainActor in
+                                isRecording = false
+                                await asrStreamService?.stopRecording()
+                                await asrStreamService?.disconnect()
+                                
+                                // 自动发送消息
+                                if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                    // 延迟一点，确保清理完成
+                                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
+                                    onSend?()
+                                }
                             }
                         }
                     }
-                }
+                )
             }
-            Logger.info("🎙️ 使用 Deepgram 流式识别（实时断句 + 自动发送）")
+            Logger.info("🎙️ 使用 Deepgram 流式识别（等待就绪 + 实时断句 + 自动发送）")
         }
     }
     

@@ -16,6 +16,7 @@ class ASRStreamService: NSObject, ObservableObject {
     private var audioFormat: AVAudioFormat?
     
     private var onTranscriptUpdate: ((String, Bool) -> Void)?
+    private var onDeepgramReady: (() -> Void)?
     
     override init() {
         super.init()
@@ -129,7 +130,9 @@ class ASRStreamService: NSObject, ObservableObject {
                 Logger.info("WebSocket 连接成功")
                 
             case "started":
-                Logger.info("识别已启动")
+                Logger.info("识别已启动，Deepgram 准备就绪")
+                // 通知 Deepgram 已就绪，可以开始录音
+                self.onDeepgramReady?()
                 
             case "transcript":
                 let transcript = json["transcript"] as? String ?? ""
@@ -181,7 +184,11 @@ class ASRStreamService: NSObject, ObservableObject {
     // MARK: - 录音控制
     
     @MainActor
-    func startRecording(onTranscriptUpdate: @escaping (String, Bool) -> Void) {
+    func startRecording(
+        onDeepgramReady: @escaping () -> Void,
+        onTranscriptUpdate: @escaping (String, Bool) -> Void
+    ) {
+        self.onDeepgramReady = onDeepgramReady
         self.onTranscriptUpdate = onTranscriptUpdate
         
         guard isConnected else {
