@@ -198,9 +198,10 @@ class TTSStreamService: NSObject, ObservableObject {
                 Logger.info("Deepgram TTS 已启动")
                 
             case "stopped":
-                Logger.info("Deepgram TTS 已停止")
+                Logger.info("TTS 已停止，开始播放累积的音频")
                 self.isPlaying = false
-                self.audioPlayer?.stop()
+                // TTS 结束，播放累积的音频
+                self.audioPlayer?.playComplete()
                 
             case "error":
                 let errorMsg = json["message"] as? String ?? "Unknown error"
@@ -218,8 +219,8 @@ class TTSStreamService: NSObject, ObservableObject {
     }
     
     private func handleAudioData(_ data: Data) {
-        // 播放音频数据
-        audioPlayer?.playAudio(data)
+        // 累积音频数据
+        audioPlayer?.receiveAudio(data)
         Logger.debug("收到音频数据: \(data.count) 字节")
     }
     
@@ -281,65 +282,82 @@ class TTSStreamService: NSObject, ObservableObject {
 
 // MARK: - 流式音频播放器
 
-class AudioStreamPlayer {
-    private var audioEngine: AVAudioEngine?
-    private var playerNode: AVAudioPlayerNode?
-    private var audioFormat: AVAudioFormat?
+class AudioStreamPlayer: NSObject {
+    private var audioPlayer: AVPlayer?
+    private var audioBuffer = Data()
+    private var isPlaying = false
     
-    init() {
-        setupAudioEngine()
+    override init() {
+        super.init()
+        setupAudioSession()
     }
     
-    private func setupAudioEngine() {
-        audioEngine = AVAudioEngine()
-        playerNode = AVAudioPlayerNode()
-        
-        guard let engine = audioEngine, let player = playerNode else {
-            return
-        }
-        
-        // 设置音频格式（MP3 解码后的 PCM）
-        audioFormat = AVAudioFormat(
-            commonFormat: .pcmFormatFloat32,
-            sampleRate: 24000,
-            channels: 1,
-            interleaved: false
-        )
-        
-        // 连接节点
-        engine.attach(player)
-        if let format = audioFormat {
-            engine.connect(player, to: engine.mainMixerNode, format: format)
+    private func setupAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setActive(true)
+        } catch {
+            Logger.error("音频会话配置失败: \(error)")
         }
     }
     
     func prepare() {
-        guard let engine = audioEngine else { return }
+        // 清空缓冲区
+        audioBuffer = Data()
+        isPlaying = false
+        Logger.info("音频播放器已准备好")
+    }
+    
+    // 接收音频数据（累积）
+    func receiveAudio(_ data: Data) {
+        audioBuffer.append(data)
+        Logger.debug("累积音频数据: \(data.count) 字节，总计: \(audioBuffer.count) 字节")
+    }
+    
+    // 所有音频接收完成，开始播放
+    func playComplete() {
+        guard !audioBuffer.isEmpty else { return }
+        
+        // 将音频数据保存到临时文件
+        let tempDir = FileManager.default.temporaryDirectory
+        let audioFile = tempDir.appendingPathComponent("tts_\(UUID().uuidString).mp3")
         
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
-            try engine.start()
-            playerNode?.play()
-            Logger.info("音频播放器已准备好")
+            try audioBuffer.write(to: audioFile)
+            
+            // 使用 AVPlayer 播放
+            let playerItem = AVPlayerItem(url: audioFile)
+            audioPlayer = AVPlayer(playerItem: playerItem)
+            
+            // 监听播放完成
+            NotificationCenter.default.addObserver(
+                forName: .AVPlayerItemDidPlayToEndTime,
+                object: playerItem,
+                queue: .main
+            ) { [weak self] _ in
+                Logger.info("音频播放完成")
+                self?.isPlaying = false
+                
+                // 删除临时文件
+                try? FileManager.default.removeItem(at: audioFile)
+            }
+            
+            // 开始播放
+            audioPlayer?.play()
+            isPlaying = true
+            
+            Logger.info("开始播放音频: \(audioBuffer.count) 字节")
+            
         } catch {
-            Logger.error("音频播放器启动失败: \(error)")
+            Logger.error("播放音频失败: \(error)")
         }
     }
     
-    func playAudio(_ data: Data) {
-        // 解码 MP3 数据并播放
-        // 注意：需要先解码 MP3 为 PCM
-        // 这里简化实现，实际需要使用 AudioToolbox 解码
-        
-        // TODO: 实现 MP3 解码
-        // 当前可以先使用 AVPlayer 播放完整文件
-        Logger.debug("播放音频数据: \(data.count) 字节")
-    }
-    
     func stop() {
-        playerNode?.stop()
-        audioEngine?.stop()
+        audioPlayer?.pause()
+        audioPlayer = nil
+        audioBuffer = Data()
+        isPlaying = false
         Logger.info("音频播放已停止")
     }
 }
