@@ -2,11 +2,11 @@
 
 import Foundation
 import AVFoundation
+import Combine
 
-@Observable
-class TTSService: NSObject, AVSpeechSynthesizerDelegate {
-    var isSpeaking = false
-    var availableVoices: [AVSpeechSynthesisVoice] = []
+class TTSService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
+    @Published var isSpeaking = false
+    @Published var availableVoices: [AVSpeechSynthesisVoice] = []
     
     private let synthesizer = AVSpeechSynthesizer()
     private var onComplete: (() -> Void)?

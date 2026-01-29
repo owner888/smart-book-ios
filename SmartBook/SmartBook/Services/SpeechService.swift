@@ -3,12 +3,12 @@
 import Foundation
 import Speech
 import AVFoundation
+import Combine
 
-@Observable
-class SpeechService {
-    var isRecording = false
-    var transcript = ""
-    var isAuthorized = false
+class SpeechService: ObservableObject {
+    @Published var isRecording = false
+    @Published var transcript = ""
+    @Published var isAuthorized = false
     
     private var recognizer: SFSpeechRecognizer?
     private var recognitionTask: SFSpeechRecognitionTask?

@@ -207,6 +207,21 @@
 "voice.rate" = "Speech Rate";
 "voice.rate.value" = "%.1fx";
 
+/* ASR (Speech Recognition) */
+"settings.asr.provider" = "Speech Recognition";
+"settings.asr.provider.native" = "iOS Native (Free)";
+"settings.asr.provider.google" = "Google ASR";
+"settings.asr.provider.deepgram" = "Deepgram (Recommended)";
+"settings.asr.language" = "Recognition Language";
+"settings.asr.language.chinese" = "Chinese";
+"settings.asr.language.english" = "English";
+"settings.asr.language.japanese" = "Japanese";
+"settings.asr.language.korean" = "Korean";
+"settings.asr.language.french" = "French";
+"settings.asr.language.german" = "German";
+"settings.asr.language.spanish" = "Spanish";
+"settings.asr.language.thai" = "Thai";
+
 /* Data Management */
 "data.title" = "Data Management";
 "data.description" = "Manage app data and cache";

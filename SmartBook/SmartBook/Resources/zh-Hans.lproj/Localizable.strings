@@ -207,6 +207,21 @@
 "voice.rate" = "语速";
 "voice.rate.value" = "%.1fx";
 
+/* ASR (Speech Recognition) */
+"settings.asr.provider" = "语音识别";
+"settings.asr.provider.native" = "iOS 原生（免费）";
+"settings.asr.provider.google" = "Google ASR";
+"settings.asr.provider.deepgram" = "Deepgram（推荐）";
+"settings.asr.language" = "识别语言";
+"settings.asr.language.chinese" = "中文";
+"settings.asr.language.english" = "英语";
+"settings.asr.language.japanese" = "日语";
+"settings.asr.language.korean" = "韩语";
+"settings.asr.language.french" = "法语";
+"settings.asr.language.german" = "德语";
+"settings.asr.language.spanish" = "西班牙语";
+"settings.asr.language.thai" = "泰语";
+
 /* Data Management */
 "data.title" = "数据管理";
 "data.description" = "管理应用数据和缓存";

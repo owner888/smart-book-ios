@@ -16,7 +16,6 @@ struct SmartBookApp: App {
     
     // 业务服务
     let bookService = BookService()
-    let speechService = SpeechService()
     let ttsService = TTSService()
     let checkInService = CheckInService()
 
@@ -41,8 +40,7 @@ struct SmartBookApp: App {
                 .environment(assistantService)
                 .environment(bookState)
                 .environment(bookService)
-                .environment(speechService)
-                .environment(ttsService)
+                .environmentObject(ttsService)
                 .environment(checkInService)
                 .preferredColorScheme(themeManager.colorScheme)
         }

@@ -18,11 +18,17 @@ struct InputToolBar: View {
     var onSend: (() -> Void)?  // 新增：发送回调
 
     @Environment(\.colorScheme) private var colorScheme
+    @AppStorage(AppConfig.Keys.asrProvider) private var asrProvider = AppConfig.DefaultValues.asrProvider
+    
     @State private var isRecording = false
     @State private var mediaBtnFrame = CGRect.zero
     @State private var modelBtnFrame = CGRect.zero
     @State private var assistantBtnFrame = CGRect.zero
-
+    
+    // 语音识别服务
+    // 使用 @StateObject 确保实例在视图生命周期内保持不变，并自动响应状态变化
+    @StateObject private var speechService = SpeechService()
+    @StateObject private var asrService = ASRService()
     
     // 判断是否有输入内容
     private var hasInput: Bool {
@@ -111,7 +117,7 @@ struct InputToolBar: View {
                 } else {
                     // 语音输入按钮
                     Button {
-                        isRecording = !isRecording
+                        toggleRecording()
                     } label: {
                         HStack(spacing: 3) {
                             Image(systemName: isRecording ? "stop.fill" : "waveform").resizable().frame(
@@ -148,6 +154,78 @@ struct InputToolBar: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in }
             )
+    }
+    
+    // MARK: - 语音识别
+    
+    private func toggleRecording() {
+        if isRecording {
+            stopRecording()
+        } else {
+            startRecording()
+        }
+    }
+    
+    private func startRecording() {
+        isRecording = true
+        
+        // 根据配置选择语音识别服务
+        switch asrProvider {
+        case "native":
+            // 使用 iOS 原生语音识别
+            speechService.startRecording(
+                onInterim: { text in
+                    inputText = text
+                },
+                onFinal: { text in
+                    inputText = text
+                    isRecording = false
+                }
+            )
+            Logger.info("🎤 使用 iOS 原生语音识别")
+            
+        case "google", "deepgram":
+            // 使用后端 ASR 服务（Google/Deepgram）
+            asrService.startRecording(
+                onInterim: { text in
+                    inputText = text
+                },
+                onFinal: { text in
+                    inputText = text
+                    isRecording = false
+                }
+            )
+            Logger.info("🎤 使用后端 ASR 服务：\(asrProvider)")
+            
+        default:
+            // 默认使用原生识别
+            speechService.startRecording(
+                onInterim: { text in
+                    inputText = text
+                },
+                onFinal: { text in
+                    inputText = text
+                    isRecording = false
+                }
+            )
+            Logger.info("🎤 使用 iOS 原生语音识别（默认）")
+        }
+    }
+    
+    private func stopRecording() {
+        isRecording = false
+        
+        // 停止对应的语音识别服务
+        switch asrProvider {
+        case "native":
+            speechService.stopRecording()
+        case "google", "deepgram":
+            asrService.stopRecording()
+        default:
+            speechService.stopRecording()
+        }
+        
+        Logger.info("🛑 停止录音")
     }
 }
 

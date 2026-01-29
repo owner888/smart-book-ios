@@ -28,6 +28,8 @@ enum AppConfig {
         static let autoTTS = "autoTTS"
         static let ttsRate = "ttsRate"
         static let selectedVoice = "selectedVoice"
+        static let asrProvider = "asrProvider"
+        static let asrLanguage = "asrLanguage"
     }
     
     // MARK: - 默认值
@@ -36,5 +38,7 @@ enum AppConfig {
         static let apiBaseURL = "http://localhost:8081"
         static let autoTTS = true
         static let ttsRate = 1.0
+        static let asrProvider = "deepgram" // native, google, deepgram
+        static let asrLanguage = "zh-CN" // 默认中文
     }
 }

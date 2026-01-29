@@ -5,7 +5,7 @@ internal import AVFAudio
 
 struct VoiceSelectionView: View {
     @Environment(ThemeManager.self) var themeManager
-    @Environment(TTSService.self) var ttsService
+    @EnvironmentObject var ttsService: TTSService
     @Environment(\.colorScheme) var systemColorScheme
     @State private var selectedVoiceId: String = ""
     

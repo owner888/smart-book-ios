@@ -5,12 +5,14 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
-    @Environment(TTSService.self) var ttsService
+    @EnvironmentObject var ttsService: TTSService
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.dismiss) var dismiss
     @AppStorage(AppConfig.Keys.apiBaseURL) private var apiBaseURL = AppConfig.defaultAPIBaseURL
     @AppStorage(AppConfig.Keys.autoTTS) private var autoTTS = AppConfig.DefaultValues.autoTTS
     @AppStorage(AppConfig.Keys.ttsRate) private var ttsRate = AppConfig.DefaultValues.ttsRate
+    @AppStorage(AppConfig.Keys.asrProvider) private var asrProvider = AppConfig.DefaultValues.asrProvider
+    @AppStorage(AppConfig.Keys.asrLanguage) private var asrLanguage = AppConfig.DefaultValues.asrLanguage
     
     @State private var showServerEditor = false
     @State private var editingURL = ""
@@ -79,6 +81,52 @@ struct SettingsView: View {
                 
                 // 语音设置
                 Section {
+                    // ASR 提供商选择
+                    HStack(spacing: 12) {
+                        SettingsIcon(icon: "mic", color: .blue)
+                        Text(L("settings.asr.provider"))
+                            .foregroundColor(colors.primaryText)
+                        Spacer()
+                        Picker("", selection: $asrProvider) {
+                            Text(L("settings.asr.provider.native")).tag("native")
+                            Text(L("settings.asr.provider.google")).tag("google")
+                            Text(L("settings.asr.provider.deepgram")).tag("deepgram")
+                        }
+                        .labelsHidden()
+                        .tint(colors.secondaryText)
+                    }
+                    
+                    // 语言选择
+                    HStack(spacing: 12) {
+                        SettingsIcon(icon: "globe", color: .cyan)
+                        Text(L("settings.asr.language"))
+                            .foregroundColor(colors.primaryText)
+                        Spacer()
+                        Picker("", selection: $asrLanguage) {
+                            Text(L("settings.asr.language.chinese")).tag("zh-CN")
+                            Text(L("settings.asr.language.english")).tag("en-US")
+                            Text(L("settings.asr.language.japanese")).tag("ja")
+                            Text(L("settings.asr.language.korean")).tag("ko")
+                            Text(L("settings.asr.language.french")).tag("fr")
+                            Text(L("settings.asr.language.german")).tag("de")
+                            Text(L("settings.asr.language.spanish")).tag("es")
+                            Text(L("settings.asr.language.thai")).tag("th")
+                        }
+                        .labelsHidden()
+                        .tint(colors.secondaryText)
+                    }
+                    
+                    // ASR 说明
+                    if asrProvider != "native" {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(asrProviderDescription)
+                                .font(.caption)
+                                .foregroundColor(colors.secondaryText)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                    
                     // 自动朗读
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "speaker.wave.2", color: .orange)
@@ -228,6 +276,18 @@ struct SettingsView: View {
     }
     
     // MARK: - Helper Methods
+    
+    /// ASR 提供商描述
+    private var asrProviderDescription: String {
+        switch asrProvider {
+        case "google":
+            return "使用 Google Cloud 语音识别，高精度但费用较高（$0.024/分钟）。需要后端配置 Google API Key。"
+        case "deepgram":
+            return "使用 Deepgram 语音识别，高精度且费用低（$0.0043/分钟，比 Google 节省 82%）。推荐使用！需要后端配置 Deepgram API Key。"
+        default:
+            return ""
+        }
+    }
     
     /// 重置服务器地址到默认值
     private func resetServerAddress() {

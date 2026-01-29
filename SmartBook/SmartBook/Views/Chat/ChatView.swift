@@ -6,13 +6,13 @@ struct ChatView: View {
     @Environment(BookState.self) var bookState
     @Environment(BookService.self) var bookService
     @Environment(ThemeManager.self) var themeManager
-    @Environment(SpeechService.self) var speechService
-    @Environment(TTSService.self) var ttsService
+    @EnvironmentObject var ttsService: TTSService
     @Environment(AssistantService.self) var assistantService
     @Environment(ModelService.self) var modelService
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var systemColorScheme
     @StateObject private var viewModel = ChatViewModel()
+    @StateObject private var speechService = SpeechService()
     @State private var historyService: ChatHistoryService?
     @State private var inputText = ""
     @State private var isConversationMode = false
