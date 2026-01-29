@@ -157,6 +157,10 @@ class ASRStreamService: NSObject, ObservableObject {
             case "stopped":
                 Logger.info("识别已停止")
                 self.isRecording = false
+
+            case "deepgram_closed":
+                Logger.info("Deepgram 连接已关闭")
+                self.isRecording = false
                 
             case "error":
                 let errorMsg = json["message"] as? String ?? "Unknown error"
@@ -166,7 +170,7 @@ class ASRStreamService: NSObject, ObservableObject {
             case "pong":
                 // 心跳响应
                 break
-                
+
             default:
                 Logger.info("未知消息类型: \(type)")
             }
