@@ -26,9 +26,8 @@ struct InputToolBar: View {
     @State private var assistantBtnFrame = CGRect.zero
     
     // 语音识别服务
-    // 使用 @StateObject 确保实例在视图生命周期内保持不变，并自动响应状态变化
     @StateObject private var speechService = SpeechService()
-    @StateObject private var asrService = ASRService()
+    @StateObject private var asrStreamService = ASRStreamService()
     
     // 判断是否有输入内容
     private var hasInput: Bool {
@@ -184,31 +183,25 @@ struct InputToolBar: View {
             )
             Logger.info("🎤 使用 iOS 原生语音识别")
             
-        case "google", "deepgram":
-            // 使用后端 ASR 服务（Google/Deepgram）
-            asrService.startRecording(
-                onInterim: { text in
-                    inputText = text
-                },
-                onFinal: { text in
-                    inputText = text
-                    isRecording = false
-                }
-            )
-            Logger.info("🎤 使用后端 ASR 服务：\(asrProvider)")
-            
         default:
-            // 默认使用原生识别
-            speechService.startRecording(
-                onInterim: { text in
-                    inputText = text
-                },
-                onFinal: { text in
-                    inputText = text
-                    isRecording = false
+            // 使用 Deepgram 流式识别（实时断句）
+            Task {
+                // 如果未连接，先连接
+                if !asrStreamService.isConnected {
+                    await asrStreamService.connect()
                 }
-            )
-            Logger.info("🎤 使用 iOS 原生语音识别（默认）")
+                
+                // 开始录音和流式识别
+                await asrStreamService.startRecording { text, isFinal in
+                    inputText = text
+                    
+                    // 最终结果时自动停止录音
+                    if isFinal {
+                        isRecording = false
+                    }
+                }
+            }
+            Logger.info("🎙️ 使用 Deepgram 流式识别（实时断句）")
         }
     }
     
@@ -219,10 +212,10 @@ struct InputToolBar: View {
         switch asrProvider {
         case "native":
             speechService.stopRecording()
-        case "google", "deepgram":
-            asrService.stopRecording()
         default:
-            speechService.stopRecording()
+            Task {
+                await asrStreamService.stopRecording()
+            }
         }
         
         Logger.info("🛑 停止录音")
