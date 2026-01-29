@@ -94,10 +94,11 @@ class TTSStreamService: NSObject, ObservableObject {
         }
         
         // 发送 start 消息
+        // WebSocket 流式只支持 linear16/mulaw/alaw（不支持 MP3）
         let startMessage: [String: Any] = [
             "type": "start",
             "model": model,
-            "encoding": "mp3",
+            "encoding": "linear16",
             "sample_rate": 24000
         ]
         
