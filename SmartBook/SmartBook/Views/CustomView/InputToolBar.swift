@@ -167,6 +167,20 @@ struct InputToolBar: View {
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in }
             )
+            .onAppear {
+                // 视图加载时预连接 Deepgram（如果使用 Deepgram）
+                if asrProvider != "native" {
+                    Task {
+                        // 延迟一点，避免阻塞 UI 初始化
+                        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+                        
+                        if !asrStreamService.isConnected {
+                            await asrStreamService.connect()
+                            Logger.info("🚀 Deepgram 预连接完成，随时可用")
+                        }
+                    }
+                }
+            }
     }
     
     // MARK: - 语音识别
@@ -222,11 +236,11 @@ struct InputToolBar: View {
                         
                         // 最终结果时自动停止并发送
                         if isFinal {
-                            // 停止录音和断开连接
+                            // 只停止录音，保持连接
                             Task { @MainActor in
                                 isRecording = false
                                 await asrStreamService?.stopRecording()
-                                await asrStreamService?.disconnect()
+                                // 不断开连接，保持 WebSocket 活跃
                                 
                                 // 自动发送消息
                                 if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
@@ -252,13 +266,13 @@ struct InputToolBar: View {
             speechService.stopRecording()
         default:
             Task {
-                // 停止录音和断开 WebSocket 连接
+                // 只停止录音，保持 WebSocket 连接
                 await asrStreamService.stopRecording()
-                await asrStreamService.disconnect()
+                // 不断开连接，下次可以快速开始
             }
         }
         
-        Logger.info("🛑 停止录音")
+        Logger.info("🛑 停止录音（连接保持）")
     }
 }
 

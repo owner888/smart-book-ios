@@ -17,9 +17,19 @@ class ASRStreamService: NSObject, ObservableObject {
     
     private var onTranscriptUpdate: ((String, Bool) -> Void)?
     private var onDeepgramReady: (() -> Void)?
+    private var heartbeatTimer: Timer?
+    private var reconnectTimer: Timer?
+    private var shouldAutoReconnect = true  // 是否自动重连
+    private var reconnectAttempts = 0
     
     override init() {
         super.init()
+    }
+    
+    deinit {
+        heartbeatTimer?.invalidate()
+        reconnectTimer?.invalidate()
+        shouldAutoReconnect = false
     }
     
     // MARK: - WebSocket 连接
@@ -67,7 +77,10 @@ class ASRStreamService: NSObject, ObservableObject {
         
         await sendMessage(startMessage)
         
-        Logger.info("WebSocket 连接成功，已发送 start 消息")
+        // 启动心跳保持连接
+        startHeartbeat()
+        
+        Logger.info("WebSocket 连接成功，已发送 start 消息，心跳已启动")
     }
     
     @MainActor
@@ -112,6 +125,9 @@ class ASRStreamService: NSObject, ObservableObject {
                 Task { @MainActor in
                     self.error = error.localizedDescription
                     self.isConnected = false
+                    
+                    // 触发自动重连
+                    self.startAutoReconnect()
                 }
             }
         }
@@ -337,5 +353,55 @@ class ASRStreamService: NSObject, ObservableObject {
                 await self.sendMessage(["type": "ping"])
             }
         }
+    }
+    
+    // MARK: - 断线重连
+    
+    @MainActor
+    private func startAutoReconnect() {
+        // 如果不允许自动重连，直接返回
+        guard shouldAutoReconnect else { return }
+        
+        reconnectAttempts += 1
+        
+        // 计算重连延迟（指数退避，最大 30 秒）
+        let delay = min(Double(reconnectAttempts) * 2.0, 30.0)
+        
+        Logger.info("🔄 将在 \(delay) 秒后重连（第 \(reconnectAttempts) 次）")
+        
+        // 取消之前的重连计时器
+        reconnectTimer?.invalidate()
+        
+        // 创建新的重连计时器
+        reconnectTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            
+            Task { @MainActor in
+                Logger.info("🔄 尝试重新连接...")
+                await self.connect()
+                
+                // 如果连接成功，重置重连计数
+                if self.isConnected {
+                    self.reconnectAttempts = 0
+                    Logger.info("✅ 重连成功")
+                }
+            }
+        }
+    }
+    
+    // 停止自动重连
+    @MainActor
+    func stopAutoReconnect() {
+        shouldAutoReconnect = false
+        reconnectTimer?.invalidate()
+        reconnectTimer = nil
+        Logger.info("⏹️ 已停止自动重连")
+    }
+    
+    // 启用自动重连
+    @MainActor
+    func enableAutoReconnect() {
+        shouldAutoReconnect = true
+        Logger.info("▶️ 已启用自动重连")
     }
 }
