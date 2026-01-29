@@ -87,20 +87,25 @@ class TTSStreamService: NSObject, ObservableObject {
     // MARK: - TTS 控制
     
     @MainActor
-    func startTTS(model: String = "aura-2-asteria-en") async {
+    func startTTS(model: String? = nil) async {
         guard isConnected else {
             Logger.error("TTS WebSocket 未连接")
             return
         }
         
         // 发送 start 消息
-        // WebSocket 流式只支持 linear16/mulaw/alaw（不支持 MP3）
-        let startMessage: [String: Any] = [
+        // 不指定 model，让服务器自动选择（会选 Google TTS 支持中文）
+        var startMessage: [String: Any] = [
             "type": "start",
-            "model": model,
-            "encoding": "linear16",
+            "provider": "auto",  // 自动选择
+            "encoding": "mp3",  // Google TTS 支持 MP3
             "sample_rate": 24000
         ]
+        
+        // 如果指定了模型，添加到消息中
+        if let model = model {
+            startMessage["model"] = model
+        }
         
         await sendMessage(startMessage)
         
