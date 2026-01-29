@@ -215,6 +215,8 @@ struct InputToolBar: View {
         default:
             Task {
                 await asrStreamService.stopRecording()
+                // 断开 WebSocket 连接
+                await asrStreamService.disconnect()
             }
         }
         
