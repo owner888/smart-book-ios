@@ -267,30 +267,86 @@ class ASRService: ObservableObject {
                 ])
             }
             
-            // 解析结果
-            struct Response: Codable {
+            // 尝试解析两种格式的响应
+            // 格式1: { "success": true, "data": { ... } }
+            // 格式2: { "success": true, "transcript": "...", ... }
+            
+            struct WrappedResponse: Codable {
                 let success: Bool
                 let data: ASRResult
             }
             
-            let result = try JSONDecoder().decode(Response.self, from: data)
+            struct DirectResponse: Codable {
+                let success: Bool
+                let transcript: String
+                let confidence: Double
+                let language: String
+                let duration: Double
+                let cost: Double
+                let costFormatted: String
+                let provider: String
+                var words: [ASRWord]?
+                var utterances: [ASRUtterance]?
+                var requestId: String?
+                
+                enum CodingKeys: String, CodingKey {
+                    case success, transcript, confidence, language, duration, cost
+                    case costFormatted, provider, words, utterances
+                    case requestId = "request_id"
+                }
+                
+                func toASRResult() -> ASRResult {
+                    return ASRResult(
+                        transcript: transcript,
+                        confidence: confidence,
+                        language: language,
+                        duration: duration,
+                        cost: cost,
+                        costFormatted: costFormatted,
+                        provider: provider,
+                        words: words,
+                        utterances: utterances,
+                        requestId: requestId
+                    )
+                }
+            }
             
-            if result.success {
-                let text = result.data.transcript
-                self.transcript = text
-                
-                Logger.info("识别成功: \(text)")
-                Logger.info("置信度: \(result.data.confidence)%")
-                Logger.info("提供商: \(result.data.provider)")
-                Logger.info("费用: \(result.data.costFormatted)")
-                
-                // 调用最终结果回调
-                self.onFinalResult?(text)
-            } else {
+            let asrResult: ASRResult
+            
+            // 先尝试解析包装格式
+            if let wrappedResponse = try? JSONDecoder().decode(WrappedResponse.self, from: data) {
+                guard wrappedResponse.success else {
+                    throw NSError(domain: "ASRService", code: -1, userInfo: [
+                        NSLocalizedDescriptionKey: "识别失败"
+                    ])
+                }
+                asrResult = wrappedResponse.data
+            }
+            // 再尝试直接格式
+            else if let directResponse = try? JSONDecoder().decode(DirectResponse.self, from: data) {
+                guard directResponse.success else {
+                    throw NSError(domain: "ASRService", code: -1, userInfo: [
+                        NSLocalizedDescriptionKey: "识别失败"
+                    ])
+                }
+                asrResult = directResponse.toASRResult()
+            }
+            else {
                 throw NSError(domain: "ASRService", code: -1, userInfo: [
-                    NSLocalizedDescriptionKey: "识别失败"
+                    NSLocalizedDescriptionKey: "无法解析服务器响应"
                 ])
             }
+            
+            let text = asrResult.transcript
+            self.transcript = text
+            
+            Logger.info("识别成功: \(text)")
+            Logger.info("置信度: \(asrResult.confidence)%")
+            Logger.info("提供商: \(asrResult.provider)")
+            Logger.info("费用: \(asrResult.costFormatted)")
+            
+            // 调用最终结果回调
+            self.onFinalResult?(text)
             
         } catch {
             Logger.error("识别失败: \(error)")

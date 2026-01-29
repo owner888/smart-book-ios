@@ -8,7 +8,7 @@ class ModelService: ConfigService<AIModel> {
     
     private init() {
         super.init(
-            apiEndpoint: "/api/models",
+            apiEndpoint: "/api/config/models",
             cacheInterval: 300,  // 5分钟缓存
             defaultItemId: nil
         )

@@ -8,7 +8,7 @@ class AssistantService: ConfigService<Assistant> {
 
     private init() {
         super.init(
-            apiEndpoint: "/api/assistants",
+            apiEndpoint: "/api/config/assistants",
             cacheInterval: 0,  // 不缓存，每次都从服务器加载最新配置
             defaultItemId: "chat"  // 默认选中通用聊天
         )
