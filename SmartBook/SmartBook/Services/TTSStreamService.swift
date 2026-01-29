@@ -87,7 +87,7 @@ class TTSStreamService: NSObject, ObservableObject {
     // MARK: - TTS 控制
     
     @MainActor
-    func startTTS(model: String = "aura-asteria-zh") async {
+    func startTTS(model: String = "aura-2-asteria-en") async {
         guard isConnected else {
             Logger.error("TTS WebSocket 未连接")
             return
