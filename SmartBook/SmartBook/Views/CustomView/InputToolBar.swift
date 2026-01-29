@@ -192,23 +192,21 @@ struct InputToolBar: View {
                 }
                 
                 // 开始录音和流式识别
-                await asrStreamService.startRecording { text, isFinal in
+                await asrStreamService.startRecording { [weak asrStreamService] text, isFinal in
                     inputText = text
                     
                     // 最终结果时自动停止并发送
                     if isFinal {
-                        isRecording = false
-                        
                         // 停止录音和断开连接
-                        Task {
-                            await asrStreamService.stopRecording()
-                            await asrStreamService.disconnect()
-                        }
-                        
-                        // 自动发送消息
-                        if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            // 延迟一点，确保 UI 更新
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        Task { @MainActor in
+                            isRecording = false
+                            await asrStreamService?.stopRecording()
+                            await asrStreamService?.disconnect()
+                            
+                            // 自动发送消息
+                            if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                // 延迟一点，确保清理完成
+                                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
                                 onSend?()
                             }
                         }

@@ -244,7 +244,10 @@ class ASRStreamService: NSObject, ObservableObject {
     
     @MainActor
     func stopRecording() {
-        guard isRecording else { return }
+        guard isRecording else { 
+            Logger.debug("录音未在进行中，忽略停止请求")
+            return 
+        }
         
         // 停止音频引擎
         if audioEngine.isRunning {
