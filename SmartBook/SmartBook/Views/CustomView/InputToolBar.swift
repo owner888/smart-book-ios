@@ -259,6 +259,8 @@ struct InputToolBar: View {
                                     // 语音模式发送，启用 TTS
                                     Task { @MainActor in
                                         await viewModel.sendMessage(text, enableTTS: true)
+                                        // 清空输入框
+                                        inputText = ""
                                     }
                                 }
                             }
