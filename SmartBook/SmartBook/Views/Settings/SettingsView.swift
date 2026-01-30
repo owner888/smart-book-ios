@@ -153,18 +153,20 @@ struct SettingsView: View {
                         }
                     }
                     
-                    // 语速
-                    VStack(spacing: 8) {
-                        HStack(spacing: 12) {
-                            SettingsIcon(icon: "speedometer", color: .green)
-                            Text(L("voice.rate"))
-                                .foregroundColor(colors.primaryText)
-                            Spacer()
-                            Text(String(format: L("voice.rate.value"), ttsRate))
-                                .foregroundColor(colors.secondaryText)
+                    // 语速（仅 iOS 原生 TTS）
+                    if ttsProvider == "native" {
+                        VStack(spacing: 8) {
+                            HStack(spacing: 12) {
+                                SettingsIcon(icon: "speedometer", color: .green)
+                                Text(L("voice.rate"))
+                                    .foregroundColor(colors.primaryText)
+                                Spacer()
+                                Text(String(format: L("voice.rate.value"), ttsRate))
+                                    .foregroundColor(colors.secondaryText)
+                            }
+                            Slider(value: $ttsRate, in: 0.5...2.0, step: 0.1)
+                                .tint(.green)
                         }
-                        Slider(value: $ttsRate, in: 0.5...2.0, step: 0.1)
-                            .tint(.green)
                     }
                 } header: {
                     Text(L("voice.title"))
