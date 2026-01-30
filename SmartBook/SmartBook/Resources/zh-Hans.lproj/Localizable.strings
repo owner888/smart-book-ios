@@ -198,7 +198,7 @@
 "server.quickSet" = "快捷设置";
 "server.edit" = "编辑服务器";
 "server.url.invalid" = "请输入有效的 URL 地址";
-"server.description" = "PHP 后端服务器地址，用于 AI 对话和书籍搜索";
+"server.description" = "服务器地址，用于 AI 对话和书籍搜索";
 
 /* Voice */
 "voice.title" = "语音";
@@ -209,9 +209,9 @@
 
 /* ASR (Speech Recognition) */
 "settings.asr.provider" = "语音识别";
-"settings.asr.provider.native" = "iOS 原生（免费）";
-"settings.asr.provider.google" = "Google ASR";
-"settings.asr.provider.deepgram" = "Deepgram（推荐）";
+"settings.asr.provider.native" = "iOS 原生";
+"settings.asr.provider.google" = "Google";
+"settings.asr.provider.deepgram" = "Deepgram";
 "settings.asr.language" = "识别语言";
 "settings.asr.language.chinese" = "中文";
 "settings.asr.language.english" = "英语";

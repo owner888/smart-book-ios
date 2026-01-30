@@ -198,7 +198,7 @@
 "server.quickSet" = "快速設定";
 "server.edit" = "編輯伺服器";
 "server.url.invalid" = "請輸入有效的 URL 位址";
-"server.description" = "PHP 後端伺服器位址，用於 AI 對話和書籍搜尋";
+"server.description" = "伺服器位址，用於 AI 對話和書籍搜尋";
 
 /* Voice */
 "voice.title" = "語音";

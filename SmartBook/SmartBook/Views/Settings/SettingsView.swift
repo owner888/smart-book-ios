@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage(AppConfig.Keys.ttsRate) private var ttsRate = AppConfig.DefaultValues.ttsRate
     @AppStorage(AppConfig.Keys.asrProvider) private var asrProvider = AppConfig.DefaultValues.asrProvider
     @AppStorage(AppConfig.Keys.asrLanguage) private var asrLanguage = AppConfig.DefaultValues.asrLanguage
+    @AppStorage(AppConfig.Keys.ttsProvider) private var ttsProvider = AppConfig.DefaultValues.ttsProvider
     
     @State private var showServerEditor = false
     @State private var editingURL = ""
@@ -74,8 +75,8 @@ struct SettingsView: View {
                     Text(L("server.title"))
                         .foregroundColor(colors.secondaryText)
                 } footer: {
-                    Text(L("server.description"))
-                        .foregroundColor(colors.secondaryText)
+                    // Text(L("server.description"))
+                        // .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
                 
@@ -125,6 +126,20 @@ struct SettingsView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .padding(.vertical, 4)
+                    }
+                    
+                    // TTS 提供商选择
+                    HStack(spacing: 12) {
+                        SettingsIcon(icon: "speaker.wave.3", color: .purple)
+                        Text(L("settings.tts.provider"))
+                            .foregroundColor(colors.primaryText)
+                        Spacer()
+                        Picker("", selection: $ttsProvider) {
+                            Text(L("settings.tts.provider.native")).tag("native")
+                            Text(L("settings.tts.provider.google")).tag("google")
+                        }
+                        .labelsHidden()
+                        .tint(colors.secondaryText)
                     }
                     
                     // 自动朗读

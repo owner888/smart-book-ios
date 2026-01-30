@@ -198,7 +198,7 @@
 "server.quickSet" = "Quick Settings";
 "server.edit" = "Edit Server";
 "server.url.invalid" = "Please enter a valid URL";
-"server.description" = "PHP backend server address for AI chat and book search";
+"server.description" = "Server address for AI chat and book search";
 
 /* Voice */
 "voice.title" = "Voice";
@@ -208,11 +208,11 @@
 "voice.rate.value" = "%.1fx";
 
 /* ASR (Speech Recognition) */
-"settings.asr.provider" = "Speech Recognition";
-"settings.asr.provider.native" = "iOS Native (Free)";
-"settings.asr.provider.google" = "Google ASR";
-"settings.asr.provider.deepgram" = "Deepgram (Recommended)";
-"settings.asr.language" = "Recognition Language";
+"settings.asr.provider" = "ASR Provider";
+"settings.asr.provider.native" = "Native";
+"settings.asr.provider.google" = "Google";
+"settings.asr.provider.deepgram" = "Deepgram";
+"settings.asr.language" = "ASR Language";
 "settings.asr.language.chinese" = "Chinese";
 "settings.asr.language.english" = "English";
 "settings.asr.language.japanese" = "Japanese";
