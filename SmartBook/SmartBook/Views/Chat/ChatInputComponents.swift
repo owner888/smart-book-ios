@@ -90,7 +90,6 @@ struct AssistantPromptBar: View {
 // MARK: - 输入栏
 struct InputBar: View {
     @Binding var text: String
-    @Binding var isConversationMode: Bool
     var isFocused: FocusState<Bool>.Binding
     let isLoading: Bool
     let speechService: SpeechService
@@ -98,7 +97,6 @@ struct InputBar: View {
     var colors: ThemeColors = .dark
     let onSend: () -> Void
     let onVoice: () -> Void
-    let onConversation: () -> Void
     let onSelectBook: () -> Void
     let onClearHistory: () -> Void
 

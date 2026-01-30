@@ -278,17 +278,23 @@ struct InputToolBar: View {
                                 await asrStreamService?.stopRecording()
                                 // 不断开连接，保持 WebSocket 活跃
                                 
-                                // 自动发送消息（语音模式，启用 TTS）
-                                if !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                // 严格检查：文本必须有实际内容（至少2个字符）才自动发送
+                                let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if trimmedText.count >= 2 {
+                                    Logger.info("✅ 语音识别完成，自动发送: \(trimmedText)")
+                                    
                                     // 延迟一点，确保清理完成
                                     try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
                                     
                                     // 语音模式发送，启用 TTS
                                     Task { @MainActor in
-                                        await viewModel.sendMessage(text, enableTTS: true)
+                                        await viewModel.sendMessage(trimmedText, enableTTS: true)
                                         // 清空输入框
                                         inputText = ""
                                     }
+                                } else {
+                                    Logger.warn("⚠️ 识别文本太短或为空，不自动发送: '\(trimmedText)'")
+                                    // 保留在输入框中，让用户决定是否发送
                                 }
                             }
                         }

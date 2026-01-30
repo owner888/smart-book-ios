@@ -12,10 +12,8 @@ struct ChatView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var systemColorScheme
     @StateObject private var viewModel = ChatViewModel()
-    @StateObject private var speechService = SpeechService()
     @State private var historyService: ChatHistoryService?
     @State private var inputText = ""
-    @State private var isConversationMode = false
     @State private var showBookPicker = false
     @State private var showSettings = false
     @State private var showBookshelf = false
@@ -435,43 +433,6 @@ struct ChatView: View {
 
         Task {
             await viewModel.sendMessage(text)
-
-            if isConversationMode,
-                let lastMessage = viewModel.messages.last,
-                lastMessage.role == .assistant
-            {
-                await ttsService.speak(lastMessage.content)
-                startVoiceInput()
-            }
-        }
-    }
-
-    func toggleVoiceInput() {
-        if speechService.isRecording {
-            speechService.stopRecording()
-        } else {
-            startVoiceInput()
-        }
-    }
-
-    func startVoiceInput() {
-        speechService.startRecording { result in
-            inputText = result
-        } onFinal: { finalResult in
-            inputText = finalResult
-            if isConversationMode {
-                sendMessage()
-            }
-        }
-    }
-
-    func toggleConversationMode() {
-        isConversationMode.toggle()
-        if isConversationMode {
-            startVoiceInput()
-        } else {
-            speechService.stopRecording()
-            ttsService.stop()
         }
     }
 
