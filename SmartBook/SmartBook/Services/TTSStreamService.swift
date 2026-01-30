@@ -13,7 +13,7 @@ class TTSStreamService: NSObject, ObservableObject {
     private var webSocketTask: URLSessionWebSocketTask?
     private var audioPlayer: AudioStreamPlayer?
     private var heartbeatTimer: Timer?
-    private var reconnectTimer: Timer?
+    private var reconnectTimer: Timer? 
     private var shouldAutoReconnect = true
     private var reconnectAttempts = 0
     
@@ -219,9 +219,20 @@ class TTSStreamService: NSObject, ObservableObject {
     }
     
     private func handleAudioData(_ data: Data) {
+        // 检查是否是 JSON 消息（误发到二进制）
+        if let jsonString = String(data: data, encoding: .utf8),
+           jsonString.starts(with: "{") {
+            Logger.debug("忽略 JSON 消息（作为二进制接收）: \(jsonString)")
+            return
+        }
+        
+        // 输出数据内容（诊断用）
+        let prefix = data.prefix(16)
+        let hexString = prefix.map { String(format: "%02X", $0) }.joined(separator: " ")
+        Logger.debug("收到音频数据: \(data.count) 字节, 头部: \(hexString)")
+        
         // 累积音频数据
         audioPlayer?.receiveAudio(data)
-        Logger.debug("收到音频数据: \(data.count) 字节")
     }
     
     private func sendMessage(_ message: [String: Any]) async {
@@ -286,10 +297,16 @@ class AudioStreamPlayer: NSObject {
     private var audioPlayer: AVPlayer?
     private var audioBuffer = Data()
     private var isPlaying = false
+    private var playTimer: Timer?
+    private var isSessionActive = false  // TTS 会话是否活跃
     
     override init() {
         super.init()
         setupAudioSession()
+    }
+    
+    deinit {
+        playTimer?.invalidate()
     }
     
     private func setupAudioSession() {
@@ -305,13 +322,41 @@ class AudioStreamPlayer: NSObject {
         // 清空缓冲区
         audioBuffer = Data()
         isPlaying = false
-        Logger.info("音频播放器已准备好")
+        isSessionActive = true  // 激活会话
+        Logger.info("音频播放器已准备好，会话已激活")
     }
     
     // 接收音频数据（累积）
     func receiveAudio(_ data: Data) {
+        // 只在会话活跃时才累积音频
+        guard isSessionActive else {
+            Logger.debug("会话未活跃，忽略数据: \(data.count) 字节")
+            return
+        }
+        
+        // 检查是否是 MP3 音频数据
+        // if !isAudioData(data) {
+        //     // 输出数据内容（诊断用）
+        //     let prefix = data.prefix(16)
+        //     let hexString = prefix.map { String(format: "%02X", $0) }.joined(separator: " ")
+        //     Logger.debug("忽略非音频数据: \(data.count) 字节, 头部: \(hexString)")
+        //     return
+        // }
+        
         audioBuffer.append(data)
         Logger.debug("累积音频数据: \(data.count) 字节，总计: \(audioBuffer.count) 字节")
+        
+        // 只有累积到一定大小（1KB）才启动播放定时器
+        if audioBuffer.count >= 1024 {
+            // 重置定时器，如果2秒没有新数据就自动播放
+            DispatchQueue.main.async { [weak self] in
+                self?.playTimer?.invalidate()
+                self?.playTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false) { [weak self] _ in
+                    Logger.info("⏱️ 2秒无新数据，自动播放")
+                    self?.playComplete()
+                }
+            }
+        }
     }
     
     // 所有音频接收完成，开始播放
@@ -345,6 +390,7 @@ class AudioStreamPlayer: NSObject {
             // 开始播放
             audioPlayer?.play()
             isPlaying = true
+            isSessionActive = false  // 停用会话，避免累积下一次的数据
             
             Logger.info("开始播放音频: \(audioBuffer.count) 字节")
             
@@ -358,6 +404,34 @@ class AudioStreamPlayer: NSObject {
         audioPlayer = nil
         audioBuffer = Data()
         isPlaying = false
+        isSessionActive = false  // 停用会话
+        playTimer?.invalidate()
+        playTimer = nil
         Logger.info("音频播放已停止")
+    }
+    
+    // 检查是否是 MP3 音频数据
+    private func isAudioData(_ data: Data) -> Bool {
+        guard data.count >= 3 else { return false }
+        
+        // 检查 MP3 文件头
+        let bytes = [UInt8](data.prefix(3))
+        
+        // ID3v2 标签：以 "ID3" 开头
+        if bytes[0] == 0x49 && bytes[1] == 0x44 && bytes[2] == 0x33 {
+            return true
+        }
+        
+        // MP3 帧同步字：0xFF 0xFB 或 0xFF 0xF3 等
+        if bytes[0] == 0xFF && (bytes[1] & 0xE0) == 0xE0 {
+            return true
+        }
+        
+        // 如果不是音频头，但数据较大，可能是音频中间部分
+        if data.count > 1024 {
+            return true
+        }
+        
+        return false
     }
 }
