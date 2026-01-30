@@ -32,11 +32,14 @@ class ChatViewModel: ObservableObject {
     private var currentMessageIndex = 0
     private var wordTimer: Timer?
     
-    // 流式 TTS 服务
+    // 流式 TTS 服务（Google TTS）
     @Published var ttsStreamService = TTSStreamService()
     
     // 原生 TTS 服务（iOS 系统语音）
     private let ttsService = TTSService()
+    
+    // TTS 提供商配置
+    @AppStorage(AppConfig.Keys.ttsProvider) private var ttsProvider = AppConfig.DefaultValues.ttsProvider
     
     // 依赖注入，方便测试和管理
     init(streamingService: StreamingChatService = StreamingChatService()) {
@@ -112,10 +115,8 @@ class ChatViewModel: ObservableObject {
         // 获取上下文（摘要 + 最近消息）
         let (summary, recentMessages) = getContext()
         
-        // 如果启用 TTS，启动流式 TTS（等待就绪）
-        var ttsReady = !enableTTS  // 如果不启用 TTS，标记为已就绪
-        
-        if enableTTS {
+        // 如果启用 TTS 且使用 Google，启动流式 TTS
+        if enableTTS && ttsProvider == "google" {
             Task {
                 if !ttsStreamService.isConnected {
                     await ttsStreamService.connect()
@@ -125,8 +126,7 @@ class ChatViewModel: ObservableObject {
                 // 等待一点时间确保 Deepgram 握手成功
                 try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
                 
-                ttsReady = true
-                Logger.info("🔊 TTS 已就绪")
+                Logger.info("🔊 Google TTS 已就绪")
             }
         }
         
@@ -154,8 +154,8 @@ class ChatViewModel: ObservableObject {
                     self.answerContents.append(content)
                     self.wordByWordDisplay()
                     
-                    // 只在启用 TTS 时发送给 TTS
-                    if enableTTS {
+                    // 只在使用 Google TTS 时发送流式文本
+                    if enableTTS && self.ttsProvider == "google" {
                         Task {
                             await self.ttsStreamService.sendText(content)
                         }
@@ -222,11 +222,20 @@ class ChatViewModel: ObservableObject {
                         self.historyService?.saveMessage(finalMessage)
                         Logger.info("💾 保存助手回复到数据库")
                         
-                        // 如果启用 TTS，使用原生语音朗读
+                        // 根据 TTS provider 选择播放方式
                         if enableTTS {
-                            Task {
-                                await self.ttsService.speak(messageContent)
-                                Logger.info("🔊 使用原生语音朗读")
+                            if self.ttsProvider == "native" {
+                                // 使用 iOS 原生语音
+                                Task {
+                                    await self.ttsService.speak(messageContent)
+                                    Logger.info("🔊 使用 iOS 原生语音朗读")
+                                }
+                            } else if self.ttsProvider == "google" {
+                                // 使用 Google TTS（WebSocket 流式）
+                                Task {
+                                    await self.ttsStreamService.flush()
+                                    Logger.info("🔊 使用 Google TTS 播放")
+                                }
                             }
                         }
                         

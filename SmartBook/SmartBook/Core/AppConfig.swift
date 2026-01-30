@@ -30,6 +30,7 @@ enum AppConfig {
         static let selectedVoice = "selectedVoice"
         static let asrProvider = "asrProvider"
         static let asrLanguage = "asrLanguage"
+        static let ttsProvider = "ttsProvider"  // 新增：TTS 提供商
     }
     
     // MARK: - 默认值
@@ -40,5 +41,6 @@ enum AppConfig {
         static let ttsRate = 1.0
         static let asrProvider = "deepgram" // native, google, deepgram
         static let asrLanguage = "zh-CN" // 默认中文
+        static let ttsProvider = "google" // native（系统语音）, google（Google TTS）
     }
 }

@@ -367,6 +367,30 @@ class AudioStreamPlayer: NSObject {
     func playComplete() {
         guard !audioBuffer.isEmpty else { return }
         
+        // 配置音频会话以支持播放
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            
+            // 停用录音，切换为播放模式
+            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
+            
+            // 配置播放模式
+            try audioSession.setCategory(
+                .playback,  // 只播放
+                mode: .default,
+                options: [.duckOthers]
+            )
+            
+            try audioSession.setActive(true)
+            
+            // 强制输出到扬声器
+            try audioSession.overrideOutputAudioPort(.speaker)
+            
+            Logger.info("✅ 音频会话已配置为播放模式")
+        } catch {
+            Logger.error("音频会话配置失败: \(error)")
+        }
+        
         // 将音频数据保存到临时文件
         let tempDir = FileManager.default.temporaryDirectory
         let audioFile = tempDir.appendingPathComponent("tts_\(UUID().uuidString).mp3")
@@ -377,6 +401,9 @@ class AudioStreamPlayer: NSObject {
             // 使用 AVPlayer 播放
             let playerItem = AVPlayerItem(url: audioFile)
             audioPlayer = AVPlayer(playerItem: playerItem)
+            
+            // 设置音量
+            audioPlayer?.volume = 1.0
             
             // 监听 playerItem 状态
             var statusObserver: NSKeyValueObservation?
