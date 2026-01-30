@@ -35,6 +35,9 @@ class ChatViewModel: ObservableObject {
     // 流式 TTS 服务
     @Published var ttsStreamService = TTSStreamService()
     
+    // 原生 TTS 服务（iOS 系统语音）
+    private let ttsService = TTSService()
+    
     // 依赖注入，方便测试和管理
     init(streamingService: StreamingChatService = StreamingChatService()) {
         self.streamingService = streamingService
@@ -212,19 +215,20 @@ class ChatViewModel: ObservableObject {
                 case .success:
                     // 流式完成，内容已经在事件中更新
                     
-                    // 只在启用 TTS 时发送 flush
-                    if enableTTS {
-                        Task {
-                            await self.ttsStreamService.flush()
-                        }
-                    }
-                    
                     // 保存助手消息到数据库
                     if messageIndex < self.messages.count {
                         let messageContent = self.answerContents.joined()
                         let finalMessage = ChatMessage(role: .assistant, content: messageContent)
                         self.historyService?.saveMessage(finalMessage)
                         Logger.info("💾 保存助手回复到数据库")
+                        
+                        // 如果启用 TTS，使用原生语音朗读
+                        if enableTTS {
+                            Task {
+                                await self.ttsService.speak(messageContent)
+                                Logger.info("🔊 使用原生语音朗读")
+                            }
+                        }
                         
                         // 检查是否需要生成摘要
                         self.checkAndTriggerSummarization()
