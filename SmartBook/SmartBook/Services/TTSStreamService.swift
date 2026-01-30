@@ -20,6 +20,14 @@ class TTSStreamService: NSObject, ObservableObject {
     override init() {
         super.init()
         audioPlayer = AudioStreamPlayer()
+        
+        // 设置播放完成回调
+        audioPlayer?.onPlaybackComplete = { [weak self] in
+            Task { @MainActor in
+                self?.isPlaying = false
+                Logger.info("✅ TTS isPlaying 已设置为 false")
+            }
+        }
     }
     
     deinit {
@@ -298,9 +306,11 @@ class TTSStreamService: NSObject, ObservableObject {
 class AudioStreamPlayer: NSObject {
     private var audioPlayer: AVPlayer?
     private var audioBuffer = Data()
-    private var isPlaying = false
     private var playTimer: Timer?
     private var isSessionActive = false  // TTS 会话是否活跃
+    
+    // 播放完成回调
+    var onPlaybackComplete: (() -> Void)?
     
     override init() {
         super.init()
@@ -327,7 +337,6 @@ class AudioStreamPlayer: NSObject {
     func prepare() {
         // 清空缓冲区
         audioBuffer = Data()
-        isPlaying = false
         isSessionActive = true  // 激活会话
         Logger.info("音频播放器已准备好，会话已激活")
     }
@@ -413,15 +422,16 @@ class AudioStreamPlayer: NSObject {
                 object: playerItem,
                 queue: .main
             ) { [weak self] _ in
-                Logger.info("音频播放完成")
-                self?.isPlaying = false
+                Logger.info("🎵 音频播放完成")
+                
                 statusObserver?.invalidate()
                 
                 // 删除临时文件
                 try? FileManager.default.removeItem(at: audioFile)
+                
+                // 通知外部播放已完成
+                self?.onPlaybackComplete?()
             }
-            
-            isPlaying = true
             isSessionActive = false  // 停用会话
             
             // 输出音频汇总信息
@@ -441,7 +451,6 @@ class AudioStreamPlayer: NSObject {
         
         // 清理所有状态
         audioBuffer = Data()
-        isPlaying = false
         isSessionActive = false
         
         // 停止定时器
