@@ -221,8 +221,8 @@ class TTSStreamService: NSObject, ObservableObject {
     private func handleAudioData(_ data: Data) {
         // 检查是否是 JSON 消息（误发到二进制）
         if let jsonString = String(data: data, encoding: .utf8),
-           jsonString.starts(with: "{") {
-            Logger.debug("忽略 JSON 消息（作为二进制接收）: \(jsonString)")
+            jsonString.starts(with: "{") {
+            // Logger.debug("忽略 JSON 消息（作为二进制接收）: \(jsonString)")
             return
         }
         
@@ -311,7 +311,11 @@ class AudioStreamPlayer: NSObject {
     
     private func setupAudioSession() {
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setCategory(
+                .playAndRecord,  // 支持同时录音和播放
+                mode: .default,
+                options: [.defaultToSpeaker, .allowBluetooth]
+            )
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             Logger.error("音频会话配置失败: \(error)")
@@ -374,6 +378,21 @@ class AudioStreamPlayer: NSObject {
             let playerItem = AVPlayerItem(url: audioFile)
             audioPlayer = AVPlayer(playerItem: playerItem)
             
+            // 监听 playerItem 状态
+            var statusObserver: NSKeyValueObservation?
+            statusObserver = playerItem.observe(\.status, options: [.new]) { [weak self] item, _ in
+                Logger.info("PlayerItem 状态: \(item.status.rawValue)")
+                
+                if item.status == .readyToPlay {
+                    Logger.info("✅ 准备好播放，开始播放")
+                    self?.audioPlayer?.play()
+                } else if item.status == .failed {
+                    if let error = item.error {
+                        Logger.error("❌ PlayerItem 失败: \(error.localizedDescription)")
+                    }
+                }
+            }
+            
             // 监听播放完成
             NotificationCenter.default.addObserver(
                 forName: .AVPlayerItemDidPlayToEndTime,
@@ -382,17 +401,18 @@ class AudioStreamPlayer: NSObject {
             ) { [weak self] _ in
                 Logger.info("音频播放完成")
                 self?.isPlaying = false
+                statusObserver?.invalidate()
                 
                 // 删除临时文件
                 try? FileManager.default.removeItem(at: audioFile)
             }
             
-            // 开始播放
-            audioPlayer?.play()
             isPlaying = true
-            isSessionActive = false  // 停用会话，避免累积下一次的数据
+            isSessionActive = false  // 停用会话
             
-            Logger.info("开始播放音频: \(audioBuffer.count) 字节")
+            // 计算并输出 MD5
+            let md5 = audioBuffer.md5()
+            Logger.info("开始加载音频: \(audioBuffer.count) 字节, MD5: \(md5), 文件: \(audioFile.path)")
             
         } catch {
             Logger.error("播放音频失败: \(error)")
@@ -433,5 +453,16 @@ class AudioStreamPlayer: NSObject {
         }
         
         return false
+    }
+}
+
+// MARK: - MD5 Extension
+
+import CryptoKit
+
+extension Data {
+    func md5() -> String {
+        let digest = Insecure.MD5.hash(data: self)
+        return digest.map { String(format: "%02hhx", $0) }.joined()
     }
 }
