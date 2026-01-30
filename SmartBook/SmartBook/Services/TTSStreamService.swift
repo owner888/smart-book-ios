@@ -197,6 +197,14 @@ class TTSStreamService: NSObject, ObservableObject {
             case "started":
                 Logger.info("Deepgram TTS 已启动")
                 
+            case "summary":
+                // 接收文本发送汇总信息
+                let textCount = json["text_count"] as? Int ?? 0
+                let totalChars = json["total_chars"] as? Int ?? 0
+                let provider = json["provider"] as? String ?? "unknown"
+                
+                Logger.info("📊 TTS 汇总: \(textCount)个片段, \(totalChars)个字符, 提供商: \(provider)")
+                
             case "stopped":
                 Logger.info("TTS 已停止，开始播放累积的音频")
                 self.isPlaying = false
