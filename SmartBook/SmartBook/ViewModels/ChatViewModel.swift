@@ -224,6 +224,8 @@ class ChatViewModel: ObservableObject {
                         
                         // 根据 TTS provider 选择播放方式
                         if enableTTS {
+                            Logger.info("🔊 TTS Provider: \(self.ttsProvider)")
+                            
                             if self.ttsProvider == "native" {
                                 // 使用 iOS 原生语音
                                 Task {
@@ -231,11 +233,14 @@ class ChatViewModel: ObservableObject {
                                     Logger.info("🔊 使用 iOS 原生语音朗读")
                                 }
                             } else if self.ttsProvider == "google" {
-                                // 使用 Google TTS（WebSocket 流式）
+                                // Google TTS 已通过 WebSocket 接收音频
+                                // 发送 flush 触发播放
                                 Task {
                                     await self.ttsStreamService.flush()
-                                    Logger.info("🔊 使用 Google TTS 播放")
+                                    Logger.info("🔊 Google TTS flush 已发送，等待播放")
                                 }
+                            } else {
+                                Logger.warn("⚠️ 未知的 TTS provider: \(self.ttsProvider)")
                             }
                         }
                         

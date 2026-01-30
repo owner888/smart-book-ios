@@ -371,22 +371,17 @@ class AudioStreamPlayer: NSObject {
         do {
             let audioSession = AVAudioSession.sharedInstance()
             
-            // 停用录音，切换为播放模式
-            try audioSession.setActive(false, options: .notifyOthersOnDeactivation)
-            
-            // 配置播放模式
+            // 直接配置为播放和录音模式（不停用）
             try audioSession.setCategory(
-                .playback,  // 只播放
+                .playAndRecord,
                 mode: .default,
-                options: [.duckOthers]
+                options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers]
             )
-            
-            try audioSession.setActive(true)
             
             // 强制输出到扬声器
             try audioSession.overrideOutputAudioPort(.speaker)
             
-            Logger.info("✅ 音频会话已配置为播放模式")
+            Logger.info("✅ 音频会话已配置，输出到扬声器")
         } catch {
             Logger.error("音频会话配置失败: \(error)")
         }
