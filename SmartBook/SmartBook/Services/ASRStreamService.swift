@@ -143,6 +143,11 @@ class ASRStreamService: NSObject, ObservableObject {
             switch type {
             case "connected":
                 Logger.info("WebSocket 连接成功")
+                
+            case "connecting":
+                let message = json["message"] as? String ?? "正在连接 Deepgram..."
+                Logger.info("📡 \(message)")
+                self.statusMessage = "📡 正在连接语音识别服务..."
 
             case "started":
                 Logger.info("识别已启动，Deepgram 准备就绪")
@@ -182,16 +187,46 @@ class ASRStreamService: NSObject, ObservableObject {
                 self.isRecording = false
 
             case "deepgram_closed":
-                Logger.info("Deepgram 连接已关闭")
+                let message = json["message"] as? String
+                Logger.info("Deepgram 连接已关闭: \(message ?? "")")
                 self.isRecording = false
-                self.statusMessage = "⚠️ Deepgram 连接已断开"
+                
+                // 如果是在录音过程中断开（非主动停止），显示警告
+                if self.isRecording {
+                    self.statusMessage = "⚠️ 语音识别服务已断开，请重新开始"
+                } else {
+                    // 主动停止的情况，不显示错误
+                    self.statusMessage = nil
+                }
+                
                 self.stopNoAudioDetectionTimer()
 
             case "error":
                 let errorMsg = json["message"] as? String ?? "Unknown error"
+                let originalError = json["original_error"] as? String
+                
                 Logger.error("服务器错误: \(errorMsg)")
+                if let originalError = originalError {
+                    Logger.error("原始错误: \(originalError)")
+                }
+                
                 self.error = errorMsg
-                self.statusMessage = "❌ 错误: \(errorMsg)"
+                
+                // 根据错误类型显示不同的状态消息
+                if errorMsg.contains("API") || errorMsg.contains("认证") {
+                    self.statusMessage = "❌ API 配置错误，请联系管理员"
+                } else if errorMsg.contains("网络") || errorMsg.contains("连接") || errorMsg.contains("超时") {
+                    self.statusMessage = "❌ 网络连接失败，请检查网络"
+                } else if errorMsg.contains("DNS") {
+                    self.statusMessage = "❌ 网络配置错误"
+                } else if errorMsg.contains("不可用") || errorMsg.contains("503") {
+                    self.statusMessage = "❌ 服务暂时不可用，请稍后再试"
+                } else if errorMsg.contains("频率") || errorMsg.contains("超限") {
+                    self.statusMessage = "❌ 使用频率过高，请稍后再试"
+                } else {
+                    self.statusMessage = "❌ \(errorMsg)"
+                }
+                
                 self.stopNoAudioDetectionTimer()
 
             case "pong":
