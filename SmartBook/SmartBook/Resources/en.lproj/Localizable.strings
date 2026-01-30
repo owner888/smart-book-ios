@@ -213,6 +213,9 @@
 "settings.asr.provider.google" = "Google";
 "settings.asr.provider.deepgram" = "Deepgram";
 "settings.asr.language" = "ASR Language";
+"settings.tts.provider" = "TTS Provider";
+"settings.tts.provider.native" = "Native";
+"settings.tts.provider.google" = "Google";
 "settings.asr.language.chinese" = "Chinese";
 "settings.asr.language.english" = "English";
 "settings.asr.language.japanese" = "Japanese";

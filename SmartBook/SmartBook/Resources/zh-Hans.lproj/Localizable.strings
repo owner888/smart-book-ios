@@ -209,10 +209,13 @@
 
 /* ASR (Speech Recognition) */
 "settings.asr.provider" = "语音识别";
-"settings.asr.provider.native" = "iOS 原生";
+"settings.asr.provider.native" = "原生";
 "settings.asr.provider.google" = "Google";
 "settings.asr.provider.deepgram" = "Deepgram";
 "settings.asr.language" = "识别语言";
+"settings.tts.provider" = "语音合成";
+"settings.tts.provider.native" = "原生";
+"settings.tts.provider.google" = "Google";
 "settings.asr.language.chinese" = "中文";
 "settings.asr.language.english" = "英语";
 "settings.asr.language.japanese" = "日语";

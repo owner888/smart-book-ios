@@ -323,3 +323,21 @@
 "vip.trial" = "1週免費試用";
 "vip.subscribe" = "立即訂閱";
 "vip.cancelAnytime" = "訂閱後可隨時取消";
+
+/* ASR & TTS */
+"settings.asr.provider" = "語音辨識";
+"settings.asr.provider.native" = "原生";
+"settings.asr.provider.google" = "Google";
+"settings.asr.provider.deepgram" = "Deepgram";
+"settings.asr.language" = "辨識語言";
+"settings.tts.provider" = "語音合成";
+"settings.tts.provider.native" = "原生";
+"settings.tts.provider.google" = "Google";
+"settings.asr.language.chinese" = "中文";
+"settings.asr.language.english" = "英語";
+"settings.asr.language.japanese" = "日語";
+"settings.asr.language.korean" = "韓語";
+"settings.asr.language.french" = "法語";
+"settings.asr.language.german" = "德語";
+"settings.asr.language.spanish" = "西班牙語";
+"settings.asr.language.thai" = "泰語";
