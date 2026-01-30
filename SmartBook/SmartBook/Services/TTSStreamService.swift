@@ -230,16 +230,10 @@ class TTSStreamService: NSObject, ObservableObject {
         // 检查是否是 JSON 消息（误发到二进制）
         if let jsonString = String(data: data, encoding: .utf8),
             jsonString.starts(with: "{") {
-            // Logger.debug("忽略 JSON 消息（作为二进制接收）: \(jsonString)")
             return
         }
         
-        // 输出数据内容（诊断用）
-        let prefix = data.prefix(16)
-        let hexString = prefix.map { String(format: "%02X", $0) }.joined(separator: " ")
-        Logger.debug("收到音频数据: \(data.count) 字节, 头部: \(hexString)")
-        
-        // 累积音频数据
+        // 累积音频数据（不输出日志，避免刷屏）
         audioPlayer?.receiveAudio(data)
     }
     
@@ -342,21 +336,11 @@ class AudioStreamPlayer: NSObject {
     func receiveAudio(_ data: Data) {
         // 只在会话活跃时才累积音频
         guard isSessionActive else {
-            Logger.debug("会话未活跃，忽略数据: \(data.count) 字节")
             return
         }
         
-        // 检查是否是 MP3 音频数据
-        // if !isAudioData(data) {
-        //     // 输出数据内容（诊断用）
-        //     let prefix = data.prefix(16)
-        //     let hexString = prefix.map { String(format: "%02X", $0) }.joined(separator: " ")
-        //     Logger.debug("忽略非音频数据: \(data.count) 字节, 头部: \(hexString)")
-        //     return
-        // }
-        
+        // 累积音频数据（不输出日志）
         audioBuffer.append(data)
-        Logger.debug("累积音频数据: \(data.count) 字节，总计: \(audioBuffer.count) 字节")
         
         // 只有累积到一定大小（1KB）才启动播放定时器
         if audioBuffer.count >= 1024 {
@@ -440,9 +424,9 @@ class AudioStreamPlayer: NSObject {
             isPlaying = true
             isSessionActive = false  // 停用会话
             
-            // 计算并输出 MD5
+            // 输出音频汇总信息
             let md5 = audioBuffer.md5()
-            Logger.info("开始加载音频: \(audioBuffer.count) 字节, MD5: \(md5), 文件: \(audioFile.path)")
+            Logger.info("🔊 音频播放汇总: \(audioBuffer.count) 字节, MD5: \(md5)")
             
         } catch {
             Logger.error("播放音频失败: \(error)")
