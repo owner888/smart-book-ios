@@ -210,10 +210,10 @@
 /* Data Management */
 "data.title" = "資料管理";
 "data.description" = "管理應用程式資料和快取";
-"data.resetServer" = "重置伺服器位址";
-"data.resetServer.title" = "重置伺服器位址";
-"data.resetServer.message" = "將伺服器位址重置為預設配置值，確定要繼續嗎？";
-"data.resetServer.confirm" = "重置";
+"data.resetSettings" = "重置設定";
+"data.resetSettings.title" = "重置設定";
+"data.resetSettings.message" = "將重置所有設定到預設值（包括伺服器位址、ASR/TTS 提供商等），確定要繼續嗎？";
+"data.resetSettings.confirm" = "重置";
 "data.clearCache" = "清除快取";
 "data.clearCache.title" = "清除快取";
 "data.clearCache.message" = "這將刪除所有快取資料，包括圖片和暫存檔案，確定要繼續嗎？";
