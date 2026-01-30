@@ -142,14 +142,15 @@ struct SettingsView: View {
                         .tint(colors.secondaryText)
                     }
                     
-                    // 自动朗读
-                    HStack(spacing: 12) {
-                        SettingsIcon(icon: "speaker.wave.2", color: .orange)
-                        Text(L("voice.autoPlay"))
-                            .foregroundColor(colors.primaryText)
-                        Spacer()
-                        Toggle("", isOn: $autoTTS)
-                            .labelsHidden()
+                    // 语音选择
+                    NavigationLink {
+                        VoiceSelectionView()
+                    } label: {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "waveform", color: .purple)
+                            Text(L("voice.select"))
+                                .foregroundColor(colors.primaryText)
+                        }
                     }
                     
                     // 语速
@@ -164,17 +165,6 @@ struct SettingsView: View {
                         }
                         Slider(value: $ttsRate, in: 0.5...2.0, step: 0.1)
                             .tint(.green)
-                    }
-                    
-                    // 语音选择
-                    NavigationLink {
-                        VoiceSelectionView()
-                    } label: {
-                        HStack(spacing: 12) {
-                            SettingsIcon(icon: "waveform", color: .purple)
-                            Text(L("voice.select"))
-                                .foregroundColor(colors.primaryText)
-                        }
                     }
                 } header: {
                     Text(L("voice.title"))
