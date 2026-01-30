@@ -228,10 +228,10 @@
 /* Data Management */
 "data.title" = "Data Management";
 "data.description" = "Manage app data and cache";
-"data.resetServer" = "Reset Server Address";
-"data.resetServer.title" = "Reset Server Address";
-"data.resetServer.message" = "This will reset the server address to the default configuration value. Continue?";
-"data.resetServer.confirm" = "Reset";
+"data.resetSettings" = "Reset Settings";
+"data.resetSettings.title" = "Reset Settings";
+"data.resetSettings.message" = "This will reset all settings to default values (including server address, ASR/TTS providers, etc.). Continue?";
+"data.resetSettings.confirm" = "Reset";
 "data.clearCache" = "Clear Cache";
 "data.clearCache.title" = "Clear Cache";
 "data.clearCache.message" = "This will delete all cached data including images and temporary files. Continue?";

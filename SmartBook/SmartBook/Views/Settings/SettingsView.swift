@@ -184,19 +184,14 @@ struct SettingsView: View {
                 
                 // 数据管理
                 Section {
-                    // 重置服务器地址
+                    // 重置设置
                     Button {
                         showResetAlert = true
                     } label: {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "arrow.counterclockwise", color: .blue)
-                            Text(L("data.resetServer"))
+                            Text(L("data.resetSettings"))
                                 .foregroundColor(colors.primaryText)
-                            Spacer()
-                            Text(AppConfig.defaultAPIBaseURL)
-                                .font(.caption)
-                                .foregroundColor(colors.secondaryText)
-                                .lineLimit(1)
                         }
                     }
                     
@@ -268,13 +263,13 @@ struct SettingsView: View {
                     showServerEditor = false
                 }
             }
-            .alert(L("data.resetServer.title"), isPresented: $showResetAlert) {
+            .alert(L("data.resetSettings.title"), isPresented: $showResetAlert) {
                 Button(L("common.cancel"), role: .cancel) { }
-                Button(L("data.resetServer.confirm"), role: .destructive) {
-                    resetServerAddress()
+                Button(L("data.resetSettings.confirm"), role: .destructive) {
+                    resetAllSettings()
                 }
             } message: {
-                Text(L("data.resetServer.message"))
+                Text(L("data.resetSettings.message"))
             }
             .alert(L("data.clearCache.title"), isPresented: $showClearCacheAlert) {
                 Button(L("common.cancel"), role: .cancel) { }
@@ -304,9 +299,14 @@ struct SettingsView: View {
         }
     }
     
-    /// 重置服务器地址到默认值
-    private func resetServerAddress() {
+    /// 重置所有设置到默认值
+    private func resetAllSettings() {
         apiBaseURL = AppConfig.defaultAPIBaseURL
+        asrProvider = AppConfig.DefaultValues.asrProvider
+        asrLanguage = AppConfig.DefaultValues.asrLanguage
+        ttsProvider = AppConfig.DefaultValues.ttsProvider
+        autoTTS = AppConfig.DefaultValues.autoTTS
+        ttsRate = AppConfig.DefaultValues.ttsRate
     }
     
     /// 计算缓存大小

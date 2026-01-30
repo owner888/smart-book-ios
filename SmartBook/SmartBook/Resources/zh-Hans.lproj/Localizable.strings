@@ -228,10 +228,10 @@
 /* Data Management */
 "data.title" = "数据管理";
 "data.description" = "管理应用数据和缓存";
-"data.resetServer" = "重置服务器地址";
-"data.resetServer.title" = "重置服务器地址";
-"data.resetServer.message" = "将服务器地址重置为默认配置值，确定要继续吗？";
-"data.resetServer.confirm" = "重置";
+"data.resetSettings" = "重置设置";
+"data.resetSettings.title" = "重置设置";
+"data.resetSettings.message" = "将重置所有设置到默认值（包括服务器地址、ASR/TTS 提供商等），确定要继续吗？";
+"data.resetSettings.confirm" = "重置";
 "data.clearCache" = "清除缓存";
 "data.clearCache.title" = "清除缓存";
 "data.clearCache.message" = "这将删除所有缓存数据，包括图片和临时文件，确定要继续吗？";
