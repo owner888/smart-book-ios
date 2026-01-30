@@ -91,9 +91,16 @@ class ChatViewModel: ObservableObject {
     @MainActor
     func sendMessage(_ text: String, enableTTS: Bool = false) async {
         guard let bookState = bookState else { return }
+        
+        // 过滤空字符串（至少2个字符）
+        let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedText.count >= 2 else {
+            Logger.warn("⚠️ 消息太短或为空，拒绝发送: '\(trimmedText)' (长度: \(trimmedText.count))")
+            return
+        }
 
-        Logger.info("📤 发送消息: \(text), TTS: \(enableTTS)")
-        let userMessage = ChatMessage(role: .user, content: text)
+        Logger.info("📤 发送消息: \(trimmedText), TTS: \(enableTTS)")
+        let userMessage = ChatMessage(role: .user, content: trimmedText)
         messages.append(userMessage)
         questionMessageId = userMessage.id
         
@@ -133,7 +140,7 @@ class ChatViewModel: ObservableObject {
         // 使用流式API
         let assistant = selectedAssistant ?? Assistant.defaultAssistants.first!
         streamingService.sendMessageStream(
-            message: text,
+            message: trimmedText,
             assistant: assistant,
             bookId: bookState.selectedBook?.id,
             model: selectedModel,
