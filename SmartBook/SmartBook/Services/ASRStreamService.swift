@@ -10,6 +10,9 @@ class ASRStreamService: NSObject, ObservableObject {
     @Published var isRecording = false
     @Published var isConnected = false
     @Published var error: String?
+    @Published var audioLevel: Float = 0.0  // 音频音量级别 (0.0-1.0)
+    @Published var isDetectingAudio = false  // 是否检测到音频
+    @Published var statusMessage: String?  // 状态提示消息
 
     private var webSocketTask: URLSessionWebSocketTask?
     private let audioEngine = AVAudioEngine()
@@ -21,6 +24,9 @@ class ASRStreamService: NSObject, ObservableObject {
     private var reconnectTimer: Timer?
     private var shouldAutoReconnect = true  // 是否自动重连
     private var reconnectAttempts = 0
+    private var lastTranscriptTime: Date?  // 最后收到识别结果的时间
+    private var noAudioTimer: Timer?  // 无音频检测计时器
+    private var deepgramConnectionTime: Date?  // Deepgram 连接时间
 
     override init() {
         super.init()
@@ -29,6 +35,7 @@ class ASRStreamService: NSObject, ObservableObject {
     deinit {
         heartbeatTimer?.invalidate()
         reconnectTimer?.invalidate()
+        noAudioTimer?.invalidate()
         shouldAutoReconnect = false
     }
 
@@ -139,6 +146,12 @@ class ASRStreamService: NSObject, ObservableObject {
 
             case "started":
                 Logger.info("识别已启动，Deepgram 准备就绪")
+                self.deepgramConnectionTime = Date()
+                self.statusMessage = "🎤 开始说话..."
+                
+                // 启动无音频检测计时器（15秒后如果没有识别结果，给出提示）
+                self.startNoAudioDetectionTimer()
+                
                 // 通知 Deepgram 已就绪，可以开始录音
                 self.onDeepgramReady?()
 
@@ -148,6 +161,15 @@ class ASRStreamService: NSObject, ObservableObject {
                 let confidence = json["confidence"] as? Double ?? 0
 
                 Logger.info("识别结果: \(transcript) [isFinal: \(isFinal), confidence: \(confidence)]")
+
+                // 更新最后识别时间
+                self.lastTranscriptTime = Date()
+                
+                // 清除状态消息
+                self.statusMessage = nil
+                
+                // 重置无音频检测计时器
+                self.resetNoAudioDetectionTimer()
 
                 // 更新文本
                 self.transcript = transcript
@@ -162,11 +184,15 @@ class ASRStreamService: NSObject, ObservableObject {
             case "deepgram_closed":
                 Logger.info("Deepgram 连接已关闭")
                 self.isRecording = false
+                self.statusMessage = "⚠️ Deepgram 连接已断开"
+                self.stopNoAudioDetectionTimer()
 
             case "error":
                 let errorMsg = json["message"] as? String ?? "Unknown error"
                 Logger.error("服务器错误: \(errorMsg)")
                 self.error = errorMsg
+                self.statusMessage = "❌ 错误: \(errorMsg)"
+                self.stopNoAudioDetectionTimer()
 
             case "pong":
                 // 心跳响应
@@ -243,6 +269,7 @@ class ASRStreamService: NSObject, ObservableObject {
         } catch {
             Logger.error("音频会话配置失败: \(error)")
             self.error = "音频会话配置失败"
+            self.statusMessage = "❌ 麦克风配置失败"
             return
         }
 
@@ -260,6 +287,7 @@ class ASRStreamService: NSObject, ObservableObject {
             )
         else {
             self.error = "无法创建音频格式"
+            self.statusMessage = "❌ 音频格式错误"
             return
         }
 
@@ -268,6 +296,7 @@ class ASRStreamService: NSObject, ObservableObject {
         // 创建格式转换器
         guard let converter = AVAudioConverter(from: inputFormat, to: targetFormat) else {
             self.error = "无法创建音频转换器"
+            self.statusMessage = "❌ 音频转换器错误"
             return
         }
 
@@ -275,6 +304,9 @@ class ASRStreamService: NSObject, ObservableObject {
         inputNode.installTap(onBus: 0, bufferSize: 4096, format: inputFormat) { [weak self] buffer, _ in
             guard let self = self else { return }
 
+            // 计算音频音量级别
+            self.calculateAudioLevel(buffer: buffer)
+            
             // 转换音频格式
             self.convertAndSendAudio(buffer: buffer, converter: converter, targetFormat: targetFormat)
         }
@@ -287,6 +319,7 @@ class ASRStreamService: NSObject, ObservableObject {
         } catch {
             Logger.error("音频引擎启动失败: \(error)")
             self.error = "无法启动录音"
+            self.statusMessage = "❌ 无法启动录音"
         }
     }
 
@@ -304,6 +337,12 @@ class ASRStreamService: NSObject, ObservableObject {
         }
 
         isRecording = false
+        audioLevel = 0.0
+        isDetectingAudio = false
+        statusMessage = nil
+        
+        // 停止无音频检测计时器
+        stopNoAudioDetectionTimer()
 
         // 发送 stop 消息，让服务器断开 Deepgram
         Task {
@@ -313,6 +352,83 @@ class ASRStreamService: NSObject, ObservableObject {
         }
     }
 
+    // MARK: - 音频音量检测
+    
+    private func calculateAudioLevel(buffer: AVAudioPCMBuffer) {
+        guard let channelData = buffer.floatChannelData?[0] else { return }
+        
+        let frameLength = Int(buffer.frameLength)
+        var sum: Float = 0.0
+        
+        // 计算 RMS（均方根）
+        for i in 0..<frameLength {
+            let sample = channelData[i]
+            sum += sample * sample
+        }
+        
+        let rms = sqrt(sum / Float(frameLength))
+        let db = 20 * log10(rms)
+        
+        // 归一化到 0-1 范围（-60dB 到 0dB）
+        let normalizedLevel = max(0, min(1, (db + 60) / 60))
+        
+        Task { @MainActor in
+            self.audioLevel = normalizedLevel
+            
+            // 检测是否有声音（阈值 0.1）
+            let hasAudio = normalizedLevel > 0.1
+            if hasAudio != self.isDetectingAudio {
+                self.isDetectingAudio = hasAudio
+                if hasAudio {
+                    Logger.debug("🎤 检测到声音，音量: \(normalizedLevel)")
+                }
+            }
+        }
+    }
+    
+    // MARK: - 无音频检测计时器
+    
+    private func startNoAudioDetectionTimer() {
+        stopNoAudioDetectionTimer()
+        
+        noAudioTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            
+            Task { @MainActor in
+                // 检查是否长时间没有识别结果
+                if let lastTime = self.lastTranscriptTime {
+                    let timeSinceLastTranscript = Date().timeIntervalSince(lastTime)
+                    if timeSinceLastTranscript > 10 {
+                        if self.isDetectingAudio {
+                            self.statusMessage = "🔊 检测到声音但无法识别，请说清楚一点"
+                        } else {
+                            self.statusMessage = "🤔 没有检测到声音，请靠近麦克风说话"
+                        }
+                    }
+                } else if let connectionTime = self.deepgramConnectionTime {
+                    let timeSinceConnection = Date().timeIntervalSince(connectionTime)
+                    if timeSinceConnection > 8 {
+                        if self.isDetectingAudio {
+                            self.statusMessage = "🔊 检测到声音但无法识别，请说清楚一点"
+                        } else {
+                            self.statusMessage = "🤔 没有检测到声音，请靠近麦克风说话"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func resetNoAudioDetectionTimer() {
+        // 重新启动计时器
+        startNoAudioDetectionTimer()
+    }
+    
+    private func stopNoAudioDetectionTimer() {
+        noAudioTimer?.invalidate()
+        noAudioTimer = nil
+    }
+    
     // MARK: - 音频处理
 
     private func convertAndSendAudio(

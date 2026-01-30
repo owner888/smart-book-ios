@@ -38,6 +38,33 @@ struct InputToolBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
+            // 显示 ASR 状态消息（如果有）
+            if let statusMessage = asrStreamService.statusMessage {
+                HStack(spacing: 6) {
+                    Text(statusMessage)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    
+                    Spacer()
+                    
+                    // 显示音频音量级别
+                    if asrStreamService.isRecording && asrStreamService.audioLevel > 0 {
+                        HStack(spacing: 2) {
+                            ForEach(0..<5) { index in
+                                RoundedRectangle(cornerRadius: 1)
+                                    .fill(asrStreamService.audioLevel > Float(index) * 0.2 ? Color.green : Color.gray.opacity(0.3))
+                                    .frame(width: 2, height: CGFloat(4 + index * 2))
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(Color.secondary.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            
             ZStack(alignment: .leading) {
                 if inputText.isEmpty {
                     Text(L("chat.input.placeholder")).font(.callout).foregroundStyle(Color.gray)
