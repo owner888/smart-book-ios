@@ -114,9 +114,16 @@ struct InputToolBar: View {
 
                 Spacer()
                 
-                if viewModel.isLoading {
+                // AI 回复中或 TTS 播放中 → 显示 Stop 按钮
+                if viewModel.isLoading || viewModel.ttsStreamService.isPlaying {
                     Button {
+                        // 停止 AI 回复
                         viewModel.stopAnswer()
+                        
+                        // 停止 TTS 播放
+                        Task {
+                            await viewModel.ttsStreamService.stopTTS()
+                        }
                     } label: {
                         Color.apprBlack.frame(width: 36,height: 36).overlay {
                             Image(systemName: "stop.fill").foregroundStyle(.apprWhite)

@@ -82,10 +82,22 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-    /// 停止AI响应
+    /// 停止AI响应和TTS播放
     func stopAnswer() {
+        // 停止 AI 文本生成
         streamingService.stopStreaming()
         isLoading = false
+        
+        // 停止所有 TTS 播放
+        Task { @MainActor in
+            // 停止 Google TTS
+            await ttsStreamService.stopTTS()
+            
+            // 停止原生 TTS
+            ttsService.stop()
+            
+            Logger.info("⏹️ 已停止 AI 生成和所有 TTS 播放")
+        }
     }
 
     @MainActor
@@ -191,16 +203,25 @@ class ChatViewModel: ObservableObject {
                 case .failure(let error):
                     self.isLoading = false
                     self.cancelDisplay()
+                    
+                    // 停止 TTS（用户取消时）
+                    Task {
+                        await self.ttsStreamService.stopTTS()
+                        self.ttsService.stop()
+                    }
+                    
                     // 检查是否是用户主动取消
                     let nsError = error as NSError
                     if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
-                        // 用户主动取消，标记消息
+                        // 用户主动取消，标记消息但不保存到数据库
                         if messageIndex < self.messages.count {
                             let currentMessage = self.messages[messageIndex]
+                            let currentContent = self.answerContents.joined()
+                            
                             self.messages[messageIndex] = ChatMessage(
                                 id: currentMessage.id,
                                 role: currentMessage.role,
-                                content: currentMessage.content,
+                                content: currentContent.isEmpty ? "⏹️ 用户已停止" : currentContent,
                                 timestamp: currentMessage.timestamp,
                                 thinking: currentMessage.thinking,
                                 sources: currentMessage.sources,
@@ -209,7 +230,8 @@ class ChatViewModel: ObservableObject {
                                 stoppedByUser: true
                             )
                         }
-                        Logger.info("⏹️ 用户取消了请求")
+                        Logger.info("⏹️ 用户取消了请求，不保存到数据库")
+                        // 注意：这里不调用 saveMessage()，不保存到数据库
                     } else {
                         // 真正的错误
                         if messageIndex < self.messages.count {

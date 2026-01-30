@@ -434,14 +434,21 @@ class AudioStreamPlayer: NSObject {
     }
     
     func stop() {
+        // 立即停止播放
         audioPlayer?.pause()
+        audioPlayer?.replaceCurrentItem(with: nil)  // 清空播放队列
         audioPlayer = nil
+        
+        // 清理所有状态
         audioBuffer = Data()
         isPlaying = false
-        isSessionActive = false  // 停用会话
+        isSessionActive = false
+        
+        // 停止定时器
         playTimer?.invalidate()
         playTimer = nil
-        Logger.info("音频播放已停止")
+        
+        Logger.info("音频播放已立即停止")
     }
     
     // 检查是否是 MP3 音频数据
