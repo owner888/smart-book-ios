@@ -50,31 +50,31 @@ extension Assistant {
     static let defaultAssistants: [Assistant] = [
         Assistant(
             id: "chat",
-            name: "通用聊天",
+            name: L("assistant.chat"),
             avatar: "💬",
             color: "#2196f3",
-            description: "我是通用聊天助手，可以与您讨论各种话题",
-            systemPrompt: "你是一个友好的AI助手，可以与用户讨论各种话题。",
+            description: L("assistant.chat"),
+            systemPrompt: "",
             action: .chat,
             useRAG: false
         ),
         Assistant(
             id: "ask",
-            name: "书籍问答",
+            name: L("assistant.book"),
             avatar: "📚",
             color: "#4caf50",
-            description: "我是书籍问答助手，可以帮助您理解和分析书籍内容",
-            systemPrompt: "",  // 由服务器端配置（Context Cache）
+            description: L("assistant.book"),
+            systemPrompt: "",
             action: .ask,
             useRAG: true
         ),
         Assistant(
             id: "continue",
-            name: "续写小说",
+            name: L("assistant.continue"),
             avatar: "✍️",
             color: "#ff9800",
-            description: "我是小说续写助手，可以根据书籍风格继续创作",
-            systemPrompt: "你是一个专业的小说续写助手，能够模仿书籍的写作风格进行续写。",
+            description: L("assistant.continue"),
+            systemPrompt: "",
             action: .continueWriting,
             useRAG: false
         )
