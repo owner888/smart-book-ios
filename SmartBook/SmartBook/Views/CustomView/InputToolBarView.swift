@@ -18,7 +18,7 @@ struct InputToolBarView<Content: View>: View {
     @Environment(ModelService.self) private var modelService
     @Environment(AssistantService.self) private var assistantService
     @State private var themeManager = ThemeManager.shared
-    
+
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
@@ -55,14 +55,14 @@ struct InputToolBarView<Content: View>: View {
                                         viewModel.forceScrollToBottom = true
                                         viewModel.scrollToBottom()
                                     } label: {
-                                        Color.white.opacity(0.001).frame(width: 42,height: 42).overlay {
+                                        Color.white.opacity(0.001).frame(width: 42, height: 42).overlay {
                                             Image(systemName: "chevron.down")
                                                 .foregroundStyle(.apprBlack)
                                         }
                                     }.glassEffect(
                                         size: CGSize(width: 42, height: 42)
                                     )
-                                }.padding(.bottom,2).padding(.trailing, 12)
+                                }.padding(.bottom, 2).padding(.trailing, 12)
                             }
                         }
 
@@ -149,7 +149,7 @@ struct InputToolBarView<Content: View>: View {
                     )
                     .environmentObject(menuObser)
                 }
-                
+
                 if showAssistantMenu {
                     CustomMenuView(
                         alignment: .bottomLeading,
@@ -182,7 +182,7 @@ struct InputToolBarView<Content: View>: View {
             // 设置默认模型和助手
             updateAIFunction(from: modelService.currentModel.id)
             updateAssistantFromService()
-            
+
             menuObser.onClose = {
                 if showMediaMenu {
                     showMediaMenu = false
@@ -208,7 +208,7 @@ struct InputToolBarView<Content: View>: View {
     }
 
     // MARK: - Helper Methods
-    
+
     private func updateAIFunction(from modelId: String) {
         if let matchingFunction = MenuConfig.aiFunctions.first(where: { $0.modelId == modelId }) {
             aiFunction = matchingFunction
@@ -217,10 +217,10 @@ struct InputToolBarView<Content: View>: View {
             Logger.warn("⚠️ No matching aiFunction found for model: \(modelId)")
         }
     }
-    
+
     private func updateAssistant(_ assistantType: MenuConfig.AssistantType) {
         // 根据 AssistantType 查找对应的 Assistant
-        if let matchingAssistant = assistantService.assistants.first(where: { 
+        if let matchingAssistant = assistantService.assistants.first(where: {
             switch assistantType {
             case .chat: return $0.id == "chat"
             case .book: return $0.id == "book"
@@ -232,7 +232,7 @@ struct InputToolBarView<Content: View>: View {
             Logger.debug("✅ Switched to assistant: \(matchingAssistant.name)")
         }
     }
-    
+
     private func updateAssistantFromService() {
         // 从 AssistantService 同步到本地 assistant 状态
         let currentAssistantId = assistantService.currentAssistant.id
@@ -291,13 +291,16 @@ struct InputToolBarView<Content: View>: View {
                         self.keyboardHeight = adjustedKeyboardHeight
                     }
                 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
-                    if !viewModel.showScrollToBottom && viewModel.forceScrollToBottom{
-                        viewModel.scrollToBottom()
+                DispatchQueue.main.asyncAfter(
+                    deadline: .now() + 0.5,
+                    execute: {
+                        if !viewModel.showScrollToBottom && viewModel.forceScrollToBottom {
+                            viewModel.scrollToBottom()
+                        }
+                        viewModel.isKeyboardChange = false
+                        viewModel.showedKeyboard = true
                     }
-                    viewModel.isKeyboardChange = false
-                    viewModel.showedKeyboard = true
-                })
+                )
             }
         }
 
@@ -311,13 +314,16 @@ struct InputToolBarView<Content: View>: View {
             withAnimation(.easeOut(duration: 0.25)) {
                 self.keyboardHeight = 0
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {
-                if !viewModel.showScrollToBottom && viewModel.forceScrollToBottom {
-                    viewModel.scrollToBottom()
+            DispatchQueue.main.asyncAfter(
+                deadline: .now() + 0.5,
+                execute: {
+                    if !viewModel.showScrollToBottom && viewModel.forceScrollToBottom {
+                        viewModel.scrollToBottom()
+                    }
+                    viewModel.isKeyboardChange = false
+                    viewModel.showedKeyboard = false
                 }
-                viewModel.isKeyboardChange = false
-                viewModel.showedKeyboard = false
-            })
+            )
         }
     }
 

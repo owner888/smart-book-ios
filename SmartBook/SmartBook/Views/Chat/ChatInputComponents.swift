@@ -51,14 +51,14 @@ struct AssistantPromptBar: View {
                 HStack(spacing: 8) {
                     Text(assistant.avatar)
                         .font(.title3)
-                    
+
                     Text(assistant.name)
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(colors.primaryText.opacity(0.9))
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                         .font(.caption2)
                         .foregroundColor(colors.secondaryText)
@@ -68,13 +68,13 @@ struct AssistantPromptBar: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            
+
             // 系统提示词内容（可展开）
             if isExpanded {
                 VStack(alignment: .leading, spacing: 4) {
                     Divider()
                         .background(colors.secondaryText.opacity(0.2))
-                    
+
                     Text(assistant.systemPrompt)
                         .font(.caption2)
                         .foregroundColor(colors.secondaryText)
@@ -142,9 +142,9 @@ struct InputBar: View {
                             ? "stop.circle.fill" : "mic.circle"
                     )
                     .font(.title2)
-                            .foregroundColor(
-                                text.isEmpty ? colors.secondaryText : .green
-                            )
+                    .foregroundColor(
+                        text.isEmpty ? colors.secondaryText : .green
+                    )
                     .symbolEffect(.bounce, value: speechService.isRecording)
                 }
                 .buttonStyle(.glassIcon)

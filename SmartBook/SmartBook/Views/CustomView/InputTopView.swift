@@ -30,7 +30,7 @@ struct InputTopView: View {
             HStack(spacing: 0) {
                 Color.clear
                     .frame(width: space, height: 1)
-                HStack(spacing:12) {
+                HStack(spacing: 12) {
                     ForEach(0..<functions.count, id: \.self) { i in
                         button(functions[i])
                     }
@@ -79,9 +79,12 @@ struct InputTopView: View {
             }.padding(.all, 14).background {
                 if #available(iOS 26, *) {
                     if isGet {
-                        Color.clear.glassEffect(.clear.tint(colors.accentColor.opacity(0.2)),in:.rect(cornerRadius: 22))
+                        Color.clear.glassEffect(
+                            .clear.tint(colors.accentColor.opacity(0.2)),
+                            in: .rect(cornerRadius: 22)
+                        )
                     } else {
-                        Color.clear.glassEffect(.regular, in:.rect(cornerRadius: 22))
+                        Color.clear.glassEffect(.regular, in: .rect(cornerRadius: 22))
                     }
                 } else {
                     Group {

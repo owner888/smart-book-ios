@@ -19,22 +19,21 @@ struct InputToolBar: View {
 
     @Environment(\.colorScheme) private var colorScheme
     @AppStorage(AppConfig.Keys.asrProvider) private var asrProvider = AppConfig.DefaultValues.asrProvider
-    
+
     @State private var isRecording = false
     @State private var isConnecting = false  // 新增：连接中状态
     @State private var mediaBtnFrame = CGRect.zero
     @State private var modelBtnFrame = CGRect.zero
     @State private var assistantBtnFrame = CGRect.zero
-    
+
     // 语音识别服务
     @StateObject private var speechService = SpeechService()
     @StateObject private var asrStreamService = ASRStreamService()
-    
+
     // 判断是否有输入内容
     private var hasInput: Bool {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
-
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
@@ -44,15 +43,18 @@ struct InputToolBar: View {
                     Text(statusMessage)
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                    
+
                     Spacer()
-                    
+
                     // 显示音频音量级别
                     if asrStreamService.isRecording && asrStreamService.audioLevel > 0 {
                         HStack(spacing: 2) {
                             ForEach(0..<5) { index in
                                 RoundedRectangle(cornerRadius: 1)
-                                    .fill(asrStreamService.audioLevel > Float(index) * 0.2 ? Color.green : Color.gray.opacity(0.3))
+                                    .fill(
+                                        asrStreamService.audioLevel > Float(index) * 0.2
+                                            ? Color.green : Color.gray.opacity(0.3)
+                                    )
                                     .frame(width: 2, height: CGFloat(4 + index * 2))
                             }
                         }
@@ -64,7 +66,7 @@ struct InputToolBar: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
-            
+
             ZStack(alignment: .leading) {
                 if inputText.isEmpty {
                     Text(L("chat.input.placeholder")).font(.callout).foregroundStyle(Color.gray)
@@ -82,12 +84,12 @@ struct InputToolBar: View {
                 Button {
                     openMedia(mediaBtnFrame)
                 } label: {
-                    Color.clear.frame(width: 32,height: 32).overlay {
+                    Color.clear.frame(width: 32, height: 32).overlay {
                         Image(systemName: "link").foregroundStyle(.apprBlack)
                     }
                 }.glassEffect(size: CGSize(width: 32, height: 32))
-                .getFrame($mediaBtnFrame)
-                .padding(.leading, -6)
+                    .getFrame($mediaBtnFrame)
+                    .padding(.leading, -6)
 
                 Button {
                     openAssistant(assistantBtnFrame)
@@ -96,7 +98,7 @@ struct InputToolBar: View {
                         Text(assistant.config.icon).font(.title3)
                     }
                 }.glassEffect(size: CGSize(width: 32, height: 32))
-                .getFrame($assistantBtnFrame)
+                    .getFrame($assistantBtnFrame)
 
                 Button {
                     openModel(modelBtnFrame)
@@ -110,22 +112,16 @@ struct InputToolBar: View {
                         ).foregroundStyle(.apprBlack)
                     }.padding(.horizontal, 10).frame(height: 32)
                 }.glassEffect(cornerRadius: 15)
-                .getFrame($modelBtnFrame)
+                    .getFrame($modelBtnFrame)
 
                 Spacer()
-                
-                // AI 回复中或 TTS 播放中 → 显示 Stop 按钮
-                if viewModel.isLoading || viewModel.ttsStreamService.isPlaying {
+
+                // AI 回复中 → 显示 Stop 按钮
+                if viewModel.isLoading {
                     Button {
-                        // 停止 AI 回复
                         viewModel.stopAnswer()
-                        
-                        // 停止 TTS 播放
-                        Task {
-                            await viewModel.ttsStreamService.stopTTS()
-                        }
                     } label: {
-                        Color.apprBlack.frame(width: 36,height: 36).overlay {
+                        Color.apprBlack.frame(width: 36, height: 36).overlay {
                             Image(systemName: "stop.fill").foregroundStyle(.apprWhite)
                         }.clipShape(RoundedRectangle(cornerRadius: 18))
                     }
@@ -162,14 +158,18 @@ struct InputToolBar: View {
                                     .frame(width: 12, height: 12)
                                     .foregroundStyle(.apprWhite)
                                     .rotationEffect(.degrees(isConnecting ? 360 : 0))
-                                    .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isConnecting)
+                                    .animation(
+                                        .linear(duration: 1).repeatForever(autoreverses: false),
+                                        value: isConnecting
+                                    )
                                 Text(L("chat.voice.start")).font(.caption2).foregroundStyle(.apprWhite)
                             } else {
                                 Image(systemName: isRecording ? "stop.fill" : "waveform")
                                     .resizable()
                                     .frame(width: 12, height: 12)
                                     .foregroundStyle(.apprWhite)
-                                Text(isRecording ? L("chat.voice.stop") : L("chat.voice.start")).font(.caption2).foregroundStyle(.apprWhite)
+                                Text(isRecording ? L("chat.voice.stop") : L("chat.voice.start")).font(.caption2)
+                                    .foregroundStyle(.apprWhite)
                             }
                         }.padding(.horizontal, 10).padding(.vertical, 6)
                     }.background {
@@ -185,17 +185,17 @@ struct InputToolBar: View {
             .padding(.vertical, 6)
             .background {
                 if #available(iOS 26, *) {
-                    Color.clear.glassEffect(.regular,in: .rect(cornerRadius: 20))
+                    Color.clear.glassEffect(.regular, in: .rect(cornerRadius: 20))
                 } else {
                     GaussianBlurView().opacity(0.9).clipShape(RoundedRectangle(cornerRadius: 20))
                 }
-                
+
             }.overlay {
                 RoundedRectangle(cornerRadius: 20).stroke(
                     .gray.opacity(0.3),
                     lineWidth: 1
                 )
-            }.padding(.vertical,6)
+            }.padding(.vertical, 6)
             .animation(.spring(duration: 0.3), value: hasInput)  // 添加动画
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
@@ -206,28 +206,28 @@ struct InputToolBar: View {
                 if asrProvider != "native" {
                     Task {
                         // 延迟一点，避免阻塞 UI 初始化
-                        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
-                        
+                        try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5秒
+
                         // 预连接 ASR
                         if !asrStreamService.isConnected {
                             await asrStreamService.connect()
                             Logger.info("🚀 Deepgram ASR 预连接完成")
                         }
-                        
+
                         // 预连接 TTS
                         if !viewModel.ttsStreamService.isConnected {
                             await viewModel.ttsStreamService.connect()
                             Logger.info("🚀 Deepgram TTS 预连接完成")
                         }
-                        
+
                         Logger.info("✅ ASR 和 TTS 都已就绪，随时可用")
                     }
                 }
             }
     }
-    
+
     // MARK: - 语音识别
-    
+
     private func toggleRecording() {
         if isRecording {
             stopRecording()
@@ -235,13 +235,13 @@ struct InputToolBar: View {
             startRecording()
         }
     }
-    
+
     private func startRecording() {
         // 根据配置选择语音识别服务
         switch asrProvider {
         case "native":
             isRecording = true  // iOS 原生立即更新状态
-            
+
             // 使用 iOS 原生语音识别
             speechService.startRecording(
                 onInterim: { text in
@@ -253,30 +253,30 @@ struct InputToolBar: View {
                 }
             )
             Logger.info("🎤 使用 iOS 原生语音识别")
-            
+
         default:
             // 使用 Deepgram 流式识别（实时断句）
             Task {
                 // 显示连接中状态
                 isConnecting = true
-                
+
                 // 如果未连接，先连接
                 if !asrStreamService.isConnected {
                     await asrStreamService.connect()
                 }
-                
+
                 // 开始录音和流式识别
                 // 等待 Deepgram 就绪后才更新按钮状态
                 await asrStreamService.startRecording(
                     onDeepgramReady: { @MainActor in
                         // Deepgram 连接成功，开始接收音频
                         isConnecting = false  // 取消连接中状态
-                        isRecording = true    // 开始录音状态
+                        isRecording = true  // 开始录音状态
                         Logger.info("✅ Deepgram 就绪，开始录音")
                     },
                     onTranscriptUpdate: { [weak asrStreamService] text, isFinal in
                         inputText = text
-                        
+
                         // 最终结果时自动停止并发送
                         if isFinal {
                             // 只停止录音，保持连接
@@ -284,15 +284,15 @@ struct InputToolBar: View {
                                 isRecording = false
                                 await asrStreamService?.stopRecording()
                                 // 不断开连接，保持 WebSocket 活跃
-                                
+
                                 // 严格检查：文本必须有实际内容（至少2个字符）才自动发送
                                 let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
                                 if trimmedText.count >= 2 {
                                     Logger.info("✅ 语音识别完成，自动发送: \(trimmedText)")
-                                    
+
                                     // 延迟一点，确保清理完成
-                                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
-                                    
+                                    try? await Task.sleep(nanoseconds: 100_000_000)  // 0.1秒
+
                                     // 语音模式发送，启用 TTS
                                     Task { @MainActor in
                                         await viewModel.sendMessage(trimmedText, enableTTS: true)
@@ -311,10 +311,10 @@ struct InputToolBar: View {
             Logger.info("🎙️ 使用 Deepgram 流式识别（等待就绪 + 实时断句 + 自动发送）")
         }
     }
-    
+
     private func stopRecording() {
         isRecording = false
-        
+
         // 停止对应的语音识别服务
         switch asrProvider {
         case "native":
@@ -326,7 +326,7 @@ struct InputToolBar: View {
                 // 不断开连接，下次可以快速开始
             }
         }
-        
+
         Logger.info("🛑 停止录音（连接保持）")
     }
 }
