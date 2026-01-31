@@ -36,6 +36,13 @@ struct InputToolBarView<Content: View>: View {
     @State private var showVIPSheet = false
     @State private var hiddenTopView = false
     @StateObject private var menuObser = CustomMenuObservable()
+    
+    // 媒体选择器状态
+    @State private var showCameraPicker = false
+    @State private var showPhotoPicker = false
+    @State private var showDocumentPicker = false
+    @State private var selectedImage: UIImage?
+    @State private var selectedDocumentURL: URL?
 
     var body: some View {
         GeometryReader { proxy in
@@ -111,6 +118,7 @@ struct InputToolBarView<Content: View>: View {
                         edgeInsets: mediaMenuEdge,
                         content: {
                             MediaMenu { type in
+                                handleMediaSelection(type)
                                 menuObser.close()
                             }
                         },
@@ -178,6 +186,27 @@ struct InputToolBarView<Content: View>: View {
         .sheet(isPresented: $showVIPSheet) {
             VIPUpgradeView()
         }
+        .sheet(isPresented: $showCameraPicker) {
+            ImagePicker(sourceType: .camera) { image in
+                handleImagePicked(image)
+            }
+        }
+        .sheet(isPresented: $showPhotoPicker) {
+            if #available(iOS 14, *) {
+                PhotoPicker { image in
+                    handleImagePicked(image)
+                }
+            } else {
+                ImagePicker(sourceType: .photoLibrary) { image in
+                    handleImagePicked(image)
+                }
+            }
+        }
+        .sheet(isPresented: $showDocumentPicker) {
+            DocumentPicker(allowedTypes: DocumentPicker.allDocuments) { url in
+                handleDocumentPicked(url)
+            }
+        }
         .onAppear {
             // 设置默认模型和助手
             updateAIFunction(from: modelService.currentModel.id)
@@ -208,6 +237,41 @@ struct InputToolBarView<Content: View>: View {
     }
 
     // MARK: - Helper Methods
+    
+    private func handleMediaSelection(_ type: MenuConfig.MediaMenuType) {
+        switch type {
+        case .camera:
+            // 检查相机权限
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                showCameraPicker = true
+            } else {
+                Logger.warn("⚠️ Camera not available")
+            }
+        case .photo:
+            showPhotoPicker = true
+        case .file:
+            showDocumentPicker = true
+        case .createPhoto, .editPhoto:
+            // TODO: 实现图片创作和编辑功能
+            Logger.info("📝 Feature coming soon: \(type.config.title)")
+        }
+    }
+    
+    private func handleImagePicked(_ image: UIImage) {
+        selectedImage = image
+        Logger.info("✅ Image selected: \(image.size)")
+        // TODO: 处理选中的图片（例如：上传到服务器、添加到消息等）
+        // 示例：在输入框显示"[图片]"
+        inputText += "[图片] "
+    }
+    
+    private func handleDocumentPicked(_ url: URL) {
+        selectedDocumentURL = url
+        Logger.info("✅ Document selected: \(url.lastPathComponent)")
+        // TODO: 处理选中的文档（例如：读取内容、上传到服务器等）
+        // 示例：在输入框显示文件名
+        inputText += "[文件: \(url.lastPathComponent)] "
+    }
 
     private func updateAIFunction(from modelId: String) {
         if let matchingFunction = MenuConfig.aiFunctions.first(where: { $0.modelId == modelId }) {

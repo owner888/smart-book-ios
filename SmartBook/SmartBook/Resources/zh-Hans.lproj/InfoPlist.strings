@@ -1,0 +1,6 @@
+/* Camera Permission */
+"NSCameraUsageDescription" = "需要访问您的相机以拍摄照片";
+
+/* Photo Library Permissions */
+"NSPhotoLibraryUsageDescription" = "需要访问您的相册以选择照片";
+"NSPhotoLibraryAddUsageDescription" = "需要访问您的相册以保存照片";

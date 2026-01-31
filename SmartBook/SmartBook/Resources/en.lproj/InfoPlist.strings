@@ -1,0 +1,6 @@
+/* Camera Permission */
+"NSCameraUsageDescription" = "Camera access is needed to take photos";
+
+/* Photo Library Permissions */
+"NSPhotoLibraryUsageDescription" = "Photo library access is needed to select photos";
+"NSPhotoLibraryAddUsageDescription" = "Photo library access is needed to save photos";
