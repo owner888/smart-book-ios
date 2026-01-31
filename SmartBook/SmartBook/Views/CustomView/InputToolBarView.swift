@@ -41,8 +41,7 @@ struct InputToolBarView<Content: View>: View {
     @State private var showCameraPicker = false
     @State private var showPhotoPicker = false
     @State private var showDocumentPicker = false
-    @State private var selectedImage: UIImage?
-    @State private var selectedDocumentURL: URL?
+    @State private var mediaItems: [MediaItem] = []
 
     var body: some View {
         GeometryReader { proxy in
@@ -78,8 +77,7 @@ struct InputToolBarView<Content: View>: View {
                             aiFunction: $aiFunction,
                             assistant: $assistant,
                             inputText: $inputText,
-                            selectedImage: $selectedImage,
-                            selectedDocumentURL: $selectedDocumentURL,
+                            mediaItems: $mediaItems,
                             openMedia: { rect in
                                 mediaMenuEdge = buttonRelatively(
                                     rect,
@@ -195,9 +193,15 @@ struct InputToolBarView<Content: View>: View {
         }
         .sheet(isPresented: $showPhotoPicker) {
             if #available(iOS 14, *) {
-                PhotoPicker { image in
-                    handleImagePicked(image)
-                }
+                PhotoPicker(
+                    onImagePicked: { image in
+                        handleImagePicked(image)
+                    },
+                    onMultipleImagesPicked: { images in
+                        handleMultipleImagesPicked(images)
+                    },
+                    selectionLimit: 10  // 最多选择10张
+                )
             } else {
                 ImagePicker(sourceType: .photoLibrary) { image in
                     handleImagePicked(image)
@@ -260,17 +264,23 @@ struct InputToolBarView<Content: View>: View {
     }
     
     private func handleImagePicked(_ image: UIImage) {
-        selectedImage = image
-        Logger.info("✅ Image selected: \(image.size)")
-        // 图片已通过预览视图显示，无需在输入框添加文本
-        // TODO: 在发送消息时，可以将图片上传到服务器或进行OCR识别
+        let item = MediaItem(type: .image(image))
+        mediaItems.append(item)
+        Logger.info("✅ Image selected: \(image.size), total: \(mediaItems.count)")
+    }
+    
+    private func handleMultipleImagesPicked(_ images: [UIImage]) {
+        for image in images {
+            let item = MediaItem(type: .image(image))
+            mediaItems.append(item)
+        }
+        Logger.info("✅ \(images.count) images selected, total: \(mediaItems.count)")
     }
     
     private func handleDocumentPicked(_ url: URL) {
-        selectedDocumentURL = url
-        Logger.info("✅ Document selected: \(url.lastPathComponent)")
-        // 文档已通过预览视图显示，无需在输入框添加文本
-        // TODO: 在发送消息时，可以读取文档内容或上传到服务器
+        let item = MediaItem(type: .document(url))
+        mediaItems.append(item)
+        Logger.info("✅ Document selected: \(url.lastPathComponent), total: \(mediaItems.count)")
     }
 
     private func updateAIFunction(from modelId: String) {

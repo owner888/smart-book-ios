@@ -12,8 +12,7 @@ struct InputToolBar: View {
     @Binding var aiFunction: MenuConfig.AIModelFunctionType
     @Binding var assistant: MenuConfig.AssistantType
     @Binding var inputText: String
-    @Binding var selectedImage: UIImage?
-    @Binding var selectedDocumentURL: URL?
+    @Binding var mediaItems: [MediaItem]
     var openMedia: (CGRect) -> Void
     var openModel: (CGRect) -> Void
     var openAssistant: (CGRect) -> Void
@@ -39,15 +38,10 @@ struct InputToolBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
-            // 媒体预览（在输入框内部）
-            if let image = selectedImage {
-                MediaPreviewView(image: image) {
-                    selectedImage = nil
-                }
-                .transition(.move(edge: .top).combined(with: .opacity))
-            } else if let documentURL = selectedDocumentURL {
-                DocumentPreviewView(fileName: documentURL.lastPathComponent) {
-                    selectedDocumentURL = nil
+            // 媒体预览容器（支持多选和水平滚动）
+            if !mediaItems.isEmpty {
+                MediaPreviewContainer(items: mediaItems) { item in
+                    mediaItems.removeAll { $0.id == item.id }
                 }
                 .transition(.move(edge: .top).combined(with: .opacity))
             }

@@ -7,6 +7,42 @@
 
 import SwiftUI
 
+// MARK: - 媒体项模型
+struct MediaItem: Identifiable {
+    let id = UUID()
+    let type: MediaType
+    
+    enum MediaType {
+        case image(UIImage)
+        case document(URL)
+    }
+}
+
+// MARK: - 多媒体预览容器（支持水平滚动）
+struct MediaPreviewContainer: View {
+    let items: [MediaItem]
+    var onRemove: (MediaItem) -> Void
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(items) { item in
+                    switch item.type {
+                    case .image(let image):
+                        MediaPreviewView(image: image) {
+                            onRemove(item)
+                        }
+                    case .document(let url):
+                        DocumentPreviewView(fileName: url.lastPathComponent) {
+                            onRemove(item)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // MARK: - 媒体预览视图
 struct MediaPreviewView: View {
     let image: UIImage

@@ -54,11 +54,13 @@ struct ImagePicker: UIViewControllerRepresentable {
 struct PhotoPicker: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
     var onImagePicked: (UIImage) -> Void
+    var onMultipleImagesPicked: (([UIImage]) -> Void)? = nil
+    var selectionLimit: Int = 1
     
     func makeUIViewController(context: Context) -> PHPickerViewController {
         var config = PHPickerConfiguration(photoLibrary: .shared())
         config.filter = .images
-        config.selectionLimit = 1
+        config.selectionLimit = selectionLimit
         
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = context.coordinator
@@ -81,13 +83,34 @@ struct PhotoPicker: UIViewControllerRepresentable {
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
             parent.presentationMode.wrappedValue.dismiss()
             
-            guard let result = results.first else { return }
+            guard !results.isEmpty else { return }
             
-            result.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] (object, error) in
-                if let image = object as? UIImage {
-                    DispatchQueue.main.async {
-                        self?.parent.onImagePicked(image)
+            // 如果只选择了一张，使用单张回调
+            if results.count == 1 {
+                results.first?.itemProvider.loadObject(ofClass: UIImage.self) { [weak self] (object, error) in
+                    if let image = object as? UIImage {
+                        DispatchQueue.main.async {
+                            self?.parent.onImagePicked(image)
+                        }
                     }
+                }
+            } else if let multipleCallback = parent.onMultipleImagesPicked {
+                // 多张图片，使用多选回调
+                var images: [UIImage] = []
+                let group = DispatchGroup()
+                
+                for result in results {
+                    group.enter()
+                    result.itemProvider.loadObject(ofClass: UIImage.self) { (object, error) in
+                        if let image = object as? UIImage {
+                            images.append(image)
+                        }
+                        group.leave()
+                    }
+                }
+                
+                group.notify(queue: .main) {
+                    multipleCallback(images)
                 }
             }
         }
