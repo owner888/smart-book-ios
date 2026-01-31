@@ -12,6 +12,8 @@ struct InputToolBar: View {
     @Binding var aiFunction: MenuConfig.AIModelFunctionType
     @Binding var assistant: MenuConfig.AssistantType
     @Binding var inputText: String
+    @Binding var selectedImage: UIImage?
+    @Binding var selectedDocumentURL: URL?
     var openMedia: (CGRect) -> Void
     var openModel: (CGRect) -> Void
     var openAssistant: (CGRect) -> Void
@@ -37,6 +39,19 @@ struct InputToolBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 15) {
+            // 媒体预览（在输入框内部）
+            if let image = selectedImage {
+                MediaPreviewView(image: image) {
+                    selectedImage = nil
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            } else if let documentURL = selectedDocumentURL {
+                DocumentPreviewView(fileName: documentURL.lastPathComponent) {
+                    selectedDocumentURL = nil
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            
             // 显示 ASR 状态消息（如果有）
             if let statusMessage = asrStreamService.statusMessage {
                 HStack(spacing: 6) {

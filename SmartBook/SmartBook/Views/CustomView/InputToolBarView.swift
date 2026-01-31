@@ -78,6 +78,8 @@ struct InputToolBarView<Content: View>: View {
                             aiFunction: $aiFunction,
                             assistant: $assistant,
                             inputText: $inputText,
+                            selectedImage: $selectedImage,
+                            selectedDocumentURL: $selectedDocumentURL,
                             openMedia: { rect in
                                 mediaMenuEdge = buttonRelatively(
                                     rect,
@@ -260,17 +262,15 @@ struct InputToolBarView<Content: View>: View {
     private func handleImagePicked(_ image: UIImage) {
         selectedImage = image
         Logger.info("✅ Image selected: \(image.size)")
-        // TODO: 处理选中的图片（例如：上传到服务器、添加到消息等）
-        // 示例：在输入框显示"[图片]"
-        inputText += "[图片] "
+        // 图片已通过预览视图显示，无需在输入框添加文本
+        // TODO: 在发送消息时，可以将图片上传到服务器或进行OCR识别
     }
     
     private func handleDocumentPicked(_ url: URL) {
         selectedDocumentURL = url
         Logger.info("✅ Document selected: \(url.lastPathComponent)")
-        // TODO: 处理选中的文档（例如：读取内容、上传到服务器等）
-        // 示例：在输入框显示文件名
-        inputText += "[文件: \(url.lastPathComponent)] "
+        // 文档已通过预览视图显示，无需在输入框添加文本
+        // TODO: 在发送消息时，可以读取文档内容或上传到服务器
     }
 
     private func updateAIFunction(from modelId: String) {
