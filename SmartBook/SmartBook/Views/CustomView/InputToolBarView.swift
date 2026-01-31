@@ -209,9 +209,16 @@ struct InputToolBarView<Content: View>: View {
             }
         }
         .sheet(isPresented: $showDocumentPicker) {
-            DocumentPicker(allowedTypes: DocumentPicker.allDocuments) { url in
-                handleDocumentPicked(url)
-            }
+            DocumentPicker(
+                allowedTypes: DocumentPicker.allDocuments,
+                onDocumentPicked: { url in
+                    handleDocumentPicked(url)
+                },
+                onMultipleDocumentsPicked: { urls in
+                    handleMultipleDocumentsPicked(urls)
+                },
+                allowsMultipleSelection: true  // 启用多选
+            )
         }
         .onAppear {
             // 设置默认模型和助手
@@ -281,6 +288,14 @@ struct InputToolBarView<Content: View>: View {
         let item = MediaItem(type: .document(url))
         mediaItems.append(item)
         Logger.info("✅ Document selected: \(url.lastPathComponent), total: \(mediaItems.count)")
+    }
+    
+    private func handleMultipleDocumentsPicked(_ urls: [URL]) {
+        for url in urls {
+            let item = MediaItem(type: .document(url))
+            mediaItems.append(item)
+        }
+        Logger.info("✅ \(urls.count) documents selected, total: \(mediaItems.count)")
     }
 
     private func updateAIFunction(from modelId: String) {

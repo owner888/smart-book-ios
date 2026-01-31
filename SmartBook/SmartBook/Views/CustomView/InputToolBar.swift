@@ -41,6 +41,13 @@ struct InputToolBar: View {
             // 媒体预览容器（支持多选和水平滚动）
             if !mediaItems.isEmpty {
                 MediaPreviewContainer(items: mediaItems) { item in
+                    // 记录删除日志
+                    switch item.type {
+                    case .image:
+                        Logger.info("🗑️ Image removed, remaining: \(mediaItems.count - 1)")
+                    case .document(let url):
+                        Logger.info("🗑️ Document removed: \(url.lastPathComponent), remaining: \(mediaItems.count - 1)")
+                    }
                     mediaItems.removeAll { $0.id == item.id }
                 }
                 .transition(.move(edge: .top).combined(with: .opacity))

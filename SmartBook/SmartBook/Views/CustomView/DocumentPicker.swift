@@ -13,11 +13,13 @@ struct DocumentPicker: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
     var allowedTypes: [UTType]
     var onDocumentPicked: (URL) -> Void
+    var onMultipleDocumentsPicked: (([URL]) -> Void)? = nil
+    var allowsMultipleSelection: Bool = false
     
     func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
         let picker = UIDocumentPickerViewController(forOpeningContentTypes: allowedTypes, asCopy: true)
         picker.delegate = context.coordinator
-        picker.allowsMultipleSelection = false
+        picker.allowsMultipleSelection = allowsMultipleSelection
         return picker
     }
     
@@ -35,9 +37,17 @@ struct DocumentPicker: UIViewControllerRepresentable {
         }
         
         func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            guard let url = urls.first else { return }
-            parent.onDocumentPicked(url)
             parent.presentationMode.wrappedValue.dismiss()
+            
+            guard !urls.isEmpty else { return }
+            
+            // 如果只选择了一个，使用单个回调
+            if urls.count == 1, let url = urls.first {
+                parent.onDocumentPicked(url)
+            } else if let multipleCallback = parent.onMultipleDocumentsPicked {
+                // 多个文档，使用多选回调
+                multipleCallback(urls)
+            }
         }
         
         func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
