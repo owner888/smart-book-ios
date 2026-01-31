@@ -20,20 +20,19 @@ class TTSStreamService: NSObject, ObservableObject {
     override init() {
         super.init()
         audioPlayer = AudioStreamPlayer()
-        
-        // 设置播放完成回调
-        audioPlayer?.onPlaybackComplete = { [weak self] in
-            Task { @MainActor in
-                self?.isPlaying = false
-                Logger.info("✅ TTS isPlaying 已设置为 false")
-            }
-        }
     }
     
     deinit {
         heartbeatTimer?.invalidate()
         reconnectTimer?.invalidate()
         shouldAutoReconnect = false
+    }
+    
+    // MARK: - 播放完成回调
+    
+    /// 设置播放完成回调
+    func setOnPlaybackComplete(_ callback: @escaping () -> Void) {
+        audioPlayer?.onPlaybackComplete = callback
     }
     
     // MARK: - WebSocket 连接
@@ -215,7 +214,6 @@ class TTSStreamService: NSObject, ObservableObject {
                 
             case "stopped":
                 Logger.info("TTS 已停止，开始播放累积的音频")
-                self.isPlaying = false
                 // TTS 结束，播放累积的音频
                 self.audioPlayer?.playComplete()
                 
@@ -460,30 +458,6 @@ class AudioStreamPlayer: NSObject {
         Logger.info("音频播放已立即停止")
     }
     
-    // 检查是否是 MP3 音频数据
-    private func isAudioData(_ data: Data) -> Bool {
-        guard data.count >= 3 else { return false }
-        
-        // 检查 MP3 文件头
-        let bytes = [UInt8](data.prefix(3))
-        
-        // ID3v2 标签：以 "ID3" 开头
-        if bytes[0] == 0x49 && bytes[1] == 0x44 && bytes[2] == 0x33 {
-            return true
-        }
-        
-        // MP3 帧同步字：0xFF 0xFB 或 0xFF 0xF3 等
-        if bytes[0] == 0xFF && (bytes[1] & 0xE0) == 0xE0 {
-            return true
-        }
-        
-        // 如果不是音频头，但数据较大，可能是音频中间部分
-        if data.count > 1024 {
-            return true
-        }
-        
-        return false
-    }
 }
 
 // MARK: - MD5 Extension

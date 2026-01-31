@@ -44,6 +44,23 @@ class ChatViewModel: ObservableObject {
     // 依赖注入，方便测试和管理
     init(streamingService: StreamingChatService = StreamingChatService()) {
         self.streamingService = streamingService
+        
+        // 设置 TTS 播放完成回调（合并所有必要逻辑）
+        Logger.info("🔧 ChatViewModel.init: 正在设置播放完成回调")
+        ttsStreamService.setOnPlaybackComplete { [weak self] in
+            Logger.info("🔔 播放完成回调被触发！")
+            
+            guard let self = self else { return }
+            
+            Task { @MainActor in
+                Logger.info("🔧 播放前状态: isLoading=\(self.isLoading), isPlaying=\(self.ttsStreamService.isPlaying)")
+                
+                // 设置播放状态为 false
+                self.ttsStreamService.isPlaying = false
+                
+                Logger.info("✅ TTS 播放完成: isLoading=\(self.isLoading), isPlaying=\(self.ttsStreamService.isPlaying)")
+            }
+        }
     }
     
     // MARK: - 历史记录管理
