@@ -185,10 +185,9 @@ class MenuConfig {
         }
         
         // 获取模型ID（用于API调用）
+        // 注意：.super不在这里，因为它只用于VIP升级UI，不会被选中
         var modelId: String {
             switch self {
-            case .super:
-                return "gemini-2.5-pro"
             case .heavy:
                 return "gemini-2.5-pro"  // Heavy -> gemini-2.5-pro
             case .expert:
@@ -199,6 +198,8 @@ class MenuConfig {
                 return "gemini-2.0-flash"  // Auto -> gemini-2.0-flash (免费)
             case .dynamic(let model):
                 return model.id
+            case .super:
+                fatalError("❌ .super不应该被选中，它只用于VIP升级UI")
             }
         }
         
