@@ -295,42 +295,6 @@ struct ChatView: View {
                                                             false
                                                     }
                                                 }
-                                                .onChange(
-                                                    of: viewModel
-                                                        .questionMessageId
-                                                ) { _, _ in
-                                                    if let messageId = viewModel
-                                                        .questionMessageId
-                                                    {
-                                                        viewModel.scrollBottom =
-                                                            max(
-                                                                0,
-                                                                proxy.size
-                                                                    .height
-                                                                    - 280
-                                                            )
-                                                        viewModel
-                                                            .forceScrollToBottom =
-                                                            false
-                                                        // 延迟一点让UI更新完成
-                                                        DispatchQueue.main
-                                                            .asyncAfter(
-                                                                deadline: .now()
-                                                                    + 0.1
-                                                            ) {
-                                                                // 使用 viewModel.scrollProxy 而不是局部变量
-                                                                withAnimation {
-                                                                    viewModel
-                                                                        .scrollProxy?
-                                                                        .scrollTo(
-                                                                            messageId,
-                                                                            anchor:
-                                                                                .top
-                                                                        )
-                                                                }
-                                                            }
-                                                    }
-                                                }
                                             }
                                             colors.background.frame(height: 10)
                                         }
