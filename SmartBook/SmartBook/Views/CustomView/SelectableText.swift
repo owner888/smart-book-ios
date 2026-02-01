@@ -24,10 +24,10 @@ struct SelectableText: UIViewRepresentable {
         textView.textContainer.lineFragmentPadding = 0
         textView.dataDetectorTypes = .link
         
-        // 确保文本视图可以调整大小
+        // 确保文本视图可以换行和调整大小
         textView.setContentHuggingPriority(.defaultLow, for: .horizontal)
         textView.setContentHuggingPriority(.defaultLow, for: .vertical)
-        textView.setContentCompressionResistancePriority(.required, for: .horizontal)
+        textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)  // 允许水平压缩（换行）
         textView.setContentCompressionResistancePriority(.required, for: .vertical)
         
         return textView
