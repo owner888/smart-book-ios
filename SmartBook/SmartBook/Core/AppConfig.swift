@@ -36,7 +36,7 @@ enum AppConfig {
     // MARK: - 默认值
     
     enum DefaultValues {
-        static let apiBaseURL = "http://localhost:8081"
+        static let apiBaseURL = "http://localhost:9527"
         static let autoTTS = true
         static let ttsRate = 1.0
         static let asrProvider = "deepgram" // native, google, deepgram

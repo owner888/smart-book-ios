@@ -47,7 +47,7 @@ class TTSStreamService: NSObject, ObservableObject {
         if let urlComponents = URLComponents(string: wsURL) {
             var components = urlComponents
             components.path = ""
-            components.port = 8084  // TTS WebSocket 端口
+            components.port = 9524  // TTS WebSocket 端口
             wsURL = components.string ?? wsURL
         }
         

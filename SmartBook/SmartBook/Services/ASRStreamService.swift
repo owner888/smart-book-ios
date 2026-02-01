@@ -52,7 +52,7 @@ class ASRStreamService: NSObject, ObservableObject {
         if let urlComponents = URLComponents(string: wsURL) {
             var components = urlComponents
             components.path = ""
-            components.port = 8083  // 强制使用 8083 端口
+            components.port = 9525  // 强制使用 9525 端口
             wsURL = components.string ?? wsURL
         }
 

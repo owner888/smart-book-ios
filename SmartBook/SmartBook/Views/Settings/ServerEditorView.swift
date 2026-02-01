@@ -118,8 +118,8 @@ struct ServerEditorView: View {
     private var quickURLs: [String] {
         [
             AppConfig.apiBaseURL,
-            "http://127.0.0.1:8080",
-            "http://192.168.1.100:8080"
+            "http://127.0.0.1:9527",
+            "http://192.168.1.100:9527"
         ]
     }
     
