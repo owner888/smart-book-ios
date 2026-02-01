@@ -179,7 +179,7 @@ class TTSStreamService: NSObject, ObservableObject {
                 self.receiveMessage()
                 
             case .failure(let error):
-                Logger.error("TTS WebSocket 错误: \(error.localizedDescription)")
+                Logger.error("TTS WebSocket Error: \(error.localizedDescription)")
                 Task { @MainActor in
                     self.error = error.localizedDescription
                     self.isConnected = false

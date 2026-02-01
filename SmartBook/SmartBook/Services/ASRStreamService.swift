@@ -52,7 +52,7 @@ class ASRStreamService: NSObject, ObservableObject {
         if let urlComponents = URLComponents(string: wsURL) {
             var components = urlComponents
             components.path = ""
-            components.port = 9525  // 强制使用 9525 端口
+            components.port = 9525  // ASR WebSocket 端口
             wsURL = components.string ?? wsURL
         }
 
@@ -119,7 +119,7 @@ class ASRStreamService: NSObject, ObservableObject {
                 self.receiveMessage()
 
             case .failure(let error):
-                Logger.error("WebSocket 接收错误: \(error.localizedDescription)")
+                Logger.error("ASR WebSocket Error: \(error.localizedDescription)")
                 Task { @MainActor in
                     self.error = error.localizedDescription
                     self.isConnected = false
