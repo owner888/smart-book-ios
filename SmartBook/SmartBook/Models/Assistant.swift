@@ -64,9 +64,9 @@ extension Assistant {
             avatar: "📚",
             color: "#4caf50",
             description: L("assistant.ask"),
-            systemPrompt: "",  // 由服务器端配置（Context Cache）
+            systemPrompt: "",
             action: .ask,
-            useRAG: true
+            useRAG: false
         ),
         Assistant(
             id: "continue",
