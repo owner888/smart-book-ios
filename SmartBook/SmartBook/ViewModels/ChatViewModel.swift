@@ -1,8 +1,8 @@
 // ChatViewModel.swift - 聊天视图模型
 
+import Combine
 import Foundation
 import SwiftUI
-import Combine
 
 /// 聊天视图模型
 class ChatViewModel: ObservableObject {
@@ -10,16 +10,14 @@ class ChatViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var showScrollToBottom = false
     @Published var scrollBottom = 0.0
-    @Published var questionMessageId: UUID?
     @Published var scrollBottomOffset = 0.0
     @Published var showedKeyboard = false
     @Published var mediaItems: [MediaItem] = []
     var scrollProxy: ScrollViewProxy?
     var isKeyboardChange = false
-   
-    //强制滚动到底部
+
+    // 强制滚动到底部
     var forceScrollToBottom = false
-    
 
     var bookState: BookState?
     var historyService: ChatHistoryService?
@@ -32,64 +30,63 @@ class ChatViewModel: ObservableObject {
     private var wordIndex = 0
     private var currentMessageIndex = 0
     private var wordTimer: Timer?
-    
+
     // 流式 TTS 服务（Google TTS）
     @Published var ttsStreamService = TTSStreamService()
-    
+
     // 原生 TTS 服务（iOS 系统语音）
     private let ttsService = TTSService()
-    
+
     // TTS 提供商配置
     @AppStorage(AppConfig.Keys.ttsProvider) private var ttsProvider = AppConfig.DefaultValues.ttsProvider
-    
+
     // 依赖注入，方便测试和管理
     init(streamingService: StreamingChatService = StreamingChatService()) {
         self.streamingService = streamingService
-        
+
         // 设置 TTS 播放完成回调（合并所有必要逻辑）
         Logger.info("🔧 ChatViewModel.init: 正在设置播放完成回调")
         ttsStreamService.setOnPlaybackComplete { [weak self] in
             Logger.info("🔔 播放完成回调被触发！")
-            
+
             guard let self = self else { return }
-            
+
             Task { @MainActor in
                 Logger.info("🔧 播放前状态: isLoading=\(self.isLoading), isPlaying=\(self.ttsStreamService.isPlaying)")
-                
+
                 // 设置播放状态为 false
                 self.ttsStreamService.isPlaying = false
-                
+
                 Logger.info("✅ TTS 播放完成: isLoading=\(self.isLoading), isPlaying=\(self.ttsStreamService.isPlaying)")
             }
         }
     }
-    
+
     // MARK: - 历史记录管理
-    
+
     /// 加载当前对话的历史消息
     func loadCurrentConversation() {
         guard let historyService = historyService else { return }
         messages = historyService.loadMessages()
         Logger.info("📖 加载了 \(messages.count) 条历史消息")
     }
-    
+
     /// 创建新对话（不立即保存到数据库，等待第一条消息）
     func startNewConversation() {
         // 清空当前对话引用，但不创建数据库记录
         historyService?.currentConversation = nil
-        
+
         messages.removeAll()
         streamingContent = ""
         Logger.info("✨ 准备开始新对话（等待第一条消息）")
     }
-    
+
     /// 切换到指定对话
     func switchToConversation(_ conversation: Conversation) {
         historyService?.switchToConversation(conversation)
         loadCurrentConversation()
     }
 
-    
     func scrollToBottom(animate: Bool = true) {
         if animate {
             withAnimation {
@@ -99,21 +96,21 @@ class ChatViewModel: ObservableObject {
             scrollProxy?.scrollTo("bottomAnchor", anchor: .bottom)
         }
     }
-    
+
     /// 停止AI响应和TTS播放
     func stopAnswer() {
         // 停止 AI 文本生成
         streamingService.stopStreaming()
         isLoading = false
-        
+
         // 停止所有 TTS 播放
         Task { @MainActor in
             // 停止 Google TTS
             await ttsStreamService.stopTTS()
-            
+
             // 停止原生 TTS
             ttsService.stop()
-            
+
             Logger.info("⏹️ 已停止 AI 生成和所有 TTS 播放")
         }
     }
@@ -121,33 +118,37 @@ class ChatViewModel: ObservableObject {
     @MainActor
     func sendMessage(_ text: String, mediaItems: [MediaItem] = [], enableTTS: Bool = false) async {
         guard let bookState = bookState else { return }
-        
+
         // 处理媒体数据
         var mediaDescription = ""
         if !mediaItems.isEmpty {
             Logger.info("📎 处理 \(mediaItems.count) 个媒体项")
-            
+
             for (index, item) in mediaItems.enumerated() {
                 switch item.type {
                 case .image(let image):
                     // 图片转base64（供日志使用）
                     if let imageData = image.jpegData(compressionQuality: 0.8) {
                         let sizeKB = Double(imageData.count) / 1024.0
-                        mediaDescription += "\n[图片 \(index + 1): \(Int(image.size.width))x\(Int(image.size.height)), \(String(format: "%.1f", sizeKB))KB]"
-                        Logger.info("📸 图片 \(index + 1): \(Int(image.size.width))x\(Int(image.size.height)), \(String(format: "%.1f", sizeKB))KB")
+                        mediaDescription +=
+                            "\n[图片 \(index + 1): \(Int(image.size.width))x\(Int(image.size.height)), \(String(format: "%.1f", sizeKB))KB]"
+                        Logger.info(
+                            "📸 图片 \(index + 1): \(Int(image.size.width))x\(Int(image.size.height)), \(String(format: "%.1f", sizeKB))KB"
+                        )
                     }
-                    
+
                 case .document(let url):
                     // 读取文档内容
                     if let content = try? String(contentsOf: url, encoding: .utf8) {
                         let preview = String(content.prefix(100))
-                        mediaDescription += "\n[文档 \(index + 1): \(url.lastPathComponent), \(content.count) 字符]\n预览: \(preview)..."
+                        mediaDescription +=
+                            "\n[文档 \(index + 1): \(url.lastPathComponent), \(content.count) 字符]\n预览: \(preview)..."
                         Logger.info("📄 文档 \(index + 1): \(url.lastPathComponent), \(content.count) 字符")
                     }
                 }
             }
         }
-        
+
         // 过滤空字符串（如果有媒体，文本可以为空）
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedText.count == 0 && mediaItems.isEmpty {
@@ -157,12 +158,13 @@ class ChatViewModel: ObservableObject {
 
         // 组合消息内容
         let finalContent = trimmedText + mediaDescription
-        Logger.info("📤 发送消息: \(trimmedText.isEmpty ? "[仅媒体]" : trimmedText), 媒体: \(mediaItems.count), TTS: \(enableTTS)")
-        
+        Logger.info(
+            "📤 发送消息: \(trimmedText.isEmpty ? "[仅媒体]" : trimmedText), 媒体: \(mediaItems.count), TTS: \(enableTTS)"
+        )
+
         let userMessage = ChatMessage(role: .user, content: finalContent)
         messages.append(userMessage)
-        questionMessageId = userMessage.id
-        
+
         // 保存用户消息
         historyService?.saveMessage(userMessage)
 
@@ -180,7 +182,7 @@ class ChatViewModel: ObservableObject {
 
         // 获取上下文（摘要 + 最近消息）
         let (summary, recentMessages) = getContext()
-        
+
         // 如果启用 TTS 且使用 Google，启动流式 TTS
         if enableTTS && ttsProvider == "google" {
             Task {
@@ -188,14 +190,14 @@ class ChatViewModel: ObservableObject {
                     await ttsStreamService.connect()
                 }
                 await ttsStreamService.startTTS()
-                
+
                 // 等待一点时间确保 Deepgram 握手成功
-                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
-                
+                try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5秒
+
                 Logger.info("🔊 Google TTS 已就绪")
             }
         }
-        
+
         // 处理图片数据（转base64）
         var imagesData: [[String: Any]]? = nil
         if !mediaItems.isEmpty {
@@ -208,7 +210,7 @@ class ChatViewModel: ObservableObject {
                         let base64String = jpegData.base64EncodedString()
                         images.append([
                             "data": base64String,
-                            "mime_type": "image/jpeg"
+                            "mime_type": "image/jpeg",
                         ])
                     }
                 case .document:
@@ -216,13 +218,13 @@ class ChatViewModel: ObservableObject {
                     break
                 }
             }
-            
+
             if !images.isEmpty {
                 imagesData = images
                 Logger.info("📸 准备发送 \(images.count) 张图片到服务器")
             }
         }
-        
+
         // 使用流式API
         let assistant = selectedAssistant ?? Assistant.defaultAssistants.first!
         streamingService.sendMessageStream(
@@ -240,14 +242,14 @@ class ChatViewModel: ObservableObject {
             // 修复：在 Task 内部也使用 weak self 避免循环引用
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
-                
+
                 switch event {
                 case .content(let content):
                     Logger.info("💬 收到内容: \(content)")
                     // 逐步更新内容
                     self.answerContents.append(content)
                     self.wordByWordDisplay()
-                    
+
                     // 只在使用 Google TTS 时发送流式文本
                     if enableTTS && self.ttsProvider == "google" {
                         Task {
@@ -273,18 +275,18 @@ class ChatViewModel: ObservableObject {
             // 修复：在 Task 内部也使用 weak self 避免循环引用
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
-                
+
                 switch result {
                 case .failure(let error):
                     self.isLoading = false
                     self.cancelDisplay()
-                    
+
                     // 停止 TTS（用户取消时）
                     Task {
                         await self.ttsStreamService.stopTTS()
                         self.ttsService.stop()
                     }
-                    
+
                     // 检查是否是用户主动取消
                     let nsError = error as NSError
                     if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
@@ -292,7 +294,7 @@ class ChatViewModel: ObservableObject {
                         if messageIndex < self.messages.count {
                             let currentMessage = self.messages[messageIndex]
                             let currentContent = self.answerContents.joined()
-                            
+
                             self.messages[messageIndex] = ChatMessage(
                                 id: currentMessage.id,
                                 role: currentMessage.role,
@@ -318,18 +320,18 @@ class ChatViewModel: ObservableObject {
                     }
                 case .success:
                     // 流式完成，内容已经在事件中更新
-                    
+
                     // 保存助手消息到数据库
                     if messageIndex < self.messages.count {
                         let messageContent = self.answerContents.joined()
                         let finalMessage = ChatMessage(role: .assistant, content: messageContent)
                         self.historyService?.saveMessage(finalMessage)
                         Logger.info("💾 保存助手回复到数据库")
-                        
+
                         // 根据 TTS provider 选择播放方式
                         if enableTTS {
                             Logger.info("🔊 TTS Provider: \(self.ttsProvider)")
-                            
+
                             if self.ttsProvider == "native" {
                                 // 使用 iOS 原生语音
                                 Task {
@@ -347,7 +349,7 @@ class ChatViewModel: ObservableObject {
                                 Logger.warn("⚠️ 未知的 TTS provider: \(self.ttsProvider)")
                             }
                         }
-                        
+
                         // 检查是否需要生成摘要
                         self.checkAndTriggerSummarization()
                     }
@@ -362,18 +364,18 @@ class ChatViewModel: ObservableObject {
         messages.removeAll()
         streamingContent = ""
     }
-    
+
     // MARK: - 上下文管理
-    
+
     /// 获取对话上下文（摘要 + 最近消息）
     /// 返回：(摘要文本, 最近消息数组)
     private func getContext() -> (String?, [ChatMessage]) {
         guard let conversation = historyService?.currentConversation else {
             return (nil, Array(messages.suffix(10)))
         }
-        
+
         let summarizedCount = conversation.summarizedMessageCount
-        
+
         // 如果有摘要，返回摘要 + 未摘要的消息
         if let summary = conversation.summary, summarizedCount > 0 {
             let unsummarizedMessages = Array(messages.dropFirst(summarizedCount))
@@ -381,21 +383,21 @@ class ChatViewModel: ObservableObject {
             Logger.info("📝 使用摘要 (\(summarizedCount)条) + 最近\(recentMessages.count)条消息")
             return (summary, recentMessages)
         }
-        
+
         // 没有摘要，返回最近10条
         let recentMessages = Array(messages.suffix(10))
         return (nil, recentMessages)
     }
-    
+
     /// 检查是否需要生成摘要
     /// 当消息数量超过20条且没有摘要时触发
     private func checkAndTriggerSummarization() {
         guard let conversation = historyService?.currentConversation else { return }
-        
+
         let totalMessages = messages.count
         let summarizedCount = conversation.summarizedMessageCount
         let unsummarizedCount = totalMessages - summarizedCount
-        
+
         // 超过20条未摘要的消息时触发
         if unsummarizedCount >= 20 {
             Task {
@@ -403,43 +405,43 @@ class ChatViewModel: ObservableObject {
             }
         }
     }
-    
+
     /// 生成对话摘要
     @MainActor
     private func generateSummary() async {
         guard let conversation = historyService?.currentConversation else { return }
-        
+
         let summarizedCount = conversation.summarizedMessageCount
         let messagesToSummarize = Array(messages.dropFirst(summarizedCount).prefix(10))
-        
+
         if messagesToSummarize.isEmpty {
             return
         }
-        
+
         Logger.info("🤖 开始生成摘要，处理 \(messagesToSummarize.count) 条消息...")
-        
+
         // 构建摘要请求
         var conversationText = ""
         if let existingSummary = conversation.summary {
             conversationText += "【之前的摘要】\n\(existingSummary)\n\n【新对话】\n"
         }
-        
+
         for msg in messagesToSummarize {
             let role = msg.role == .user ? "用户" : "AI"
             conversationText += "\(role): \(msg.content)\n\n"
         }
-        
+
         let summarizePrompt = """
-        请将以上对话总结成一个简洁的摘要，保留关键信息和上下文。
-        摘要应该：
-        1. 概括主要讨论的话题
-        2. 记录重要的结论或决定
-        3. 保持简洁，不超过200字
-        """
-        
+            请将以上对话总结成一个简洁的摘要，保留关键信息和上下文。
+            摘要应该：
+            1. 概括主要讨论的话题
+            2. 记录重要的结论或决定
+            3. 保持简洁，不超过200字
+            """
+
         // 调用 AI 生成摘要（使用流式 API）
         var generatedSummary = ""
-        
+
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
             // 使用通用聊天助手生成摘要
             let chatAssistant = Assistant(
@@ -452,7 +454,7 @@ class ChatViewModel: ObservableObject {
                 action: .chat,
                 useRAG: false
             )
-            
+
             streamingService.sendMessageStream(
                 message: conversationText + "\n\n" + summarizePrompt,
                 assistant: chatAssistant,
@@ -471,12 +473,12 @@ class ChatViewModel: ObservableObject {
                 continuation.resume()
             }
         }
-        
+
         // 保存生成的摘要
         if !generatedSummary.isEmpty {
             conversation.summary = generatedSummary
             conversation.summarizedMessageCount = summarizedCount + messagesToSummarize.count
-            
+
             historyService?.saveSummary(summary: generatedSummary, messageCount: conversation.summarizedMessageCount)
             Logger.info("✅ AI 摘要已保存，已摘要消息数: \(conversation.summarizedMessageCount)")
             Logger.info("📝 摘要内容: \(generatedSummary.prefix(100))...")
@@ -484,45 +486,49 @@ class ChatViewModel: ObservableObject {
             Logger.error("❌ 摘要生成失败，内容为空")
         }
     }
-    
+
     func wordByWordDisplay() {
         if wordTimer == nil {
-            wordTimer = Timer.scheduledTimer(withTimeInterval: 0.12, repeats: true, block: { _ in
-                if self.contentIndex < self.answerContents.count {
-                    let content = self.answerContents[self.contentIndex]
-                    let words = content.map { String($0) }
-                    if self.wordIndex < words.count {
-                        let remainingCount = words.count - self.wordIndex
-                        let takeCount = min(3, remainingCount)
-                        let wordChars = words[self.wordIndex..<(self.wordIndex + takeCount)]
-                        let word = wordChars.joined()
-                        if self.currentMessageIndex < self.messages.count {
-                            self.streamingContent += word
-                            self.messages[self.currentMessageIndex] = ChatMessage(
-                                role: .assistant,
-                                content: self.streamingContent,
-                                isStreaming: true
-                            )
-                            self.wordIndex += takeCount
+            wordTimer = Timer.scheduledTimer(
+                withTimeInterval: 0.12,
+                repeats: true,
+                block: { _ in
+                    if self.contentIndex < self.answerContents.count {
+                        let content = self.answerContents[self.contentIndex]
+                        let words = content.map { String($0) }
+                        if self.wordIndex < words.count {
+                            let remainingCount = words.count - self.wordIndex
+                            let takeCount = min(3, remainingCount)
+                            let wordChars = words[self.wordIndex..<(self.wordIndex + takeCount)]
+                            let word = wordChars.joined()
+                            if self.currentMessageIndex < self.messages.count {
+                                self.streamingContent += word
+                                self.messages[self.currentMessageIndex] = ChatMessage(
+                                    role: .assistant,
+                                    content: self.streamingContent,
+                                    isStreaming: true
+                                )
+                                self.wordIndex += takeCount
+                            }
+                        } else {
+                            self.wordIndex = 0
+                            self.contentIndex += 1
                         }
                     } else {
-                        self.wordIndex = 0
-                        self.contentIndex += 1
+                        self.messages[self.currentMessageIndex] = ChatMessage(
+                            role: .assistant,
+                            content: self.streamingContent,
+                            isStreaming: false
+                        )
+                        self.isLoading = false
+                        self.cancelDisplay()
+                        self.scrollBottom = 0
                     }
-                } else {
-                    self.messages[self.currentMessageIndex] = ChatMessage(
-                        role: .assistant,
-                        content: self.streamingContent,
-                        isStreaming: false
-                    )
-                    self.isLoading = false
-                    self.cancelDisplay()
-                    self.scrollBottom = 0
                 }
-            })
+            )
         }
     }
-    
+
     func cancelDisplay() {
         wordTimer?.invalidate()
         wordTimer = nil
