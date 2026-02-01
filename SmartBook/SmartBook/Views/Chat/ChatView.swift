@@ -16,6 +16,7 @@ struct ChatView: View {
     @State private var inputText = ""
     @State private var showBookPicker = false
     @State private var showSettings = false
+
     @State private var showBookshelf = false
     @State private var keyboardHeight: CGFloat = 0
     @State private var uploadProgress: Double = 0
@@ -69,7 +70,7 @@ struct ChatView: View {
                                 }
                             }
                         }
-                        
+
                         await MainActor.run {
                             isUploading = false
                             withAnimation {
@@ -90,13 +91,13 @@ struct ChatView: View {
                     ZStack {
                         Color.black.opacity(0.4)
                             .ignoresSafeArea()
-                        
+
                         VStack(spacing: 16) {
                             ProgressView(value: uploadProgress)
                                 .progressViewStyle(.linear)
                                 .frame(width: 200)
                                 .tint(.green)
-                            
+
                             Text("📤 上传书籍中... \(Int(uploadProgress * 100))%")
                                 .font(.caption)
                                 .foregroundColor(.white)
@@ -125,7 +126,7 @@ struct ChatView: View {
             if historyService == nil {
                 historyService = ChatHistoryService(modelContext: modelContext)
                 viewModel.historyService = historyService
-                
+
                 // 如果有当前对话（从历史列表选择的），加载消息
                 // 否则等待用户发送第一条消息时自动创建对话
                 if let currentConversation = historyService?.currentConversation {
@@ -135,7 +136,7 @@ struct ChatView: View {
                     Logger.info("✨ 准备新对话，等待用户发送第一条消息")
                 }
             }
-            
+
             viewModel.bookState = bookState
             viewModel.selectedAssistant = assistantService.currentAssistant
             viewModel.selectedModel = modelService.currentModel.id
@@ -172,7 +173,7 @@ struct ChatView: View {
                                             }
                                         }
                                     }
-                                    
+
                                     // 系统提示词显示（如果有）
                                     if !assistantService.currentAssistant.systemPrompt.isEmpty {
                                         AssistantPromptBar(
@@ -180,7 +181,7 @@ struct ChatView: View {
                                             colors: colors
                                         )
                                     }
-                                    
+
                                     // 对话列表（始终显示，无论是否选择书籍）
                                     if viewModel.messages.isEmpty {
                                         Spacer()
@@ -288,8 +289,7 @@ struct ChatView: View {
                                                     oldPhase,
                                                     newPhase in
                                                     // 检测用户手指拖曳滚动
-                                                    if newPhase == .interacting
-                                                    {
+                                                    if newPhase == .interacting {
                                                         viewModel
                                                             .forceScrollToBottom =
                                                             false
@@ -367,13 +367,13 @@ struct ChatView: View {
                     HStack(spacing: 12) {
                         // 新对话按钮（只在有消息时显示）
                         if !viewModel.messages.isEmpty {
-                            Button(action: { 
+                            Button(action: {
                                 viewModel.startNewConversation()
                             }) {
                                 Image(systemName: "square.and.pencil")
                             }
                         }
-                        
+
                         // 更多菜单按钮
                         Menu {
                             Button(action: { showBookPicker = true }) {
@@ -423,13 +423,13 @@ struct ChatView: View {
     func sendMessage() {
         let text = inputText
         let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        
+
         // 至少需要文本或媒体之一
         guard hasText || !viewModel.mediaItems.isEmpty else { return }
-        
+
         // 保存媒体副本
         let mediaToSend = viewModel.mediaItems
-        
+
         // 清空输入
         inputText = ""
         viewModel.mediaItems.removeAll()

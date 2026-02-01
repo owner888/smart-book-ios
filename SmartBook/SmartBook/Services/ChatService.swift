@@ -65,7 +65,7 @@ class StreamingChatService: NSObject {
         case .ask:
             url = URL(string: "\(AppConfig.apiBaseURL)/api/stream/ask")!
             body = [
-                "question": message,
+                "message": message,
                 "chat_id": UUID().uuidString,
                 "search": false,
                 "rag": ragEnabled,
@@ -80,7 +80,10 @@ class StreamingChatService: NSObject {
         case .continueWriting:
             url = URL(string: "\(AppConfig.apiBaseURL)/api/stream/continue")!
             body = [
-                "prompt": message,
+                "message": message,
+                "chat_id": UUID().uuidString,
+                "search": false,
+                "rag": ragEnabled,
                 "model": model,
                 "assistant_id": assistant.id,
                 "history": historyArray
@@ -95,6 +98,7 @@ class StreamingChatService: NSObject {
                 "message": message,
                 "chat_id": UUID().uuidString,
                 "search": false,
+                "rag": ragEnabled,
                 "model": model,
                 "assistant_id": assistant.id,
                 "history": historyArray
