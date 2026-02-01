@@ -28,7 +28,7 @@ final class ChatViewModelTests: XCTestCase {
         // Then: 初始状态应该正确
         XCTAssertTrue(viewModel.messages.isEmpty, "初始消息列表应该为空")
         XCTAssertFalse(viewModel.isLoading, "初始不应该在加载中")
-        XCTAssertNil(viewModel.questionMessageId, "初始不应该有问题消息ID")
+        XCTAssertNil(viewModel.currentMessageId, "初始不应该有问题消息ID")
     }
     
     // MARK: - 消息发送测试
