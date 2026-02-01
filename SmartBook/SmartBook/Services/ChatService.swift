@@ -40,6 +40,7 @@ class StreamingChatService: NSObject {
         ragEnabled: Bool = true,
         summary: String? = nil,
         history: [ChatMessage] = [],
+        images: [[String: Any]]? = nil,
         onEvent: @escaping SSEEventHandler,
         onComplete: @escaping CompletionHandler
     ) {
@@ -101,6 +102,12 @@ class StreamingChatService: NSObject {
             if let summary = summary {
                 body["summary"] = summary
             }
+        }
+        
+        // 添加图片数据（如果有）
+        if let images = images, !images.isEmpty {
+            body["images"] = images
+            Logger.info("📎 添加 \(images.count) 张图片到请求")
         }
         
         var request = URLRequest(url: url)

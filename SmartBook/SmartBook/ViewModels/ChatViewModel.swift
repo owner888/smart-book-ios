@@ -13,6 +13,7 @@ class ChatViewModel: ObservableObject {
     @Published var questionMessageId: UUID?
     @Published var scrollBottomOffset = 0.0
     @Published var showedKeyboard = false
+    @Published var mediaItems: [MediaItem] = []
     var scrollProxy: ScrollViewProxy?
     var isKeyboardChange = false
    
@@ -118,18 +119,47 @@ class ChatViewModel: ObservableObject {
     }
 
     @MainActor
-    func sendMessage(_ text: String, enableTTS: Bool = false) async {
+    func sendMessage(_ text: String, mediaItems: [MediaItem] = [], enableTTS: Bool = false) async {
         guard let bookState = bookState else { return }
         
-        // 过滤空字符串（至少2个字符）
+        // 处理媒体数据
+        var mediaDescription = ""
+        if !mediaItems.isEmpty {
+            Logger.info("📎 处理 \(mediaItems.count) 个媒体项")
+            
+            for (index, item) in mediaItems.enumerated() {
+                switch item.type {
+                case .image(let image):
+                    // 图片转base64（供日志使用）
+                    if let imageData = image.jpegData(compressionQuality: 0.8) {
+                        let sizeKB = Double(imageData.count) / 1024.0
+                        mediaDescription += "\n[图片 \(index + 1): \(Int(image.size.width))x\(Int(image.size.height)), \(String(format: "%.1f", sizeKB))KB]"
+                        Logger.info("📸 图片 \(index + 1): \(Int(image.size.width))x\(Int(image.size.height)), \(String(format: "%.1f", sizeKB))KB")
+                    }
+                    
+                case .document(let url):
+                    // 读取文档内容
+                    if let content = try? String(contentsOf: url, encoding: .utf8) {
+                        let preview = String(content.prefix(100))
+                        mediaDescription += "\n[文档 \(index + 1): \(url.lastPathComponent), \(content.count) 字符]\n预览: \(preview)..."
+                        Logger.info("📄 文档 \(index + 1): \(url.lastPathComponent), \(content.count) 字符")
+                    }
+                }
+            }
+        }
+        
+        // 过滤空字符串（如果有媒体，文本可以为空）
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmedText.count >= 2 else {
-            Logger.warn("⚠️ 消息太短或为空，拒绝发送: '\(trimmedText)' (长度: \(trimmedText.count))")
+        if trimmedText.count < 2 && mediaItems.isEmpty {
+            Logger.warn("⚠️ 消息太短且无媒体，拒绝发送")
             return
         }
 
-        Logger.info("📤 发送消息: \(trimmedText), TTS: \(enableTTS)")
-        let userMessage = ChatMessage(role: .user, content: trimmedText)
+        // 组合消息内容
+        let finalContent = trimmedText + mediaDescription
+        Logger.info("📤 发送消息: \(trimmedText.isEmpty ? "[仅媒体]" : trimmedText), 媒体: \(mediaItems.count), TTS: \(enableTTS)")
+        
+        let userMessage = ChatMessage(role: .user, content: finalContent)
         messages.append(userMessage)
         questionMessageId = userMessage.id
         
@@ -166,6 +196,33 @@ class ChatViewModel: ObservableObject {
             }
         }
         
+        // 处理图片数据（转base64）
+        var imagesData: [[String: Any]]? = nil
+        if !mediaItems.isEmpty {
+            var images: [[String: Any]] = []
+            for item in mediaItems {
+                switch item.type {
+                case .image(let image):
+                    // 转JPEG并编码为base64
+                    if let jpegData = image.jpegData(compressionQuality: 0.8) {
+                        let base64String = jpegData.base64EncodedString()
+                        images.append([
+                            "data": base64String,
+                            "mime_type": "image/jpeg"
+                        ])
+                    }
+                case .document:
+                    // 文档暂不支持Vision，跳过
+                    break
+                }
+            }
+            
+            if !images.isEmpty {
+                imagesData = images
+                Logger.info("📸 准备发送 \(images.count) 张图片到服务器")
+            }
+        }
+        
         // 使用流式API
         let assistant = selectedAssistant ?? Assistant.defaultAssistants.first!
         streamingService.sendMessageStream(
@@ -175,7 +232,8 @@ class ChatViewModel: ObservableObject {
             model: selectedModel,
             ragEnabled: true,
             summary: summary,
-            history: recentMessages
+            history: recentMessages,
+            images: imagesData
         ) { [weak self] event in
             guard let self = self else { return }
 

@@ -305,7 +305,7 @@
 
 /* Assistants */
 "assistant.chat" = "通用聊天";
-"assistant.book" = "書籍問答";
+"assistant.ask" = "書籍問答";
 "assistant.continue" = "續寫小說";
 
 /* VIP Upgrade */

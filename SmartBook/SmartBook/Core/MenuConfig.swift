@@ -11,7 +11,7 @@ class MenuConfig {
     
     // 助手配置（动态从服务器加载）
     @MainActor
-    static var assistants: [AssistantType] = [.chat, .book, .continue]
+    static var assistants: [AssistantType] = [.chat, .ask, .continue]
     
     static let topFunctions: [TopFunctionType] = [.getSuper, .createVideo, .editPhoto, .voiceMode, .camera, .analysisDocument, .custom]
     
@@ -37,8 +37,8 @@ class MenuConfig {
                 switch assistant.id {
                 case "chat":
                     return .chat
-                case "book":
-                    return .book
+                case "ask":
+                    return .ask
                 case "continue":
                     return .continue
                 default:
@@ -56,7 +56,7 @@ class MenuConfig {
         } catch {
             Logger.error("⚠️ 加载助手失败，使用默认配置: \(error.localizedDescription)")
             // 保留静态默认值
-            assistants = [.chat, .book, .continue]
+            assistants = [.chat, .ask, .continue]
         }
     }
     
@@ -226,7 +226,7 @@ class MenuConfig {
     
     enum AssistantType: Equatable {
         case chat
-        case book
+        case ask
         case `continue`
         case dynamic(DynamicAssistant)  // 从服务器动态加载的助手
         
@@ -234,8 +234,8 @@ class MenuConfig {
             switch self {
             case .chat:
                 return Config(icon: "💬", title: L("assistant.chat"), builtIn: false)
-            case .book:
-                return Config(icon: "📚", title: L("assistant.book"), builtIn: false)
+            case .ask:
+                return Config(icon: "📚", title: L("assistant.ask"), builtIn: false)
             case .continue:
                 return Config(icon: "✍️", title: L("assistant.continue"), builtIn: false)
             case .dynamic(let assistant):
@@ -251,7 +251,7 @@ class MenuConfig {
         static func == (lhs: AssistantType, rhs: AssistantType) -> Bool {
             switch (lhs, rhs) {
             case (.chat, .chat),
-                 (.book, .book),
+                 (.ask, .ask),
                  (.continue, .continue):
                 return true
             case (.dynamic(let lAssistant), .dynamic(let rAssistant)):

@@ -312,7 +312,7 @@ struct InputToolBarView<Content: View>: View {
         if let matchingAssistant = assistantService.assistants.first(where: {
             switch assistantType {
             case .chat: return $0.id == "chat"
-            case .book: return $0.id == "book"
+            case .ask: return $0.id == "ask"
             case .continue: return $0.id == "continue"
             case .dynamic(let dynamicAssistant): return $0.id == dynamicAssistant.id
             }
@@ -328,7 +328,7 @@ struct InputToolBarView<Content: View>: View {
         if let matchingType = MenuConfig.assistants.first(where: {
             switch $0 {
             case .chat: return currentAssistantId == "chat"
-            case .book: return currentAssistantId == "book"
+            case .ask: return currentAssistantId == "ask"
             case .continue: return currentAssistantId == "continue"
             case .dynamic(let dynamicAssistant): return currentAssistantId == dynamicAssistant.id
             }

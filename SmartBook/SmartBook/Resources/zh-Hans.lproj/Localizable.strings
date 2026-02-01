@@ -323,7 +323,7 @@
 
 /* Assistants */
 "assistant.chat" = "通用聊天";
-"assistant.book" = "书籍问答";
+"assistant.ask" = "书籍问答";
 "assistant.continue" = "续写小说";
 
 /* VIP Upgrade */

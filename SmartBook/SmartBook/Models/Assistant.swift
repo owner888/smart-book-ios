@@ -60,11 +60,11 @@ extension Assistant {
         ),
         Assistant(
             id: "ask",
-            name: L("assistant.book"),
+            name: L("assistant.ask"),
             avatar: "📚",
             color: "#4caf50",
-            description: L("assistant.book"),
-            systemPrompt: "",
+            description: L("assistant.ask"),
+            systemPrompt: "",  // 由服务器端配置（Context Cache）
             action: .ask,
             useRAG: true
         ),

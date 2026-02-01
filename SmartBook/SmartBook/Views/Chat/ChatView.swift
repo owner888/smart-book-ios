@@ -421,18 +421,25 @@ struct ChatView: View {
     // MARK: - 消息发送和处理
 
     func sendMessage() {
-        guard !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else { return }
-
         let text = inputText
+        let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        
+        // 至少需要文本或媒体之一
+        guard hasText || !viewModel.mediaItems.isEmpty else { return }
+        
+        // 保存媒体副本
+        let mediaToSend = viewModel.mediaItems
+        
+        // 清空输入
         inputText = ""
+        viewModel.mediaItems.removeAll()
 
         // 立即收起键盘
         hiddenKeyboard()
         isInputFocused = false
 
         Task {
-            await viewModel.sendMessage(text)
+            await viewModel.sendMessage(text, mediaItems: mediaToSend)
         }
     }
 

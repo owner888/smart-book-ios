@@ -323,7 +323,7 @@
 
 /* Assistants */
 "assistant.chat" = "General Chat";
-"assistant.book" = "Book Q&A";
+"assistant.ask" = "Book Q&A";
 "assistant.continue" = "Continue Writing";
 
 /* VIP Upgrade */
