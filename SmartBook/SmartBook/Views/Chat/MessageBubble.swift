@@ -118,42 +118,19 @@ struct MessageBubble: View {
                     }
                 }
                 .foregroundColor(colors.primaryText)
+                .contextMenu {
+                    // 用户消息右键菜单：只有拷贝
+                    if message.role == .user {
+                        Button(action: {
+                            UIPasteboard.general.string = message.content
+                        }) {
+                            Label(L("chat.contextMenu.copy"), systemImage: "doc.on.doc")
+                        }
+                    }
+                }
             }
             .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
         }
     }
 }
 
-// MARK: - Preview
-
-#Preview {
-    VStack {
-        // 简单模式示例
-        MessageBubble(
-            message: ChatMessage(role: .user, content: "你好"),
-            colors: .dark
-        )
-        
-        // 增强模式示例
-        MessageBubble(
-            message: ChatMessage(
-                role: .assistant,
-                content: "这是一条测试消息",
-                thinking: "我正在思考如何回答...",
-                sources: [
-                    RAGSource(text: "这是第一个检索来源", score: 0.95),
-                    RAGSource(text: "这是第二个检索来源", score: 0.88)
-                ],
-                usage: UsageInfo(
-                    tokens: TokenInfo(input: 1000, output: 500, total: 1500),
-                    cost: 0.0023,
-                    model: "gemini-2.0-flash"
-                )
-            ),
-            assistant: Assistant.defaultAssistants[0],
-            colors: .dark
-        )
-        .padding()
-    }
-    .background(Color.black)
-}
