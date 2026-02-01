@@ -6,6 +6,7 @@ import SwiftUI
 
 /// 聊天视图模型
 class ChatViewModel: ObservableObject {
+    @Published var currentMessageId: UUID?
     @Published var messages: [ChatMessage] = []
     @Published var isLoading = false
     @Published var showScrollToBottom = false
@@ -164,6 +165,7 @@ class ChatViewModel: ObservableObject {
 
         let userMessage = ChatMessage(role: .user, content: finalContent)
         messages.append(userMessage)
+        currentMessageId = userMessage.id
 
         // 保存用户消息
         historyService?.saveMessage(userMessage)
