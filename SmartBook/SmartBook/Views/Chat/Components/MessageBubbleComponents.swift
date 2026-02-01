@@ -226,23 +226,23 @@ struct MessageContentView: View {
         // 创建紧凑的段落样式，移除底部空白
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 0 // 行间距
-        paragraphStyle.minimumLineHeight = 15 // 最小行高
-        paragraphStyle.maximumLineHeight = 15 // 最大行高
+        paragraphStyle.minimumLineHeight = 20 // 最小行高（适应17号字体）
+        paragraphStyle.maximumLineHeight = 20 // 最大行高
         paragraphStyle.lineHeightMultiple = 1.0 // 行高倍数
 
         switch type {
         case "normal":
-            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 15), range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 17), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
 
         case "bold":
-            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 15, weight: .bold), range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 17, weight: .bold), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
 
         case "italic":
-            attributedString.addAttribute(.font, value: UIFont.italicSystemFont(ofSize: 15), range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(.font, value: UIFont.italicSystemFont(ofSize: 17), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
 
@@ -259,18 +259,18 @@ struct MessageContentView: View {
             attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
 
         case "strikethrough":
-            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 15), range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 17), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText).withAlphaComponent(0.6), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
 
         case "faded": // 自定义淡化效果
-            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 15), range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 17), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText).withAlphaComponent(0.4), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
 
         case "link":
-            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 15), range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 17), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.foregroundColor, value: UIColor.blue.withAlphaComponent(0.8), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
@@ -292,12 +292,12 @@ struct MessageContentView: View {
             return attributedString
 
         case "blockquote":
-            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 15), range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 17), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText).withAlphaComponent(0.8), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
 
         default:
-            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 15), range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(.font, value: UIFont.systemFont(ofSize: 17), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText), range: NSRange(location: 0, length: content.count))
             attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
         }
