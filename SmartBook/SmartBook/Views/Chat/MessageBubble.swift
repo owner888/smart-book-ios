@@ -118,18 +118,18 @@ struct MessageBubble: View {
                     }
                 }
                 .foregroundColor(colors.primaryText)
-                .contextMenu {
-                    // 用户消息右键菜单：只有拷贝
-                    if message.role == .user {
-                        Button(action: {
-                            UIPasteboard.general.string = message.content
-                        }) {
-                            Label(L("chat.contextMenu.copy"), systemImage: "doc.on.doc")
-                        }
+            }
+            .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
+            .contextMenu {
+                // 用户消息长按菜单：拷贝
+                if message.role == .user {
+                    Button(action: {
+                        UIPasteboard.general.string = message.content
+                    }) {
+                        Label(L("chat.contextMenu.copy"), systemImage: "doc.on.doc")
                     }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
         }
     }
 }
