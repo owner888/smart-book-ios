@@ -121,10 +121,13 @@ struct MessageContentView: View {
             Text(message.content)
                 .textSelection(.enabled)
         } else {
-            // 使用NSMutableAttributedString渲染Markdown
+            // 使用SelectableText实现真正的文本选择
             let attributedString = markdownToAttributedString(message.content)
-            Text(AttributedString(attributedString)).textSelection(.enabled)
-                
+            SelectableText(
+                attributedText: attributedString,
+                textColor: UIColor(colors.primaryText),
+                backgroundColor: .clear
+            )
         }
     }
     /// 将Markdown内容转换为NSMutableAttributedString
