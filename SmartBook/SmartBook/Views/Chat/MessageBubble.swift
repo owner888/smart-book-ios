@@ -111,26 +111,15 @@ struct MessageBubble: View {
                 }
                 .padding(12)
                 .background {
+                    // 只有用户消息有气泡背景
                     if message.role == .user {
                         RoundedRectangle(cornerRadius: 16)
                             .fill(colors.userBubble)
-                    } else {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(colors.assistantBubble)
                     }
                 }
                 .foregroundColor(colors.primaryText)
-                
-                // 时间戳
-                Text(message.timestamp, style: .time)
-                    .font(.caption2)
-                    .foregroundColor(colors.secondaryText.opacity(0.6))
             }
-            
-            // 助手消息靠左，右侧留空间
-            if message.role == .assistant {
-                Spacer(minLength: 48)
-            }
+            .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
         }
     }
 }
