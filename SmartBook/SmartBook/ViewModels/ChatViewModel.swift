@@ -150,7 +150,7 @@ class ChatViewModel: ObservableObject {
         
         // 过滤空字符串（如果有媒体，文本可以为空）
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmedText.count < 2 && mediaItems.isEmpty {
+        if trimmedText.count == 0 && mediaItems.isEmpty {
             Logger.warn("⚠️ 消息太短且无媒体，拒绝发送")
             return
         }
