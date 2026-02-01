@@ -28,7 +28,7 @@ struct ChatHistoryListView: View {
             if historyService.conversations.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "text.bubble")
-                        .font(.system(size: 50))
+                        .font(.system(size: 50)) // 装饰性大图标
                         .foregroundColor(colors.secondaryText)
                     
                     Text(L("chatHistory.empty"))

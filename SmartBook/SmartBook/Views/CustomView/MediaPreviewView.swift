@@ -64,7 +64,8 @@ struct MediaPreviewView: View {
                             .frame(width: 24, height: 24)
                         
                         Image(systemName: "xmark")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.caption2) // 11号 - 动态字号
+                            .fontWeight(.bold)
                             .foregroundColor(.white)
                     }
                 }
@@ -93,14 +94,15 @@ struct DocumentPreviewView: View {
             
             // 文档图标（居中）
             Image(systemName: "doc.text.fill")
-                .font(.system(size: 32))
+                .font(.largeTitle) // 大图标 - 动态字号
                 .foregroundColor(.white.opacity(0.9))
             
             // 文件类型标签（底部）
             VStack {
                 Spacer()
                 Text(fileExtension)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.caption2) // 11号 - 动态字号
+                    .fontWeight(.medium)
                     .foregroundColor(.white)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
@@ -121,7 +123,8 @@ struct DocumentPreviewView: View {
                         .frame(width: 24, height: 24)
                     
                     Image(systemName: "xmark")
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.caption2) // 11号 - 动态字号
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
                 }
             }

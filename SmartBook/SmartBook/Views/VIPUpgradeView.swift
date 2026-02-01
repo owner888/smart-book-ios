@@ -28,7 +28,7 @@ struct VIPUpgradeView: View {
                             .frame(width: 80, height: 80)
                         
                         Image(systemName: "bolt.circle.fill")
-                            .font(.system(size: 60))
+                            .font(.system(size: 60)) // 装饰性大图标
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [.yellow, .orange],
@@ -94,7 +94,7 @@ struct VIPUpgradeView: View {
                 // 价格区域
                 VStack(spacing: 8) {
                     Text(L("vip.price"))
-                        .font(.system(size: 36, weight: .bold))
+                        .font(.title).fontWeight(.bold) // 大标题 - 动态字号
                     
                     Text(L("vip.trial"))
                         .font(.caption)

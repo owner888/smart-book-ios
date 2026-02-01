@@ -113,7 +113,7 @@ struct SearchView: View {
                         VStack(spacing: 16) {
                             Spacer().frame(height: 60)
                             Image(systemName: "book.closed")
-                                .font(.system(size: 50))
+                                .font(.system(size: 50)) // 装饰性大图标
                                 .foregroundColor(colors.secondaryText)
                             Text(String(format: L("search.noResultsFor"), searchText))
                                 .font(.headline)

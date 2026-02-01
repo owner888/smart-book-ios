@@ -10,7 +10,7 @@ struct EmptyStateView: View {
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "books.vertical")
-                .font(.system(size: 64))
+                .font(.system(size: 64)) // 装饰性大图标
                 .foregroundColor(colors.secondaryText.opacity(0.6))
 
             Text(L("chat.emptyState.title"))
@@ -49,7 +49,7 @@ struct EmptyChatStateView: View {
     var body: some View {
         VStack(spacing: 20) {
             Image(systemName: "bubble.left.and.bubble.right")
-                .font(.system(size: 64))
+                .font(.system(size: 64)) // 装饰性大图标
                 .foregroundColor(colors.secondaryText.opacity(0.6))
 
             Text(L("chat.emptyState.noBookTitle"))

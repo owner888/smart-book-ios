@@ -243,7 +243,7 @@ struct EmptyHomeState: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "book.pages")
-                .font(.system(size: 50))
+                .font(.system(size: 50)) // 装饰性大图标
                 .foregroundColor(colors.secondaryText)
             
             Text(L("home.empty"))

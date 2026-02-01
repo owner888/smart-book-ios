@@ -19,12 +19,12 @@ struct StreamingMessageBubble: View {
                 .frame(width: 36, height: 36)
                 .overlay {
                     Text(assistant.avatar)
-                        .font(.system(size: 18))
+                        .font(.body) // 17号 - 动态字号
                 }
             
             VStack(alignment: .leading, spacing: 8) {
                 Text(assistant.name)
-                    .font(.caption)
+                    .font(.caption) // 12号 - 动态字号
                     .foregroundColor(colors.secondaryText)
                 
                 VStack(alignment: .leading, spacing: 12) {
@@ -66,11 +66,11 @@ struct StreamingMessageBubble: View {
                     Image(systemName: "brain.head.profile")
                         .foregroundColor(.purple)
                     Text("Thinking...")
-                        .font(.caption)
+                        .font(.caption) // 12号 - 动态字号
                         .fontWeight(.medium)
                     Spacer()
                     Image(systemName: isThinkingExpanded ? "chevron.down" : "chevron.right")
-                        .font(.caption)
+                        .font(.caption) // 12号 - 动态字号
                 }
                 .foregroundColor(colors.primaryText)
             }
@@ -78,7 +78,7 @@ struct StreamingMessageBubble: View {
             
             if isThinkingExpanded {
                 Text(thinking)
-                    .font(.caption)
+                    .font(.caption) // 12号 - 动态字号
                     .foregroundColor(colors.secondaryText)
                     .padding(8)
                     .background(

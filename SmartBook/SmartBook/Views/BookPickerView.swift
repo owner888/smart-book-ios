@@ -42,7 +42,7 @@ struct BookPickerView: View {
                 } else if bookState.books.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "books.vertical")
-                            .font(.system(size: 50))
+                            .font(.system(size: 50)) // 装饰性大图标
                             .foregroundColor(themeColors.secondaryText)
                         Text(L("picker.noBooks"))
                             .foregroundColor(themeColors.secondaryText)

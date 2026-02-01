@@ -115,7 +115,7 @@ struct BookshelfView: View {
     private var emptyView: some View {
         VStack(spacing: 20) {
             Image(systemName: "books.vertical")
-                .font(.system(size: 60))
+                .font(.system(size: 60)) // 装饰性大图标
                 .foregroundColor(colors.secondaryText)
             Text(L("library.empty"))
                 .font(.headline)

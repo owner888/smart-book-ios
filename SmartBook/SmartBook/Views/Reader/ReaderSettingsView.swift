@@ -202,7 +202,7 @@ struct BackgroundColorButton: View {
                     
                     Image(systemName: option.icon)
                         .foregroundColor(option.iconColor)
-                        .font(.system(size: 18))
+                        .font(.body) // 17号 - 动态字号
                 }
                 
                 Text(option.name)

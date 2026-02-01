@@ -22,7 +22,7 @@ struct ReaderErrorView: View {
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 50)).foregroundColor(.orange)
+                .font(.system(size: 50)) // 装饰性大图标.foregroundColor(.orange)
             Text(L("error.loading")).foregroundColor(txtColor)
             Button(L("common.back"), action: onDismiss).buttonStyle(.bordered)
         }

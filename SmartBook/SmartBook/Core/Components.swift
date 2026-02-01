@@ -197,7 +197,7 @@ struct BookCoverView: View {
             .overlay {
                 VStack(spacing: 8) {
                     Image(systemName: "book.closed.fill")
-                        .font(.system(size: 32))
+                        .font(.largeTitle) // 大标题 - 动态字号
                         .foregroundColor(colors.secondaryText.opacity(0.5))
                     if showTitle {
                         Text(book.title)

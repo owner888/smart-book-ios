@@ -9,7 +9,8 @@ struct SettingsIcon: View {
     
     var body: some View {
         Image(systemName: icon)
-            .font(.system(size: 14, weight: .semibold))
+            .font(.subheadline) // 15号 - 动态字号
+            .fontWeight(.semibold)
             .foregroundColor(.white)
             .frame(width: 28, height: 28)
             .background(color)
