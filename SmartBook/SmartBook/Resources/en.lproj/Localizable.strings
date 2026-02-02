@@ -322,7 +322,7 @@
 "model.auto.summary" = "Chooses Fast or Expert";
 
 /* Assistants */
-"assistant.chat" = "General Chat";
+"assistant.chat" = "Chat";
 "assistant.ask" = "Book Q&A";
 "assistant.continue" = "Continue Writing";
 
