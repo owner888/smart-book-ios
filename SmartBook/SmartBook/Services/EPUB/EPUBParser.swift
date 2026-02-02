@@ -13,7 +13,7 @@ class EPUBParser {
         var metadata = EPUBMetadata()
         
         guard FileManager.default.fileExists(atPath: epubPath) else {
-            Logger.warn("EPUB file not found: \(epubPath)")
+            Logger.warning("EPUB file not found: \(epubPath)")
             return metadata
         }
         
@@ -65,7 +65,7 @@ class EPUBParser {
     /// 解析 EPUB 完整内容（元数据 + 章节）
     static func parseContent(from epubPath: String) -> EPUBContent? {
         guard FileManager.default.fileExists(atPath: epubPath) else {
-            Logger.warn("EPUB file not found: \(epubPath)")
+            Logger.warning("EPUB file not found: \(epubPath)")
             return nil
         }
         

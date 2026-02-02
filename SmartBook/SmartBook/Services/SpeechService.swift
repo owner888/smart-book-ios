@@ -39,7 +39,7 @@ class SpeechService: ObservableObject {
         isAuthorized = (status == .authorized)
         
         if !isAuthorized {
-            Logger.warn("语音识别权限未授权")
+            Logger.warning("语音识别权限未授权")
         }
     }
     
@@ -50,12 +50,12 @@ class SpeechService: ObservableObject {
         onFinal: @escaping (String) -> Void
     ) {
         guard isAuthorized else {
-            Logger.warn("语音识别未授权")
+            Logger.warning("语音识别未授权")
             return
         }
         
         guard let recognizer = recognizer, recognizer.isAvailable else {
-            Logger.warn("语音识别不可用")
+            Logger.warning("语音识别不可用")
             return
         }
         

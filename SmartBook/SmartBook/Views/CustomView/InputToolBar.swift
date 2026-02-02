@@ -316,7 +316,7 @@ struct InputToolBar: View {
                                         inputText = ""
                                     }
                                 } else {
-                                    Logger.warn("⚠️ 识别文本太短或为空，不自动发送: '\(trimmedText)'")
+                                    Logger.warning("⚠️ 识别文本太短或为空，不自动发送: '\(trimmedText)'")
                                     // 保留在输入框中，让用户决定是否发送
                                 }
                             }

@@ -38,7 +38,7 @@ final class Logger {
     }
     
     /// WARN 级别 - 黄色
-    static func warn(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
+    static func warning(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         log(.warn, message, file: file, function: function, line: line)
     }
     

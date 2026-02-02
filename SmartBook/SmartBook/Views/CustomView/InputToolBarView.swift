@@ -258,7 +258,7 @@ struct InputToolBarView<Content: View>: View {
             if UIImagePickerController.isSourceTypeAvailable(.camera) {
                 showCameraPicker = true
             } else {
-                Logger.warn("⚠️ Camera not available")
+                Logger.warning("⚠️ Camera not available")
             }
         case .photo:
             showPhotoPicker = true
@@ -303,7 +303,7 @@ struct InputToolBarView<Content: View>: View {
             aiFunction = matchingFunction
             Logger.debug("✅ Set aiFunction from model: \(modelId) -> \(matchingFunction.config.title)")
         } else {
-            Logger.warn("⚠️ No matching aiFunction found for model: \(modelId)")
+            Logger.warning("⚠️ No matching aiFunction found for model: \(modelId)")
         }
     }
 

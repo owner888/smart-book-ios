@@ -153,7 +153,7 @@ class ChatViewModel: ObservableObject {
         // 过滤空字符串（如果有媒体，文本可以为空）
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmedText.count == 0 && mediaItems.isEmpty {
-            Logger.warn("⚠️ 消息太短且无媒体，拒绝发送")
+            Logger.warning("⚠️ 消息太短且无媒体，拒绝发送")
             return
         }
 
@@ -348,7 +348,7 @@ class ChatViewModel: ObservableObject {
                                     Logger.info("🔊 Google TTS flush 已发送，等待播放")
                                 }
                             } else {
-                                Logger.warn("⚠️ 未知的 TTS provider: \(self.ttsProvider)")
+                                Logger.warning("⚠️ 未知的 TTS provider: \(self.ttsProvider)")
                             }
                         }
 

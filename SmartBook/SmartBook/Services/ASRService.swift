@@ -216,7 +216,7 @@ class ASRService: ObservableObject {
     @MainActor
     private func recognizeAudio() async {
         guard !audioBuffer.isEmpty else {
-            Logger.warn("没有录音数据")
+            Logger.warning("没有录音数据")
             return
         }
         
