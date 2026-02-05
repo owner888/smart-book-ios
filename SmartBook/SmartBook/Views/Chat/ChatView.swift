@@ -139,8 +139,7 @@ struct ChatView: View {
 
                 // 如果有当前对话（从历史列表选择的），加载消息
                 // 否则等待用户发送第一条消息时自动创建对话
-                if let currentConversation = historyService?.currentConversation
-                {
+                if let currentConversation = historyService?.currentConversation {
                     viewModel.loadCurrentConversation()
                     Logger.info("📖 加载现有对话: \(currentConversation.title)")
                 } else {
@@ -384,7 +383,7 @@ struct ChatView: View {
             },
             action: { newValue in
                 if !viewModel.keyboardChanging {
-                    if let lastPosition = lastAnchorPosition,abs(newValue.maxY - lastPosition) > 100 {
+                    if let lastPosition = lastAnchorPosition, abs(newValue.maxY - lastPosition) > 100 {
                         lastAnchorPosition = nil
                         return
                     }
