@@ -18,6 +18,7 @@ struct InputToolBarView<Content: View>: View {
     @Environment(ModelService.self) private var modelService
     @Environment(AssistantService.self) private var assistantService
     @State private var themeManager = ThemeManager.shared
+    @State private var beforeAdaptationBottom = 0.0
 
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -46,32 +47,32 @@ struct InputToolBarView<Content: View>: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                ZStack(alignment: .bottom) {
-                    content
-                    VStack(spacing: 0) {
-                        if !hiddenTopView {
-                            InputTopView { function in
-                                // 处理顶部功能
-                            }
-                        } else {
-                            if viewModel.showScrollToBottom {
-                                HStack {
-                                    Spacer()
-                                    Button {
-                                        viewModel.forceScrollToBottom = true
-                                        viewModel.scrollToBottom()
-                                    } label: {
-                                        Color.white.opacity(0.001).frame(width: 42, height: 42).overlay {
-                                            Image(systemName: "chevron.down")
-                                                .foregroundStyle(.apprBlack)
-                                        }
-                                    }.glassEffect(
-                                        size: CGSize(width: 42, height: 42)
-                                    )
-                                }.padding(.bottom, 2).padding(.trailing, 12)
+                VStack {
+                    VStack {
+                        ZStack(alignment: .bottom) {
+                            content
+                            if !hiddenTopView {
+                                InputTopView { function in
+                                    // 处理顶部功能
+                                }.padding(.bottom,6)
+                            } else {
+                                if viewModel.showScrollToBottom {
+                                    HStack {
+                                        Spacer()
+                                        Button {
+                                            viewModel.scrollToBottom()
+                                        } label: {
+                                            Color.white.opacity(0.001).frame(width: 42, height: 42).overlay {
+                                                Image(systemName: "chevron.down")
+                                                    .foregroundStyle(.apprBlack)
+                                            }
+                                        }.glassEffect(
+                                            size: CGSize(width: 42, height: 42)
+                                        )
+                                    }.padding(.bottom, 2).padding(.trailing, 12)
+                                }
                             }
                         }
-
                         InputToolBar(
                             viewModel: viewModel,
                             aiFunction: $aiFunction,
@@ -107,11 +108,11 @@ struct InputToolBarView<Content: View>: View {
                                 onSend?()
                             }
                         )
-                    }
-                    .padding(.horizontal, 18)
-                }
-                .padding(.bottom, keyboardHeight)
-
+                    }.clipShape(Rectangle()).padding(.horizontal, 18)
+                    if keyboardHeight == 0 {
+                        Color.clear.frame(height: viewModel.safeAreaBottom)
+                   }
+                }.padding(.bottom, keyboardHeight)
                 if showMediaMenu {
                     CustomMenuView(
                         alignment: .bottomLeading,
@@ -354,7 +355,6 @@ struct InputToolBarView<Content: View>: View {
             if let keyboardFrame = notification.userInfo?[
                 UIResponder.keyboardFrameEndUserInfoKey
             ] as? CGRect {
-                viewModel.isKeyboardChange = true
                 // 获取键盘在屏幕坐标系中的高度
                 let window = UIApplication.shared.connectedScenes
                     .compactMap { $0 as? UIWindowScene }
@@ -368,28 +368,31 @@ struct InputToolBarView<Content: View>: View {
                     )
                     let keyboardHeight =
                         window.bounds.height - keyboardFrameInWindow.origin.y
-
+                    self.keyboardHeight = keyboardHeight
                     // 减去底部安全区域的高度
                     let bottomSafeArea = window.safeAreaInsets.bottom
                     let adjustedKeyboardHeight = max(
                         0,
                         keyboardHeight - bottomSafeArea
                     )
+                    
                     keyboardHeightChanged?(adjustedKeyboardHeight)
-                    withAnimation(.easeOut(duration: 0.25)) {
-                        self.keyboardHeight = adjustedKeyboardHeight
-                    }
-                }
-                DispatchQueue.main.asyncAfter(
-                    deadline: .now() + 0.5,
-                    execute: {
-                        if !viewModel.showScrollToBottom && viewModel.forceScrollToBottom {
-                            viewModel.scrollToBottom()
+                    viewModel.keyboardChanging = true
+                    if viewModel.scrollBottom > adjustedKeyboardHeight {
+                        viewModel.reducedScrollBottom = true
+                        beforeAdaptationBottom = viewModel.scrollBottom
+                        viewModel.scrollBottom -= adjustedKeyboardHeight
+                    } else if !viewModel.showScrollToBottom {
+                        if viewModel.scrollBottom > 20 {
+                            viewModel.reducedScrollBottom = true
+                            beforeAdaptationBottom = viewModel.scrollBottom
+                            viewModel.scrollBottom = 20
                         }
-                        viewModel.isKeyboardChange = false
-                        viewModel.showedKeyboard = true
                     }
-                )
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
+                        viewModel.keyboardChanging = false
+                    })
+                }
             }
         }
 
@@ -398,21 +401,22 @@ struct InputToolBarView<Content: View>: View {
             object: nil,
             queue: .main
         ) { _ in
-            viewModel.isKeyboardChange = true
+            viewModel.keyboardChanging = true
             keyboardHeightChanged?(0)
-            withAnimation(.easeOut(duration: 0.25)) {
-                self.keyboardHeight = 0
+            self.keyboardHeight = 0
+            viewModel.keyboardChanging = true
+            if viewModel.reducedScrollBottom {
+                viewModel.scrollBottom = beforeAdaptationBottom
             }
-            DispatchQueue.main.asyncAfter(
-                deadline: .now() + 0.5,
-                execute: {
-                    if !viewModel.showScrollToBottom && viewModel.forceScrollToBottom {
-                        viewModel.scrollToBottom()
-                    }
-                    viewModel.isKeyboardChange = false
-                    viewModel.showedKeyboard = false
-                }
-            )
+            viewModel.reducedScrollBottom = false
+//            if !viewModel.showScrollToBottom {
+//                withAnimation(.easeIn(duration: 0.2)) {
+//                    viewModel.scrollToBottom(animate: false)
+//                }
+//            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
+                viewModel.keyboardChanging = false
+            })
         }
     }
 

@@ -10,15 +10,14 @@ class ChatViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var isLoading = false
     @Published var showScrollToBottom = false
-    @Published var scrollBottom = 0.0
-    @Published var scrollBottomOffset = 0.0
-    @Published var showedKeyboard = false
     @Published var mediaItems: [MediaItem] = []
+    @Published var scrollBottom = 0.0
     var scrollProxy: ScrollViewProxy?
-    var isKeyboardChange = false
+    var answerMessageId = UUID()
+    var reducedScrollBottom = false
+    var keyboardChanging = false
+    var safeAreaBottom = 0.0
 
-    // 强制滚动到底部
-    var forceScrollToBottom = false
 
     var bookState: BookState?
     var historyService: ChatHistoryService?
@@ -177,8 +176,9 @@ class ChatViewModel: ObservableObject {
         cancelDisplay()
 
         // 创建一个临时的助手消息用于流式更新
-        let streamingMessage = ChatMessage(role: .assistant, content: "")
+        let streamingMessage = ChatMessage(role: .assistant, content: "",isStreaming: true)
         messages.append(streamingMessage)
+        answerMessageId = streamingMessage.id
         let messageIndex = messages.count - 1
         currentMessageIndex = messageIndex
 
@@ -263,8 +263,10 @@ class ChatViewModel: ObservableObject {
                     if messageIndex < self.messages.count {
                         self.cancelDisplay()
                         self.messages[messageIndex] = ChatMessage(
+                            id: self.messages[messageIndex].id,
                             role: .assistant,
-                            content: "❌ 错误: \(error)"
+                            content: "❌ 错误: \(error)",
+                            isStreaming: false
                         )
                     }
 
@@ -306,7 +308,8 @@ class ChatViewModel: ObservableObject {
                                 sources: currentMessage.sources,
                                 usage: currentMessage.usage,
                                 systemPrompt: currentMessage.systemPrompt,
-                                stoppedByUser: true
+                                stoppedByUser: true,
+                                isStreaming: false,
                             )
                         }
                         Logger.info("⏹️ 用户取消了请求，不保存到数据库")
@@ -315,8 +318,10 @@ class ChatViewModel: ObservableObject {
                         // 真正的错误
                         if messageIndex < self.messages.count {
                             self.messages[messageIndex] = ChatMessage(
+                                id: self.messages[messageIndex].id,
                                 role: .assistant,
-                                content: "❌ 请求失败: \(error.localizedDescription)"
+                                content: "❌ 请求失败: \(error.localizedDescription)",
+                                isStreaming: false
                             )
                         }
                     }
@@ -326,7 +331,11 @@ class ChatViewModel: ObservableObject {
                     // 保存助手消息到数据库
                     if messageIndex < self.messages.count {
                         let messageContent = self.answerContents.joined()
-                        let finalMessage = ChatMessage(role: .assistant, content: messageContent)
+                        let finalMessage = ChatMessage(
+                            id: self.messages[messageIndex].id,
+                            role: .assistant,
+                            content: messageContent
+                        )
                         self.historyService?.saveMessage(finalMessage)
                         Logger.info("💾 保存助手回复到数据库")
 
@@ -506,6 +515,7 @@ class ChatViewModel: ObservableObject {
                             if self.currentMessageIndex < self.messages.count {
                                 self.streamingContent += word
                                 self.messages[self.currentMessageIndex] = ChatMessage(
+                                    id: self.messages[self.currentMessageIndex].id,
                                     role: .assistant,
                                     content: self.streamingContent,
                                     isStreaming: true
@@ -518,13 +528,13 @@ class ChatViewModel: ObservableObject {
                         }
                     } else {
                         self.messages[self.currentMessageIndex] = ChatMessage(
+                            id: self.messages[self.currentMessageIndex].id,
                             role: .assistant,
                             content: self.streamingContent,
                             isStreaming: false
                         )
                         self.isLoading = false
                         self.cancelDisplay()
-                        self.scrollBottom = 0
                     }
                 }
             )

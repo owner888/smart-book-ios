@@ -21,12 +21,22 @@ struct ChatView: View {
     @State private var keyboardHeight: CGFloat = 0
     @State private var uploadProgress: Double = 0
     @State private var isUploading = false
+    @State private var messageHeights = [UUID: CGFloat]()
+    @State private var scrollViewFrame = CGRect.zero
+    @State private var headerSpacer = 0.0
+    @State private var adaptationBottom: CGFloat?
+    @State private var answerInitialHeight = 0.0
+    @State private var lastAnchorPosition: CGFloat?
 
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
 
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
+    }
+
+    var scrollViewHeight: CGFloat {
+        return scrollViewFrame.height
     }
 
     var body: some View {
@@ -129,7 +139,8 @@ struct ChatView: View {
 
                 // 如果有当前对话（从历史列表选择的），加载消息
                 // 否则等待用户发送第一条消息时自动创建对话
-                if let currentConversation = historyService?.currentConversation {
+                if let currentConversation = historyService?.currentConversation
+                {
                     viewModel.loadCurrentConversation()
                     Logger.info("📖 加载现有对话: \(currentConversation.title)")
                 } else {
@@ -154,7 +165,8 @@ struct ChatView: View {
     var chatContent: some View {
         NavigationStack {
             GeometryReader { proxy in
-                ZStack {
+                viewModel.safeAreaBottom = proxy.safeAreaInsets.bottom
+                return ZStack {
                     colors.background.ignoresSafeArea()
                     VStack(spacing: 0) {
                         // 聊天内容区域
@@ -162,48 +174,29 @@ struct ChatView: View {
                             viewModel: viewModel,
                             inputText: $inputText,
                             content: {
-                                VStack(spacing: 0) {
-                                    if let book = bookState.selectedBook {
-                                        BookContextBar(
-                                            book: book,
-                                            colors: colors
-                                        ) {
-                                            withAnimation {
-                                                bookState.selectedBook = nil
-                                            }
-                                        }
-                                    }
-
-                                    // 系统提示词显示（如果有）
-                                    if !assistantService.currentAssistant.systemPrompt.isEmpty {
-                                        AssistantPromptBar(
-                                            assistant: assistantService.currentAssistant,
-                                            colors: colors
-                                        )
-                                    }
-
+                                ZStack(alignment: .top) {
                                     // 对话列表（始终显示，无论是否选择书籍）
                                     if viewModel.messages.isEmpty {
-                                        Spacer()
-                                        if bookState.books.isEmpty {
-                                            EmptyStateView(
-                                                colors: colors,
-                                                onAddBook: {
-                                                    showBookPicker = true
-                                                }
-                                            )
-                                        } else {
-                                            EmptyChatStateView(
-                                                colors: colors,
-                                                onAddBook: {
-                                                    showBookPicker = true
-                                                }
-                                            )
+                                        VStack {
+                                            Spacer()
+                                            if bookState.books.isEmpty {
+                                                EmptyStateView(
+                                                    colors: colors,
+                                                    onAddBook: {
+                                                        showBookPicker = true
+                                                    }
+                                                )
+                                            } else {
+                                                EmptyChatStateView(
+                                                    colors: colors,
+                                                    onAddBook: {
+                                                        showBookPicker = true
+                                                    }
+                                                )
+                                            }
+                                            Spacer()
                                         }
-                                        Color.clear.frame(height: 70)
-                                        Spacer()
                                     } else {
-
                                         ZStack(alignment: .bottom) {
                                             // 有消息时显示对话列表
                                             ScrollViewReader { scrollProxy in
@@ -219,121 +212,82 @@ struct ChatView: View {
                                                                 message:
                                                                     message,
                                                                 colors: colors
+                                                            ).onGeometryChange(
+                                                                for: CGFloat
+                                                                    .self,
+                                                                of: { geo in
+                                                                    geo.frame(
+                                                                        in:
+                                                                            .global
+                                                                    ).height
+                                                                },
+                                                                action: {
+                                                                    newValue in
+                                                                    messageChangedSize(
+                                                                        newValue,
+                                                                        id:
+                                                                            message
+                                                                            .id
+                                                                    )
+                                                                }
                                                             )
                                                             .id(message.id)
                                                         }
                                                     }
-                                                    .padding(.horizontal, 18)
-                                                    .padding(.vertical, 8)
-                                                    GeometryReader {
-                                                        currentProxy in
-                                                        Color.clear.frame(
-                                                            height: 120
-                                                        )
-                                                        .onChange(
-                                                            of:
-                                                                currentProxy
-                                                                .frame(
-                                                                    in: .global
-                                                                ).maxY
-                                                        ) { _, newValue in
-                                                            viewModel
-                                                                .scrollBottomOffset =
-                                                                newValue
-                                                            if !viewModel
-                                                                .isKeyboardChange
-                                                            {
-                                                                let height =
-                                                                    proxy.size
-                                                                    .height
-                                                                    + proxy
-                                                                    .safeAreaInsets
-                                                                    .top
-                                                                    - keyboardHeight
-                                                                    + 6
-                                                                let isShow =
-                                                                    newValue
-                                                                    > height
-                                                                if viewModel
-                                                                    .isLoading
-                                                                {
-                                                                    if isShow {
-                                                                        viewModel
-                                                                            .scrollToBottom(
-                                                                                animate:
-                                                                                    false
-                                                                            )
-                                                                        viewModel
-                                                                            .showScrollToBottom =
-                                                                            false
-
-                                                                        viewModel
-                                                                            .forceScrollToBottom =
-                                                                            true
-                                                                    }
-                                                                } else {
-                                                                    viewModel
-                                                                        .showScrollToBottom =
-                                                                        isShow
-                                                                }
-
-                                                            }
-                                                        }.id("bottomAnchor")
-                                                    }.frame(height: 110)
                                                     Color.clear.frame(
                                                         height: viewModel
                                                             .scrollBottom
                                                     )
-                                                }
-                                                .onScrollPhaseChange {
-                                                    oldPhase,
-                                                    newPhase in
-                                                    // 检测用户手指拖曳滚动
-                                                    if newPhase == .interacting {
-                                                        viewModel
-                                                            .forceScrollToBottom =
-                                                            false
-                                                    }
-                                                }
-                                                .onChange(
-                                                    of: viewModel
-                                                        .currentMessageId
-                                                ) { _, _ in
-                                                    if let messageId = viewModel
-                                                        .currentMessageId
-                                                    {
-                                                        viewModel.scrollBottom =
-                                                            max(
-                                                                0,
-                                                                proxy.size
-                                                                    .height
-                                                                    - 280
+                                                    bottomAnchorView
+
+                                                }.scrollClipDisabled()
+                                                    .contentMargins(
+                                                        .top,
+                                                        headerSpacer,
+                                                        for: .scrollContent
+                                                    ).onGeometryChange(
+                                                        for: CGRect.self,
+                                                        of: { geo in
+                                                            geo.frame(
+                                                                in: .global
                                                             )
-                                                        viewModel
-                                                            .forceScrollToBottom =
-                                                            false
-                                                        // 延迟一点让UI更新完成
-                                                        DispatchQueue.main
-                                                            .asyncAfter(
-                                                                deadline: .now()
-                                                                    + 0.1
-                                                            ) {
-                                                                // 使用 viewModel.scrollProxy 而不是局部变量
-                                                                withAnimation {
-                                                                    viewModel
-                                                                        .scrollProxy?
-                                                                        .scrollTo(
-                                                                            messageId,
-                                                                            anchor:
-                                                                                .top
-                                                                        )
-                                                                }
-                                                            }
-                                                    }
+                                                        },
+                                                        action: { newValue in
+                                                            scrollViewFrame =
+                                                                newValue
+                                                            scrollViewChangedSize()
+                                                        }
+                                                    )
+                                            }
+                                        }
+                                    }
+                                    VStack(spacing: 0) {
+                                        if let book = bookState.selectedBook {
+                                            BookContextBar(
+                                                book: book,
+                                                colors: colors
+                                            ) {
+                                                withAnimation {
+                                                    bookState.selectedBook = nil
                                                 }
                                             }
-                                            colors.background.frame(height: 10)
+                                            // 系统提示词显示（如果有）
+                                            if !assistantService
+                                                .currentAssistant.systemPrompt
+                                                .isEmpty
+                                            {
+                                                AssistantPromptBar(
+                                                    assistant: assistantService
+                                                        .currentAssistant,
+                                                    colors: colors
+                                                )
+                                            }
                                         }
+                                    }.onGeometryChange(for: CGFloat.self) {
+                                        geo in
+                                        geo.frame(in: .global).height
+                                    } action: { newValue in
+                                        headerSpacer = newValue
                                     }
                                 }
                             },
@@ -343,16 +297,18 @@ struct ChatView: View {
                             }
                         )
                         .environmentObject(sideObser)
-                        colors.background.frame(
-                            height: proxy.safeAreaInsets.bottom
-                        )
                     }
                     .ignoresSafeArea(.container, edges: .bottom)
-                }.onChange(of: viewModel.showedKeyboard) {
-                    let height = proxy.size.height + proxy.safeAreaInsets.top - keyboardHeight + 6
-                    viewModel.showScrollToBottom =
-                        viewModel.scrollBottomOffset
-                        > height
+                    .onChange(
+                        of: viewModel
+                            .currentMessageId
+                    ) {
+                        if viewModel
+                            .currentMessageId != nil
+                        {
+                            onSended()
+                        }
+                    }
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -418,11 +374,100 @@ struct ChatView: View {
         }
     }
 
-    // MARK: - 消息发送和处理
+    var bottomAnchorView: some View {
+        Color.clear.frame(
+            height: 1
+        ).id("bottomAnchor").onGeometryChange(
+            for: CGRect.self,
+            of: { geo in
+                geo.frame(in: .global)
+            },
+            action: { newValue in
+                if !viewModel.keyboardChanging {
+                    if let lastPosition = lastAnchorPosition,abs(newValue.maxY - lastPosition) > 100 {
+                        lastAnchorPosition = nil
+                        return
+                    }
+                    let distance = newValue.maxY - scrollViewFrame.maxY
+                    viewModel.showScrollToBottom = distance > 16
+                    lastAnchorPosition = newValue.maxY
+                }
+            }
+        )
+        .onAppear {
+            if !viewModel.keyboardChanging {
+                viewModel.showScrollToBottom = false
+            }
+        }.onDisappear {
+            if !viewModel.keyboardChanging {
+                viewModel.showScrollToBottom = true
+            }
+        }
+    }
 
+    private func scrollViewChangedSize() {
+        if !viewModel.showScrollToBottom {
+            viewModel.scrollToBottom(animate: false)
+        }
+    }
+
+    private func messageChangedSize(_ height: CGFloat, id: UUID) {
+        messageHeights[id] = height
+        if id == viewModel.answerMessageId,
+            let bottom = adaptationBottom,
+            viewModel.isLoading
+        {
+            viewModel.scrollBottom = max(bottom - height, 0)
+        }
+    }
+
+    private func onSended() {
+        adaptationBottom = nil
+        answerInitialHeight = 0
+        DispatchQueue.main.asyncAfter(
+            deadline: .now() + 0.25,
+            execute: {
+                if let messageId = viewModel.currentMessageId {
+                    if messageHeights[messageId] != nil {
+                        scrollToMessageTop(messageId)
+                    } else {
+                        viewModel.scrollToBottom(animate: false)
+                        DispatchQueue.main.asyncAfter(
+                            deadline: .now() + 0.2,
+                            execute: {
+                                scrollToMessageTop(messageId)
+                            }
+                        )
+                    }
+                }
+            }
+        )
+    }
+
+    private func scrollToMessageTop(_ messageId: UUID) {
+        if let height = messageHeights[messageId] {
+            viewModel.scrollBottom = max(
+                scrollViewHeight - height - headerSpacer - 30.0,
+                0
+            )
+            adaptationBottom = viewModel.scrollBottom
+            if let answerHeight = messageHeights[
+                viewModel.answerMessageId
+            ] {
+                answerInitialHeight = answerHeight
+                viewModel.scrollBottom -= answerHeight
+            }
+            withAnimation {
+                viewModel.scrollProxy?.scrollTo(messageId, anchor: .top)
+            }
+        }
+    }
+
+    // MARK: - 消息发送和处理
     func sendMessage() {
         let text = inputText
-        let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines)
+            .isEmpty
 
         // 至少需要文本或媒体之一
         guard hasText || !viewModel.mediaItems.isEmpty else { return }

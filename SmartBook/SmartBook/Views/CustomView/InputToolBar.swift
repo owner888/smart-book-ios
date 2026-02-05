@@ -49,7 +49,7 @@ struct InputToolBar: View {
                         Logger.info("🗑️ Document removed: \(url.lastPathComponent), remaining: \(mediaItems.count - 1)")
                     }
                     mediaItems.removeAll { $0.id == item.id }
-                }
+                }.padding(.top,10)
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
             
