@@ -58,9 +58,9 @@ class StreamingChatService: NSObject {
         case .continueWriting:
             endpoint = "continue"
         case .chat:
-            endpoint = "chat"
+            endpoint = "completions"
         }
-        let url = URL(string: "\(AppConfig.apiBaseURL)/v1/chat/completions")!
+        let url = URL(string: "\(AppConfig.apiBaseURL)/v1/chat/\(endpoint)")!
 
         // 构建 OpenAI 格式的 messages 数组
         var messagesArray: [[String: Any]] = []
