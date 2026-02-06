@@ -235,7 +235,7 @@ class ChatViewModel: ObservableObject {
             assistant: assistant,
             bookId: bookState.selectedBook?.id,
             model: selectedModel,
-            ragEnabled: true,
+            ragEnabled: false,
             summary: summary,
             history: recentMessages,
             images: imagesData
