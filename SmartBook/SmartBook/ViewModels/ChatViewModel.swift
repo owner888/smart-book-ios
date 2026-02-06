@@ -20,8 +20,9 @@ class ChatViewModel: ObservableObject {
     
     // MARK: - 摘要配置
     
-    /// 摘要触发阈值（未摘要消息数量）
-    private let summarizationThreshold = 15
+    /// 摘要触发阈值（同时也是保留的历史消息数量）
+    /// 当未摘要消息数 > 此值时，触发摘要生成，并保留最近N条作为历史
+    private let summarizationThreshold = 3
     
     /// 摘要助手（静态常量，避免重复创建）
     private static let summaryAssistant = Assistant(
@@ -34,7 +35,6 @@ class ChatViewModel: ObservableObject {
         action: .chat,
         useRAG: false
     )
-
 
     var bookState: BookState?
     var historyService: ChatHistoryService?
@@ -400,21 +400,21 @@ class ChatViewModel: ObservableObject {
     /// 返回：(摘要文本, 最近消息数组)
     private func getContext() -> (String?, [ChatMessage]) {
         guard let conversation = historyService?.currentConversation else {
-            return (nil, Array(messages.suffix(10)))
+            return (nil, Array(messages.suffix(summarizationThreshold)))
         }
 
         let summarizedCount = conversation.summarizedMessageCount
 
-        // 如果有摘要，返回摘要 + 未摘要的消息
+        // 如果有摘要，返回摘要 + 未摘要的最近N条消息
         if let summary = conversation.summary, summarizedCount > 0 {
             let unsummarizedMessages = Array(messages.dropFirst(summarizedCount))
-            let recentMessages = Array(unsummarizedMessages.suffix(10))
+            let recentMessages = Array(unsummarizedMessages.suffix(summarizationThreshold))
             Logger.info("📝 使用摘要 (\(summarizedCount)条) + 最近\(recentMessages.count)条消息")
             return (summary, recentMessages)
         }
 
-        // 没有摘要，返回最近10条
-        let recentMessages = Array(messages.suffix(10))
+        // 没有摘要，返回最近N条
+        let recentMessages = Array(messages.suffix(summarizationThreshold))
         return (nil, recentMessages)
     }
 
@@ -426,8 +426,8 @@ class ChatViewModel: ObservableObject {
         let summarizedCount = conversation.summarizedMessageCount
         let unsummarizedCount = totalMessages - summarizedCount
 
-        // 达到阈值时触发摘要生成
-        if unsummarizedCount >= summarizationThreshold {
+        // 当未摘要消息数超过阈值时触发（例：阈值3，有4条时触发，摘要1条，保留3条）
+        if unsummarizedCount > summarizationThreshold {
             Task {
                 await generateSummary()
             }
@@ -440,13 +440,16 @@ class ChatViewModel: ObservableObject {
         guard let conversation = historyService?.currentConversation else { return }
 
         let summarizedCount = conversation.summarizedMessageCount
-        let messagesToSummarize = Array(messages.dropFirst(summarizedCount).prefix(10))
+        let unsummarizedMessages = Array(messages.dropFirst(summarizedCount))
+        
+        // 摘要所有未摘要消息，但保留最近N条作为历史
+        let messagesToSummarize = Array(unsummarizedMessages.dropLast(summarizationThreshold))
 
         if messagesToSummarize.isEmpty {
             return
         }
 
-        Logger.info("🤖 开始生成摘要，处理 \(messagesToSummarize.count) 条消息...")
+        Logger.info("🤖 开始生成摘要，处理 \(messagesToSummarize.count) 条消息（保留最近\(summarizationThreshold)条作为历史）...")
 
         // 构建摘要请求
         var conversationText = ""
