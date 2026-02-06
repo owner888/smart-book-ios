@@ -147,6 +147,12 @@ struct ChatView: View {
                 }
             }
 
+            // 初始化摘要服务
+            if viewModel.summarizationService == nil {
+                viewModel.summarizationService = SummarizationService(threshold: viewModel.summarizationThreshold)
+                Logger.info("✅ 摘要服务已初始化，阈值: \(viewModel.summarizationThreshold)")
+            }
+
             viewModel.bookState = bookState
             viewModel.selectedAssistant = assistantService.currentAssistant
             viewModel.selectedModel = modelService.currentModel.id

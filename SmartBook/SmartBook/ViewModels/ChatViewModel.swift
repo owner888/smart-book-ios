@@ -21,23 +21,11 @@ class ChatViewModel: ObservableObject {
     // MARK: - 摘要配置
     
     /// 摘要触发阈值（同时也是保留的历史消息数量）
-    /// 当未摘要消息数 > 此值时，触发摘要生成，并保留最近N条作为历史
-    private let summarizationThreshold = 3
-    
-    /// 摘要助手（静态常量，避免重复创建）
-    private static let summaryAssistant = Assistant(
-        id: "summarize",
-        name: "摘要助手",
-        avatar: "📝",
-        color: "#9c27b0",
-        description: "对话摘要助手",
-        systemPrompt: "你是一个专业的对话摘要助手。",
-        action: .chat,
-        useRAG: false
-    )
+    let summarizationThreshold = 3
 
     var bookState: BookState?
     var historyService: ChatHistoryService?
+    var summarizationService: SummarizationService?
     var selectedAssistant: Assistant?
     var selectedModel: String = "gemini-2.0-flash"
     private let streamingService: StreamingChatService
@@ -180,7 +168,10 @@ class ChatViewModel: ObservableObject {
         )
 
         // 先获取上下文（在添加新消息之前）
-        let (summary, recentMessages) = getContext()
+        let (summary, recentMessages) = summarizationService?.getContext(
+            messages: messages,
+            conversation: historyService?.currentConversation
+        ) ?? (nil, Array(messages.suffix(3)))
 
         // 再添加用户消息
         let userMessage = ChatMessage(role: .user, content: finalContent)
@@ -380,7 +371,11 @@ class ChatViewModel: ObservableObject {
                         }
 
                         // 检查是否需要生成摘要
-                        self.checkAndTriggerSummarization()
+                        self.summarizationService?.checkAndTriggerSummarization(
+                            messages: self.messages,
+                            conversation: self.historyService?.currentConversation,
+                            historyService: self.historyService
+                        )
                     }
                     break
                 }
@@ -392,120 +387,6 @@ class ChatViewModel: ObservableObject {
         historyService?.clearCurrentConversationMessages()
         messages.removeAll()
         streamingContent = ""
-    }
-
-    // MARK: - 上下文管理
-
-    /// 获取对话上下文（摘要 + 最近消息）
-    /// 返回：(摘要文本, 最近消息数组)
-    private func getContext() -> (String?, [ChatMessage]) {
-        guard let conversation = historyService?.currentConversation else {
-            return (nil, Array(messages.suffix(summarizationThreshold)))
-        }
-
-        let summarizedCount = conversation.summarizedMessageCount
-
-        // 如果有摘要，返回摘要 + 未摘要的最近N条消息
-        if let summary = conversation.summary, summarizedCount > 0 {
-            let unsummarizedMessages = Array(messages.dropFirst(summarizedCount))
-            let recentMessages = Array(unsummarizedMessages.suffix(summarizationThreshold))
-            Logger.info("📝 使用摘要 (\(summarizedCount)条) + 最近\(recentMessages.count)条消息")
-            return (summary, recentMessages)
-        }
-
-        // 没有摘要，返回最近N条
-        let recentMessages = Array(messages.suffix(summarizationThreshold))
-        return (nil, recentMessages)
-    }
-
-    /// 检查是否需要生成摘要
-    private func checkAndTriggerSummarization() {
-        guard let conversation = historyService?.currentConversation else { return }
-
-        let totalMessages = messages.count
-        let summarizedCount = conversation.summarizedMessageCount
-        let unsummarizedCount = totalMessages - summarizedCount
-
-        // 当未摘要消息数超过阈值时触发（例：阈值3，有4条时触发，摘要1条，保留3条）
-        if unsummarizedCount > summarizationThreshold {
-            Task {
-                await generateSummary()
-            }
-        }
-    }
-
-    /// 生成对话摘要
-    @MainActor
-    private func generateSummary() async {
-        guard let conversation = historyService?.currentConversation else { return }
-
-        let summarizedCount = conversation.summarizedMessageCount
-        let unsummarizedMessages = Array(messages.dropFirst(summarizedCount))
-        
-        // 摘要所有未摘要消息，但保留最近N条作为历史
-        let messagesToSummarize = Array(unsummarizedMessages.dropLast(summarizationThreshold))
-
-        if messagesToSummarize.isEmpty {
-            return
-        }
-
-        Logger.info("🤖 开始生成摘要，处理 \(messagesToSummarize.count) 条消息（保留最近\(summarizationThreshold)条作为历史）...")
-
-        // 构建摘要请求
-        var conversationText = ""
-        if let existingSummary = conversation.summary {
-            conversationText += "【之前的摘要】\n\(existingSummary)\n\n【新对话】\n"
-        }
-
-        for msg in messagesToSummarize {
-            let role = msg.role == .user ? "用户" : "AI"
-            conversationText += "\(role): \(msg.content)\n\n"
-        }
-
-        let summarizePrompt = """
-            请将以上对话总结成一个简洁的摘要，保留关键信息和上下文。
-            摘要应该：
-            1. 概括主要讨论的话题
-            2. 记录重要的结论或决定
-            3. 保持简洁，不超过200字
-            """
-
-        // 调用 AI 生成摘要（使用流式 API）
-        var generatedSummary = ""
-
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            streamingService.sendMessageStream(
-                message: conversationText + "\n\n" + summarizePrompt,
-                assistant: Self.summaryAssistant,
-                bookId: nil,
-                model: "gemini-2.0-flash",
-                ragEnabled: false,
-                summary: nil,
-                history: []
-            ) { event in
-                if case .content(let content) = event {
-                    generatedSummary += content
-                }
-            } onComplete: { _ in
-                continuation.resume()
-            }
-        }
-
-        // 保存生成的摘要
-        guard !generatedSummary.isEmpty else {
-            Logger.error("❌ 摘要生成失败，内容为空")
-            return
-        }
-        
-        conversation.summary = generatedSummary
-        conversation.summarizedMessageCount = summarizedCount + messagesToSummarize.count
-        conversation.touch()
-        
-        // 通过 historyService 保存到数据库
-        historyService?.saveSummary(summary: generatedSummary, messageCount: conversation.summarizedMessageCount)
-        
-        Logger.info("✅ AI 摘要已保存，已摘要消息数: \(conversation.summarizedMessageCount)")
-        Logger.info("📝 摘要内容: \(generatedSummary.prefix(100))...")
     }
 
     func wordByWordDisplay() {
