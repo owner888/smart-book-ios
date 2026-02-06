@@ -60,25 +60,33 @@ class StreamingChatService: NSObject {
         case .chat:
             endpoint = "chat"
         }
-        let url = URL(string: "\(AppConfig.apiBaseURL)/api/stream/\(endpoint)")!
+        let url = URL(string: "\(AppConfig.apiBaseURL)/v1/chat/completions")!
 
-        // 转换历史消息格式
-        let historyArray = history.map { msg in
-            return [
+        // 构建 OpenAI 格式的 messages 数组
+        var messagesArray: [[String: Any]] = []
+        
+        // 添加历史消息
+        for msg in history {
+            messagesArray.append([
                 "role": msg.role == .user ? "user" : "assistant",
-                "content": msg.content,
-            ] as [String: Any]
+                "content": msg.content
+            ])
         }
+        
+        // 添加当前消息
+        messagesArray.append([
+            "role": "user",
+            "content": message
+        ])
 
-        // 构建统一的请求体
+        // 构建统一的请求体（OpenAI 格式 + 扩展字段）
         var body: [String: Any] = [
-            "message": message,
+            "messages": messagesArray,
             "chat_id": UUID().uuidString,
             "search": false,
             "rag": ragEnabled,
             "model": model,
             "assistant_id": assistant.id,
-            "history": historyArray,
         ]
 
         // 添加摘要（如果有）
@@ -95,6 +103,7 @@ class StreamingChatService: NSObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(AppConfig.apiKey)", forHTTPHeaderField: "Authorization")
         request.httpBody = try? JSONSerialization.data(withJSONObject: body)
         request.timeoutInterval = 300  // 5分钟超时
 
@@ -103,6 +112,7 @@ class StreamingChatService: NSObject {
         print("📤 发送聊天请求到后端")
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         print("🌐 URL: \(url.absoluteString)")
+        print("🔑 API Key: \(AppConfig.apiKey.prefix(20))...")
         print("🤖 Assistant ID: \(assistant.id)")
         print("📋 Assistant Name: \(assistant.name)")
         print("🎯 Action: \(assistant.action)")

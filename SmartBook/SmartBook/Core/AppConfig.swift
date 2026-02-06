@@ -21,6 +21,12 @@ enum AppConfig {
         Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? DefaultValues.apiBaseURL
     }
     
+    /// API Key
+    /// 从 Info.plist 读取（Secrets.xcconfig）
+    static var apiKey: String {
+        Bundle.main.infoDictionary?["API_KEY"] as? String ?? ""
+    }
+    
     // MARK: - UserDefaults Keys
     
     enum Keys {
