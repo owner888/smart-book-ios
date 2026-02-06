@@ -17,6 +17,23 @@ class ChatViewModel: ObservableObject {
     var reducedScrollBottom = false
     var keyboardChanging = false
     var safeAreaBottom = 0.0
+    
+    // MARK: - 摘要配置
+    
+    /// 摘要触发阈值（未摘要消息数量）
+    private let summarizationThreshold = 15
+    
+    /// 摘要助手（静态常量，避免重复创建）
+    private static let summaryAssistant = Assistant(
+        id: "summarize",
+        name: "摘要助手",
+        avatar: "📝",
+        color: "#9c27b0",
+        description: "对话摘要助手",
+        systemPrompt: "你是一个专业的对话摘要助手。",
+        action: .chat,
+        useRAG: false
+    )
 
 
     var bookState: BookState?
@@ -402,7 +419,6 @@ class ChatViewModel: ObservableObject {
     }
 
     /// 检查是否需要生成摘要
-    /// 当消息数量超过20条且没有摘要时触发
     private func checkAndTriggerSummarization() {
         guard let conversation = historyService?.currentConversation else { return }
 
@@ -410,8 +426,8 @@ class ChatViewModel: ObservableObject {
         let summarizedCount = conversation.summarizedMessageCount
         let unsummarizedCount = totalMessages - summarizedCount
 
-        // 超过20条未摘要的消息时触发
-        if unsummarizedCount >= 20 {
+        // 达到阈值时触发摘要生成
+        if unsummarizedCount >= summarizationThreshold {
             Task {
                 await generateSummary()
             }
@@ -455,48 +471,38 @@ class ChatViewModel: ObservableObject {
         var generatedSummary = ""
 
         await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            // 使用通用聊天助手生成摘要
-            let chatAssistant = Assistant(
-                id: "summarize",
-                name: "摘要助手",
-                avatar: "📝",
-                color: "#9c27b0",
-                description: "对话摘要助手",
-                systemPrompt: "你是一个专业的对话摘要助手。",
-                action: .chat,
-                useRAG: false
-            )
-
             streamingService.sendMessageStream(
                 message: conversationText + "\n\n" + summarizePrompt,
-                assistant: chatAssistant,
+                assistant: Self.summaryAssistant,
                 bookId: nil,
-                model: "gemini-2.0-flash",  // 使用快速模型生成摘要
+                model: "gemini-2.0-flash",
                 ragEnabled: false,
                 summary: nil,
-                history: []  // 摘要请求不需要历史
+                history: []
             ) { event in
-                // 收集摘要内容
                 if case .content(let content) = event {
                     generatedSummary += content
                 }
-            } onComplete: { result in
-                // 摘要生成完成
+            } onComplete: { _ in
                 continuation.resume()
             }
         }
 
         // 保存生成的摘要
-        if !generatedSummary.isEmpty {
-            conversation.summary = generatedSummary
-            conversation.summarizedMessageCount = summarizedCount + messagesToSummarize.count
-
-            historyService?.saveSummary(summary: generatedSummary, messageCount: conversation.summarizedMessageCount)
-            Logger.info("✅ AI 摘要已保存，已摘要消息数: \(conversation.summarizedMessageCount)")
-            Logger.info("📝 摘要内容: \(generatedSummary.prefix(100))...")
-        } else {
+        guard !generatedSummary.isEmpty else {
             Logger.error("❌ 摘要生成失败，内容为空")
+            return
         }
+        
+        conversation.summary = generatedSummary
+        conversation.summarizedMessageCount = summarizedCount + messagesToSummarize.count
+        conversation.touch()
+        
+        // 通过 historyService 保存到数据库
+        historyService?.saveSummary(summary: generatedSummary, messageCount: conversation.summarizedMessageCount)
+        
+        Logger.info("✅ AI 摘要已保存，已摘要消息数: \(conversation.summarizedMessageCount)")
+        Logger.info("📝 摘要内容: \(generatedSummary.prefix(100))...")
     }
 
     func wordByWordDisplay() {
