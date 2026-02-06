@@ -80,9 +80,13 @@ class SummarizationService {
         let totalMessages = messages.count
         let summarizedCount = conversation.summarizedMessageCount
         let unsummarizedCount = totalMessages - summarizedCount
+        
+        // threshold 代表轮数（1轮=用户+AI=2条消息）
+        // 例：threshold=3 → 3轮对话 → 6条消息
+        let roundThreshold = threshold * 2
 
         // 当未摘要消息数超过阈值时触发
-        if unsummarizedCount > threshold {
+        if unsummarizedCount > roundThreshold {
             Task {
                 await generateSummary(
                     messages: messages,
