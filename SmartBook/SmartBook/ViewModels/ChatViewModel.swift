@@ -162,6 +162,10 @@ class ChatViewModel: ObservableObject {
             "📤 发送消息: \(trimmedText.isEmpty ? "[仅媒体]" : trimmedText), 媒体: \(mediaItems.count), TTS: \(enableTTS)"
         )
 
+        // 先获取上下文（在添加新消息之前）
+        let (summary, recentMessages) = getContext()
+
+        // 再添加用户消息
         let userMessage = ChatMessage(role: .user, content: finalContent)
         messages.append(userMessage)
         currentMessageId = userMessage.id
@@ -181,9 +185,6 @@ class ChatViewModel: ObservableObject {
         answerMessageId = streamingMessage.id
         let messageIndex = messages.count - 1
         currentMessageIndex = messageIndex
-
-        // 获取上下文（摘要 + 最近消息）
-        let (summary, recentMessages) = getContext()
 
         // 如果启用 TTS 且使用 Google，启动流式 TTS
         if enableTTS && ttsProvider == "google" {
