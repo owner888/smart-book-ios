@@ -8,35 +8,34 @@ import Foundation
 class ASRStreamService: NSObject, ObservableObject {
     @Published var transcript = ""
     @Published var isRecording = false
-    @Published var isConnected = false
     @Published var error: String?
     @Published var audioLevel: Float = 0.0  // 音频音量级别 (0.0-1.0)
     @Published var isDetectingAudio = false  // 是否检测到音频
     @Published var statusMessage: String?  // 状态提示消息
 
-    private var webSocketTask: URLSessionWebSocketTask?
+    // ✅ 使用统一的 WebSocketClient
+    private var wsClient: WebSocketClient?
     private let audioEngine = AVAudioEngine()
     private var audioFormat: AVAudioFormat?
 
     private var onTranscriptUpdate: ((String, Bool) -> Void)?
     private var onDeepgramReady: (() -> Void)?
-    private var heartbeatTimer: Timer?
-    private var reconnectTimer: Timer?
-    private var shouldAutoReconnect = true  // 是否自动重连
-    private var reconnectAttempts = 0
     private var lastTranscriptTime: Date?  // 最后收到识别结果的时间
     private var noAudioTimer: Timer?  // 无音频检测计时器
     private var deepgramConnectionTime: Date?  // Deepgram 连接时间
+    
+    // ✅ 连接状态从 WebSocketClient 获取
+    var isConnected: Bool {
+        wsClient?.isConnected ?? false
+    }
 
     override init() {
         super.init()
     }
 
     deinit {
-        heartbeatTimer?.invalidate()
-        reconnectTimer?.invalidate()
+        wsClient?.disconnect()
         noAudioTimer?.invalidate()
-        shouldAutoReconnect = false
     }
 
     // MARK: - WebSocket 连接
@@ -65,20 +64,29 @@ class ASRStreamService: NSObject, ObservableObject {
             return
         }
 
-        // 创建 WebSocket 连接
-        let session = URLSession(configuration: .default)
-        webSocketTask = session.webSocketTask(with: url)
-        webSocketTask?.resume()
-
-        isConnected = true
-
-        // 开始接收消息
-        receiveMessage()
-
-        // 启动心跳保持连接
-        startHeartbeat()
-
-        Logger.info("WebSocket 连接成功，心跳已启动")
+        // ✅ 使用 WebSocketClient 统一管理连接
+        wsClient = WebSocketClient(url: url)
+        
+        wsClient?.connect(
+            onConnected: {
+                Logger.info("ASR WebSocket 连接成功")
+            },
+            onDisconnected: { [weak self] error in
+                if let error = error {
+                    Logger.error("ASR WebSocket 断开: \(error.localizedDescription)")
+                    self?.error = error.localizedDescription
+                }
+            },
+            onMessage: { [weak self] message in
+                switch message {
+                case .text(let text):
+                    self?.handleTextMessage(text)
+                case .data:
+                    // ASR 不处理二进制消息
+                    break
+                }
+            }
+        )
     }
 
     @MainActor
@@ -86,50 +94,16 @@ class ASRStreamService: NSObject, ObservableObject {
         guard isConnected else { return }
 
         // 发送停止消息
-        let stopMessage: [String: Any] = ["type": "stop"]
-        await sendMessage(stopMessage)
+        try? await wsClient?.send(json: ["type": "stop"])
 
-        // 关闭连接
-        webSocketTask?.cancel(with: .goingAway, reason: nil)
-        webSocketTask = nil
-        isConnected = false
+        // ✅ 使用 WebSocketClient 断开
+        wsClient?.disconnect()
+        wsClient = nil
 
-        Logger.info("WebSocket 连接已关闭")
+        Logger.info("ASR WebSocket 连接已关闭")
     }
 
     // MARK: - 消息处理
-
-    private func receiveMessage() {
-        webSocketTask?.receive { [weak self] result in
-            guard let self = self else { return }
-
-            switch result {
-            case .success(let message):
-                switch message {
-                case .string(let text):
-                    self.handleTextMessage(text)
-                case .data:
-                    // 不处理二进制消息
-                    break
-                @unknown default:
-                    break
-                }
-
-                // 继续接收下一条消息
-                self.receiveMessage()
-
-            case .failure(let error):
-                Logger.error("ASR WebSocket Error: \(error.localizedDescription)")
-                Task { @MainActor in
-                    self.error = error.localizedDescription
-                    self.isConnected = false
-
-                    // 触发自动重连
-                    self.startAutoReconnect()
-                }
-            }
-        }
-    }
 
     private func handleTextMessage(_ text: String) {
         guard let data = text.data(using: .utf8),
@@ -240,16 +214,9 @@ class ASRStreamService: NSObject, ObservableObject {
     }
 
     private func sendMessage(_ message: [String: Any]) async {
-        guard let data = try? JSONSerialization.data(withJSONObject: message),
-            let text = String(data: data, encoding: .utf8)
-        else {
-            return
-        }
-
-        let message = URLSessionWebSocketTask.Message.string(text)
-
+        // ✅ 使用 WebSocketClient 发送消息
         do {
-            try await webSocketTask?.send(message)
+            try await wsClient?.send(json: message)
         } catch {
             Logger.error("发送消息失败: \(error.localizedDescription)")
         }
@@ -520,74 +487,12 @@ class ASRStreamService: NSObject, ObservableObject {
     }
 
     private func sendAudioData(_ data: Data) async {
-        let message = URLSessionWebSocketTask.Message.data(data)
-
+        // ✅ 使用 WebSocketClient 发送音频数据
         do {
-            try await webSocketTask?.send(message)
+            try await wsClient?.send(data: data)
         } catch {
             // 忽略发送错误，避免日志刷屏
         }
     }
 
-    // MARK: - 心跳
-
-    func startHeartbeat() {
-        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            guard let self = self, self.isConnected else { return }
-
-            Task {
-                await self.sendMessage(["type": "ping"])
-            }
-        }
-    }
-
-    // MARK: - 断线重连
-
-    @MainActor
-    private func startAutoReconnect() {
-        // 如果不允许自动重连，直接返回
-        guard shouldAutoReconnect else { return }
-
-        reconnectAttempts += 1
-
-        // 计算重连延迟（指数退避，最大 30 秒）
-        let delay = min(Double(reconnectAttempts) * 2.0, 30.0)
-
-        Logger.info("🔄 将在 \(delay) 秒后重连（第 \(reconnectAttempts) 次）")
-
-        // 取消之前的重连计时器
-        reconnectTimer?.invalidate()
-
-        // 创建新的重连计时器
-        reconnectTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
-            guard let self = self else { return }
-
-            Task { @MainActor in
-                Logger.info("🔄 尝试重新连接...")
-                await self.connect()
-
-                // 如果连接成功，重置重连计数
-                if self.isConnected {
-                    self.reconnectAttempts = 0
-                    Logger.info("✅ 重连成功")
-                }
-            }
-        }
-    }
-
-    // 停止自动重连
-    @MainActor
-    func stopAutoReconnect() {
-        shouldAutoReconnect = false
-        reconnectTimer?.invalidate()
-        reconnectTimer = nil
-        Logger.info("⏹️ 已停止自动重连")
-    }
-
-    // 启用自动重连
-    @MainActor
-    func enableAutoReconnect() {
-        shouldAutoReconnect = true
-        Logger.info("▶️ 已启用自动重连")
-    }
 }
