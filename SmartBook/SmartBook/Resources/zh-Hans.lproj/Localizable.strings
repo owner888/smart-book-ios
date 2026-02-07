@@ -277,6 +277,35 @@
 "error.storageFull" = "存储空间不足";
 "error.loading" = "加载失败";
 
+/* API Errors */
+"error.api.serverError" = "服务器错误，请稍后重试";
+"error.api.networkError" = "网络连接失败，请检查网络";
+"error.api.timeout" = "请求超时，请重试";
+"error.api.unauthorized" = "未授权，请检查 API Key";
+"error.api.notFound" = "请求的资源未找到";
+"error.api.invalidRequest" = "请求参数错误";
+"error.api.parseError" = "数据解析失败";
+"error.api.unknown" = "未知错误";
+
+/* Book Errors */
+"error.book.notFound" = "书籍文件未找到";
+"error.book.invalidFormat" = "不支持的书籍格式";
+"error.book.corrupted" = "书籍文件已损坏";
+"error.book.uploadFailed" = "上传失败，请重试";
+"error.book.deleteFailed" = "删除失败";
+"error.book.cannotDeleteBundled" = "无法删除内置书籍";
+
+/* Chat Errors */
+"error.chat.sendFailed" = "发送消息失败";
+"error.chat.noBook" = "请先选择一本书";
+"error.chat.emptyMessage" = "消息不能为空";
+"error.chat.streamError" = "流式响应错误";
+
+/* Media Errors */
+"error.media.accessDenied" = "无法访问相册，请在设置中授权";
+"error.media.invalidImage" = "无效的图片格式";
+"error.media.tooLarge" = "文件过大，请选择较小的文件";
+
 /* Navigation */
 "nav.library" = "资料库";
 "nav.recent" = "最近";

@@ -6,16 +6,118 @@ import Foundation
 enum APIError: LocalizedError {
     case serverError
     case networkError
+    case timeout
+    case unauthorized
+    case notFound
+    case invalidRequest
+    case parseError
+    case unknown
     case custom(String)
     
     var errorDescription: String? {
         switch self {
         case .serverError:
-            return "服务器错误"
+            return L("error.api.serverError")
         case .networkError:
-            return "网络连接失败"
+            return L("error.api.networkError")
+        case .timeout:
+            return L("error.api.timeout")
+        case .unauthorized:
+            return L("error.api.unauthorized")
+        case .notFound:
+            return L("error.api.notFound")
+        case .invalidRequest:
+            return L("error.api.invalidRequest")
+        case .parseError:
+            return L("error.api.parseError")
+        case .unknown:
+            return L("error.api.unknown")
         case .custom(let message):
             return message
+        }
+    }
+    
+    /// 从 HTTP 状态码创建错误
+    static func from(statusCode: Int) -> APIError {
+        switch statusCode {
+        case 401:
+            return .unauthorized
+        case 404:
+            return .notFound
+        case 400:
+            return .invalidRequest
+        case 408:
+            return .timeout
+        case 500...599:
+            return .serverError
+        default:
+            return .unknown
+        }
+    }
+}
+
+// MARK: - 书籍错误
+enum BookError: LocalizedError {
+    case notFound
+    case invalidFormat
+    case corrupted
+    case uploadFailed
+    case deleteFailed
+    case cannotDeleteBundled
+    
+    var errorDescription: String? {
+        switch self {
+        case .notFound:
+            return L("error.book.notFound")
+        case .invalidFormat:
+            return L("error.book.invalidFormat")
+        case .corrupted:
+            return L("error.book.corrupted")
+        case .uploadFailed:
+            return L("error.book.uploadFailed")
+        case .deleteFailed:
+            return L("error.book.deleteFailed")
+        case .cannotDeleteBundled:
+            return L("error.book.cannotDeleteBundled")
+        }
+    }
+}
+
+// MARK: - 聊天错误
+enum ChatError: LocalizedError {
+    case sendFailed
+    case noBook
+    case emptyMessage
+    case streamError
+    
+    var errorDescription: String? {
+        switch self {
+        case .sendFailed:
+            return L("error.chat.sendFailed")
+        case .noBook:
+            return L("error.chat.noBook")
+        case .emptyMessage:
+            return L("error.chat.emptyMessage")
+        case .streamError:
+            return L("error.chat.streamError")
+        }
+    }
+}
+
+// MARK: - 媒体错误
+enum MediaError: LocalizedError {
+    case accessDenied
+    case invalidImage
+    case tooLarge
+    
+    var errorDescription: String? {
+        switch self {
+        case .accessDenied:
+            return L("error.media.accessDenied")
+        case .invalidImage:
+            return L("error.media.invalidImage")
+        case .tooLarge:
+            return L("error.media.tooLarge")
         }
     }
 }

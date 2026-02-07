@@ -277,6 +277,35 @@
 "error.storageFull" = "Storage is full";
 "error.loading" = "Failed to load";
 
+/* API Errors */
+"error.api.serverError" = "Server error, please try again later";
+"error.api.networkError" = "Network connection failed, please check your network";
+"error.api.timeout" = "Request timeout, please try again";
+"error.api.unauthorized" = "Unauthorized, please check API Key";
+"error.api.notFound" = "Requested resource not found";
+"error.api.invalidRequest" = "Invalid request parameters";
+"error.api.parseError" = "Failed to parse data";
+"error.api.unknown" = "Unknown error";
+
+/* Book Errors */
+"error.book.notFound" = "Book file not found";
+"error.book.invalidFormat" = "Unsupported book format";
+"error.book.corrupted" = "Book file is corrupted";
+"error.book.uploadFailed" = "Upload failed, please try again";
+"error.book.deleteFailed" = "Failed to delete";
+"error.book.cannotDeleteBundled" = "Cannot delete bundled books";
+
+/* Chat Errors */
+"error.chat.sendFailed" = "Failed to send message";
+"error.chat.noBook" = "Please select a book first";
+"error.chat.emptyMessage" = "Message cannot be empty";
+"error.chat.streamError" = "Streaming response error";
+
+/* Media Errors */
+"error.media.accessDenied" = "Cannot access photos, please authorize in Settings";
+"error.media.invalidImage" = "Invalid image format";
+"error.media.tooLarge" = "File is too large, please choose a smaller file";
+
 /* Navigation */
 "nav.library" = "Library";
 "nav.recent" = "Recent";
