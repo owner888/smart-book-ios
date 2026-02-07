@@ -229,7 +229,7 @@ class ASRService: ObservableObject {
             // Base64 编码
             let base64Audio = wavData.base64EncodedString()
             
-            // ✅ 使用 APIClient 发送请求
+            // ✅ 使用 HTTPClient 发送请求
             let requestBody: [String: Any] = [
                 "audio": base64Audio,
                 "encoding": "LINEAR16",
@@ -238,7 +238,7 @@ class ASRService: ObservableObject {
                 "model": config?.defaultModel ?? "nova-2"
             ]
             
-            let (data, httpResponse) = try await APIClient.shared.post(
+            let (data, httpResponse) = try await HTTPClient.shared.post(
                 "/api/asr/recognize",
                 body: requestBody,
                 timeout: 60  // ASR 可能需要较长时间

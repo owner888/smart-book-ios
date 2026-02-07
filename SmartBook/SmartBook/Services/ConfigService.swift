@@ -72,8 +72,8 @@ class ConfigService<Item: ConfigItem> {
         defer { isLoading = false }
         
         do {
-            // ✅ 使用 APIClient 统一请求
-            let (data, httpResponse) = try await APIClient.shared.get(apiEndpoint)
+            // ✅ 使用 HTTPClient 统一请求
+            let (data, httpResponse) = try await HTTPClient.shared.get(apiEndpoint)
             
             guard httpResponse.statusCode == 200 else {
                 // 使用默认配置

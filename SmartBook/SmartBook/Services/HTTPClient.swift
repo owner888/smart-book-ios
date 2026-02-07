@@ -1,5 +1,5 @@
-// APIClient.swift - API 请求客户端
-// 封装通用的 API 请求配置（JSON、Authorization、超时等）
+// HTTPClient.swift - HTTP 请求客户端
+// 封装通用的 HTTP 请求配置（JSON、Authorization、超时等）
 
 import Foundation
 
@@ -12,13 +12,13 @@ enum HTTPMethod: String {
     case PATCH
 }
 
-/// API 客户端
-/// 提供统一的 API 请求方法，自动处理通用配置
-class APIClient {
+/// HTTP 客户端
+/// 提供统一的 HTTP 请求方法，自动处理通用配置
+class HTTPClient {
     
     // MARK: - 单例
     
-    static let shared = APIClient()
+    static let shared = HTTPClient()
     
     private init() {}
     

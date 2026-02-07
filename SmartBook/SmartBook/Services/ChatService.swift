@@ -100,8 +100,8 @@ class StreamingChatService: NSObject {
             Logger.info("📎 添加 \(images.count) 张图片到请求")
         }
 
-        // ✅ 使用 APIClient 创建 SSE 流式请求
-        let task = APIClient.shared.streamingPost("/v1/chat/\(endpoint)", body: body, delegate: self)
+        // ✅ 使用 HTTPClient 创建 SSE 流式请求
+        let task = HTTPClient.shared.streamingPost("/v1/chat/\(endpoint)", body: body, delegate: self)
         
         // 🐛 调试：打印发送的请求数据
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")

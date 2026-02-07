@@ -298,14 +298,14 @@ class BookService {
     // MARK: - API 调用
     
     func fetchBooksFromAPI() async throws -> [Book] {
-        // ✅ 使用 APIClient 统一请求
-        let (data, httpResponse) = try await APIClient.shared.get("/api/books")
+        // ✅ 使用 HTTPClient 统一请求
+        let (data, httpResponse) = try await HTTPClient.shared.get("/api/books")
         
         guard httpResponse.statusCode == 200 else {
             throw APIError.from(statusCode: httpResponse.statusCode)
         }
         
-        let booksResponse = try APIClient.shared.decode(BooksResponse.self, from: data)
+        let booksResponse = try HTTPClient.shared.decode(BooksResponse.self, from: data)
         
         if let error = booksResponse.error {
             throw APIError.custom(error)
@@ -317,8 +317,8 @@ class BookService {
     func searchBook(_ bookId: String, query: String) async throws -> [SearchResult] {
         Logger.debug("Searching in book \(bookId) for: \(query)")
         
-        // ✅ 使用 APIClient 统一请求
-        let (data, httpResponse) = try await APIClient.shared.post(
+        // ✅ 使用 HTTPClient 统一请求
+        let (data, httpResponse) = try await HTTPClient.shared.post(
             "/api/books/\(bookId)/search",
             body: ["query": query]
         )
@@ -327,7 +327,7 @@ class BookService {
             throw APIError.from(statusCode: httpResponse.statusCode)
         }
         
-        let searchResponse = try APIClient.shared.decode(SearchResponse.self, from: data)
+        let searchResponse = try HTTPClient.shared.decode(SearchResponse.self, from: data)
         return searchResponse.results ?? []
     }
     
@@ -343,8 +343,8 @@ class BookService {
         let filename = URL(fileURLWithPath: filePath).lastPathComponent
         
         do {
-            // ✅ 使用 APIClient 发送请求
-            let (data, httpResponse) = try await APIClient.shared.post(
+            // ✅ 使用 HTTPClient 发送请求
+            let (data, httpResponse) = try await HTTPClient.shared.post(
                 "/api/books/select",
                 body: ["book": filename]
             )
@@ -355,7 +355,7 @@ class BookService {
                 try await uploadBook(filePath: filePath, onProgress: onProgress)
                 
                 // 上传成功后重新选择
-                let (data2, httpResponse2) = try await APIClient.shared.post(
+                let (data2, httpResponse2) = try await HTTPClient.shared.post(
                     "/api/books/select",
                     body: ["book": filename]
                 )
@@ -364,7 +364,7 @@ class BookService {
                     throw APIError.from(statusCode: httpResponse2.statusCode)
                 }
                 
-                let result = try APIClient.shared.decode(SelectBookResponse.self, from: data2)
+                let result = try HTTPClient.shared.decode(SelectBookResponse.self, from: data2)
                 if let error = result.error {
                     throw APIError.custom(error)
                 }
@@ -378,7 +378,7 @@ class BookService {
             }
             
             // 解析响应
-            let result = try APIClient.shared.decode(SelectBookResponse.self, from: data)
+            let result = try HTTPClient.shared.decode(SelectBookResponse.self, from: data)
             if let error = result.error {
                 throw APIError.custom(error)
             }
@@ -404,8 +404,8 @@ class BookService {
         Logger.info("🚀 开始上传...")
         
         do {
-            // ✅ 使用 APIClient 上传文件
-            let (data, httpResponse) = try await APIClient.shared.upload(
+            // ✅ 使用 HTTPClient 上传文件
+            let (data, httpResponse) = try await HTTPClient.shared.upload(
                 "/api/books/upload",
                 fileData: fileData,
                 filename: filename,
@@ -421,7 +421,7 @@ class BookService {
                 throw APIError.from(statusCode: httpResponse.statusCode)
             }
             
-            let result = try APIClient.shared.decode(UploadResponse.self, from: data)
+            let result = try HTTPClient.shared.decode(UploadResponse.self, from: data)
             if result.success != true {
                 Logger.error("❌ 上传失败: \(result.error ?? "未知错误")")
                 throw BookError.uploadFailed
