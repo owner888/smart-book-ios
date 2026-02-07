@@ -163,6 +163,43 @@ class APIClient {
         return (data, httpResponse)
     }
     
+    // MARK: - SSE 流式请求
+    
+    /// 发送 SSE 流式请求（用于聊天等场景）
+    /// - Parameters:
+    ///   - endpoint: API 端点
+    ///   - body: 请求体
+    ///   - delegate: URLSessionDataDelegate（处理流式响应）
+    /// - Returns: URLSessionDataTask
+    func streamingPost(
+        _ endpoint: String,
+        body: [String: Any],
+        delegate: URLSessionDataDelegate
+    ) -> URLSessionDataTask {
+        let urlString = "\(AppConfig.apiBaseURL)\(endpoint)"
+        guard let url = URL(string: urlString) else {
+            fatalError("Invalid URL: \(urlString)")
+        }
+        
+        // 创建请求
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 300  // 5分钟超时
+        
+        // ✅ 统一设置 headers
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(AppConfig.apiKey)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        
+        // 创建带 delegate 的 session
+        let config = URLSessionConfiguration.default
+        let session = URLSession(configuration: config, delegate: delegate, delegateQueue: nil)
+        
+        // 创建并返回 task
+        let task = session.dataTask(with: request)
+        return task
+    }
+    
     // MARK: - 辅助方法
     
     /// 解码 JSON 响应

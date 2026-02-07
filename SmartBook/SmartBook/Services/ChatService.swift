@@ -100,13 +100,9 @@ class StreamingChatService: NSObject {
             Logger.info("📎 添加 \(images.count) 张图片到请求")
         }
 
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(AppConfig.apiKey)", forHTTPHeaderField: "Authorization")
-        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-        request.timeoutInterval = 300  // 5分钟超时
-
+        // ✅ 使用 APIClient 创建 SSE 流式请求
+        let task = APIClient.shared.streamingPost("/v1/chat/\(endpoint)", body: body, delegate: self)
+        
         // 🐛 调试：打印发送的请求数据
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         print("📤 发送聊天请求到后端")
@@ -125,8 +121,7 @@ class StreamingChatService: NSObject {
         }
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
 
-        // 使用复用的 session
-        let task = session.dataTask(with: request)
+        // 保存并启动 task
         currentTask = task
         task.resume()
     }
