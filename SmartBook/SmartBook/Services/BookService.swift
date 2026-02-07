@@ -144,7 +144,8 @@ class BookService {
         do {
             let files = try fileManager.contentsOfDirectory(atPath: booksPath)
             for file in files {
-                if file.hasSuffix(".epub") {
+                // ✅ 支持 EPUB 和 PDF
+                if file.hasSuffix(".epub") || file.hasSuffix(".pdf") {
                     let filePath = (booksPath as NSString).appendingPathComponent(file)
                     if let book = createBook(from: file, path: filePath) {
                         books.append(book)
@@ -165,7 +166,8 @@ class BookService {
         do {
             let files = try fileManager.contentsOfDirectory(atPath: userBooksDirectory.path)
             for file in files {
-                if file.hasSuffix(".epub") {
+                // ✅ 支持 EPUB 和 PDF
+                if file.hasSuffix(".epub") || file.hasSuffix(".pdf") {
                     let filePath = userBooksDirectory.appendingPathComponent(file).path
                     if let book = createBook(from: file, path: filePath) {
                         books.append(book)
@@ -182,8 +184,19 @@ class BookService {
     private func loadBooksFromBundleRoot() -> [Book] {
         var books: [Book] = []
         
-        if let urls = Bundle.main.urls(forResourcesWithExtension: "epub", subdirectory: nil) {
-            for url in urls {
+        // ✅ 支持 EPUB
+        if let epubURLs = Bundle.main.urls(forResourcesWithExtension: "epub", subdirectory: nil) {
+            for url in epubURLs {
+                let filename = url.lastPathComponent
+                if let book = createBook(from: filename, path: url.path) {
+                    books.append(book)
+                }
+            }
+        }
+        
+        // ✅ 支持 PDF
+        if let pdfURLs = Bundle.main.urls(forResourcesWithExtension: "pdf", subdirectory: nil) {
+            for url in pdfURLs {
                 let filename = url.lastPathComponent
                 if let book = createBook(from: filename, path: url.path) {
                     books.append(book)
@@ -245,16 +258,37 @@ class BookService {
     private func createBook(from filename: String, path: String) -> Book? {
         let id = filename.data(using: .utf8)?.base64EncodedString() ?? UUID().uuidString
         let defaultTitle = (filename as NSString).deletingPathExtension
-        let metadata = EPUBParser.parseMetadataForiOS(from: path)
+        let ext = (filename as NSString).pathExtension.lowercased()
         
-        let title = metadata.title ?? defaultTitle
-        let author = metadata.author ?? guessAuthor(for: defaultTitle)
-        
+        // ✅ 根据文件类型选择解析器
+        let title: String
+        let author: String
         var coverURL: String? = nil
-        if let cachedCoverPath = EPUBParser.getCachedCoverPath(for: id) {
-            coverURL = cachedCoverPath.absoluteString
-        } else if let newCoverPath = EPUBParser.extractAndCacheCover(from: path, bookId: id) {
-            coverURL = newCoverPath.absoluteString
+        
+        if ext == "pdf" {
+            // 使用 PDFParser
+            let pdfMetadata = PDFParser.parseMetadataForiOS(from: path)
+            title = pdfMetadata.title ?? defaultTitle
+            author = pdfMetadata.author ?? guessAuthor(for: defaultTitle)
+            
+            // 提取 PDF 封面
+            if let cachedCoverPath = PDFParser.getCachedCoverPath(for: id) {
+                coverURL = cachedCoverPath.absoluteString
+            } else if let newCoverPath = PDFParser.extractAndCacheCover(from: path, bookId: id) {
+                coverURL = newCoverPath.absoluteString
+            }
+        } else {
+            // 使用 EPUBParser
+            let epubMetadata = EPUBParser.parseMetadataForiOS(from: path)
+            title = epubMetadata.title ?? defaultTitle
+            author = epubMetadata.author ?? guessAuthor(for: defaultTitle)
+            
+            // 提取 EPUB 封面
+            if let cachedCoverPath = EPUBParser.getCachedCoverPath(for: id) {
+                coverURL = cachedCoverPath.absoluteString
+            } else if let newCoverPath = EPUBParser.extractAndCacheCover(from: path, bookId: id) {
+                coverURL = newCoverPath.absoluteString
+            }
         }
         
         return Book(
