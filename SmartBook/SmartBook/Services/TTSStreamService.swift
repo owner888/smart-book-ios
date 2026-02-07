@@ -37,12 +37,9 @@ class TTSStreamService: NSObject, ObservableObject {
     @Published var isConnected = false
     @Published var error: String?
 
-    private var webSocketTask: URLSessionWebSocketTask?
+    // ✅ 使用统一的 WebSocketClient
+    private var wsClient: WebSocketClient?
     private var audioPlayer: AudioStreamPlayer?
-    private var heartbeatTimer: Timer?
-    private var reconnectTimer: Timer?
-    private var shouldAutoReconnect = true
-    private var reconnectAttempts = 0
     private var audioEncoding: AudioEncoding = .mp3  // 默认使用 MP3
 
     override init() {
@@ -54,9 +51,7 @@ class TTSStreamService: NSObject, ObservableObject {
     }
 
     deinit {
-        heartbeatTimer?.invalidate()
-        reconnectTimer?.invalidate()
-        shouldAutoReconnect = false
+        wsClient?.disconnect()
     }
 
     // MARK: - 播放完成回调
@@ -89,31 +84,44 @@ class TTSStreamService: NSObject, ObservableObject {
             return
         }
 
-        // 创建 WebSocket 连接
-        let session = URLSession(configuration: .default)
-        webSocketTask = session.webSocketTask(with: url)
-        webSocketTask?.resume()
-
+        // ✅ 使用 WebSocketClient 统一管理连接
+        wsClient = WebSocketClient(url: url)
+        
+        wsClient?.connect(
+            onConnected: { [weak self] in
+                self?.isConnected = true
+                Logger.info("TTS WebSocket 连接成功")
+            },
+            onDisconnected: { [weak self] error in
+                self?.isConnected = false
+                if let error = error {
+                    Logger.error("TTS WebSocket 断开: \(error.localizedDescription)")
+                    self?.error = error.localizedDescription
+                }
+            },
+            onMessage: { [weak self] message in
+                switch message {
+                case .text(let text):
+                    self?.handleTextMessage(text)
+                case .data(let data):
+                    self?.handleAudioData(data)
+                }
+            }
+        )
+        
         isConnected = true
-
-        // 开始接收消息
-        receiveMessage()
-
-        // 启动心跳
-        startHeartbeat()
-
-        Logger.info("TTS WebSocket 连接成功，心跳已启动")
     }
 
     @MainActor
     func disconnect() async {
         guard isConnected else { return }
 
-        let stopMessage: [String: Any] = ["type": "stop"]
-        await sendMessage(stopMessage)
+        // 发送停止消息
+        try? await wsClient?.send(json: ["type": "stop"])
 
-        webSocketTask?.cancel(with: .goingAway, reason: nil)
-        webSocketTask = nil
+        // ✅ 使用 WebSocketClient 断开
+        wsClient?.disconnect()
+        wsClient = nil
         isConnected = false
 
         // 停止播放
@@ -190,36 +198,6 @@ class TTSStreamService: NSObject, ObservableObject {
 
     // MARK: - 消息处理
 
-    private func receiveMessage() {
-        webSocketTask?.receive { [weak self] result in
-            guard let self = self else { return }
-
-            switch result {
-            case .success(let message):
-                switch message {
-                case .string(let text):
-                    self.handleTextMessage(text)
-                case .data(let audioData):
-                    // 接收到音频数据
-                    self.handleAudioData(audioData)
-                @unknown default:
-                    break
-                }
-
-                // 继续接收
-                self.receiveMessage()
-
-            case .failure(let error):
-                Logger.error("TTS WebSocket Error: \(error.localizedDescription)")
-                Task { @MainActor in
-                    self.error = error.localizedDescription
-                    self.isConnected = false
-                    self.startAutoReconnect()
-                }
-            }
-        }
-    }
-
     private func handleTextMessage(_ text: String) {
         guard let data = text.data(using: .utf8),
             let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -277,58 +255,11 @@ class TTSStreamService: NSObject, ObservableObject {
     }
 
     private func sendMessage(_ message: [String: Any]) async {
-        guard let data = try? JSONSerialization.data(withJSONObject: message),
-            let text = String(data: data, encoding: .utf8)
-        else {
-            return
-        }
-
-        let message = URLSessionWebSocketTask.Message.string(text)
-
+        // ✅ 使用 WebSocketClient 发送消息
         do {
-            try await webSocketTask?.send(message)
+            try await wsClient?.send(json: message)
         } catch {
             Logger.error("发送消息失败: \(error.localizedDescription)")
-        }
-    }
-
-    // MARK: - 心跳
-
-    func startHeartbeat() {
-        Timer.scheduledTimer(withTimeInterval: 30, repeats: true) { [weak self] _ in
-            guard let self = self, self.isConnected else { return }
-
-            Task {
-                await self.sendMessage(["type": "ping"])
-            }
-        }
-    }
-
-    // MARK: - 断线重连
-
-    @MainActor
-    private func startAutoReconnect() {
-        guard shouldAutoReconnect else { return }
-
-        reconnectAttempts += 1
-        let delay = min(Double(reconnectAttempts) * 2.0, 30.0)
-
-        Logger.info("🔄 TTS 将在 \(delay) 秒后重连（第 \(reconnectAttempts) 次）")
-
-        reconnectTimer?.invalidate()
-
-        reconnectTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
-            guard let self = self else { return }
-
-            Task { @MainActor in
-                Logger.info("🔄 TTS 尝试重新连接...")
-                await self.connect()
-
-                if self.isConnected {
-                    self.reconnectAttempts = 0
-                    Logger.info("✅ TTS 重连成功")
-                }
-            }
         }
     }
 
