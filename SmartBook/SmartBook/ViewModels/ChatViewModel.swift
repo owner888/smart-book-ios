@@ -17,9 +17,9 @@ class ChatViewModel: ObservableObject {
     var reducedScrollBottom = false
     var keyboardChanging = false
     var safeAreaBottom = 0.0
-    
+
     // MARK: - 摘要配置
-    
+
     /// 摘要触发阈值（同时也是保留的历史消息数量）
     let summarizationThreshold = 3
 
@@ -37,21 +37,27 @@ class ChatViewModel: ObservableObject {
     private var wordTimer: Timer?
 
     // 流式 TTS 服务（Google TTS）
-    @Published var ttsStreamService = TTSStreamService()
+    @Published var ttsStreamService: TTSStreamService
 
     // 原生 TTS 服务（iOS 系统语音）
-    private let ttsService = TTSService()
+    private let ttsService: TTSService
 
     // TTS 提供商配置
     @AppStorage(AppConfig.Keys.ttsProvider) private var ttsProvider = AppConfig.DefaultValues.ttsProvider
 
-    // 依赖注入，方便测试和管理
-    init(streamingService: StreamingChatService = StreamingChatService()) {
+    // ✅ 依赖注入，方便测试和管理
+    init(
+        streamingService: StreamingChatService = StreamingChatService(),
+        ttsStreamService: TTSStreamService? = nil,
+        ttsService: TTSService? = nil
+    ) {
         self.streamingService = streamingService
+        self.ttsStreamService = ttsStreamService ?? DIContainer.shared.makeTTSStreamService()
+        self.ttsService = ttsService ?? DIContainer.shared.makeTTSService()
 
         // 设置 TTS 播放完成回调（合并所有必要逻辑）
         Logger.info("🔧 ChatViewModel.init: 正在设置播放完成回调")
-        ttsStreamService.setOnPlaybackComplete { [weak self] in
+        self.ttsStreamService.setOnPlaybackComplete { [weak self] in
             Logger.info("🔔 播放完成回调被触发！")
 
             guard let self = self else { return }
@@ -168,10 +174,11 @@ class ChatViewModel: ObservableObject {
         )
 
         // 先获取上下文（在添加新消息之前）
-        let (summary, recentMessages) = summarizationService?.getContext(
-            messages: messages,
-            conversation: historyService?.currentConversation
-        ) ?? (nil, Array(messages.suffix(summarizationThreshold)))
+        let (summary, recentMessages) =
+            summarizationService?.getContext(
+                messages: messages,
+                conversation: historyService?.currentConversation
+            ) ?? (nil, Array(messages.suffix(summarizationThreshold)))
 
         // 再添加用户消息
         let userMessage = ChatMessage(role: .user, content: finalContent)
@@ -188,7 +195,7 @@ class ChatViewModel: ObservableObject {
         cancelDisplay()
 
         // 创建一个临时的助手消息用于流式更新
-        let streamingMessage = ChatMessage(role: .assistant, content: "",isStreaming: true)
+        let streamingMessage = ChatMessage(role: .assistant, content: "", isStreaming: true)
         messages.append(streamingMessage)
         answerMessageId = streamingMessage.id
         let messageIndex = messages.count - 1
