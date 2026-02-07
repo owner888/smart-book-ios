@@ -144,8 +144,8 @@ class BookService {
         do {
             let files = try fileManager.contentsOfDirectory(atPath: booksPath)
             for file in files {
-                // ✅ 支持 EPUB 和 PDF
-                if file.hasSuffix(".epub") || file.hasSuffix(".pdf") {
+                // ✅ 支持 EPUB、PDF 和 TXT
+                if file.hasSuffix(".epub") || file.hasSuffix(".pdf") || file.hasSuffix(".txt") {
                     let filePath = (booksPath as NSString).appendingPathComponent(file)
                     if let book = createBook(from: file, path: filePath) {
                         books.append(book)
@@ -166,8 +166,8 @@ class BookService {
         do {
             let files = try fileManager.contentsOfDirectory(atPath: userBooksDirectory.path)
             for file in files {
-                // ✅ 支持 EPUB 和 PDF
-                if file.hasSuffix(".epub") || file.hasSuffix(".pdf") {
+                // ✅ 支持 EPUB、PDF 和 TXT
+                if file.hasSuffix(".epub") || file.hasSuffix(".pdf") || file.hasSuffix(".txt") {
                     let filePath = userBooksDirectory.appendingPathComponent(file).path
                     if let book = createBook(from: file, path: filePath) {
                         books.append(book)
@@ -197,6 +197,16 @@ class BookService {
         // ✅ 支持 PDF
         if let pdfURLs = Bundle.main.urls(forResourcesWithExtension: "pdf", subdirectory: nil) {
             for url in pdfURLs {
+                let filename = url.lastPathComponent
+                if let book = createBook(from: filename, path: url.path) {
+                    books.append(book)
+                }
+            }
+        }
+        
+        // ✅ 支持 TXT
+        if let txtURLs = Bundle.main.urls(forResourcesWithExtension: "txt", subdirectory: nil) {
+            for url in txtURLs {
                 let filename = url.lastPathComponent
                 if let book = createBook(from: filename, path: url.path) {
                     books.append(book)
@@ -277,6 +287,14 @@ class BookService {
             } else if let newCoverPath = PDFParser.extractAndCacheCover(from: path, bookId: id) {
                 coverURL = newCoverPath.absoluteString
             }
+        } else if ext == "txt" {
+            // 使用 TXTParser
+            let txtMetadata = TXTParser.parseMetadataForiOS(from: path)
+            title = txtMetadata.title ?? defaultTitle
+            author = txtMetadata.author ?? guessAuthor(for: defaultTitle)
+            
+            // TXT 没有封面
+            coverURL = nil
         } else {
             // 使用 EPUBParser
             let epubMetadata = EPUBParser.parseMetadataForiOS(from: path)
