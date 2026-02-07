@@ -201,65 +201,6 @@ extension StreamingChatService: URLSessionDataDelegate {
             self.buffer = ""
         }
 
-        // 注意：不再调用 finishTasksAndInvalidate，因为我们复用 session
-    }
-}
-
-// MARK: - SSE 事件类型
-enum SSEEvent {
-    case systemPrompt(String)
-    case thinking(String)
-    case content(String)
-    case sources([RAGSource])
-    case usage(UsageInfo)
-    case cached(Bool)
-    case error(String)
-    case done
-
-    static func parse(type: String, data: String) -> SSEEvent? {
-        switch type {
-        case "system_prompt":
-            return .systemPrompt(data)
-
-        case "thinking":
-            return .thinking(data)
-
-        case "content":
-            return .content(data)
-
-        case "sources":
-            if let jsonData = data.data(using: .utf8),
-                let sources = try? JSONDecoder().decode([RAGSource].self, from: jsonData)
-            {
-                return .sources(sources)
-            }
-            return nil
-
-        case "usage":
-            if let jsonData = data.data(using: .utf8),
-                let usage = try? JSONDecoder().decode(UsageInfo.self, from: jsonData)
-            {
-                return .usage(usage)
-            }
-            return nil
-
-        case "cached":
-            if let jsonData = data.data(using: .utf8),
-                let cacheInfo = try? JSONDecoder().decode([String: Bool].self, from: jsonData),
-                let hit = cacheInfo["hit"]
-            {
-                return .cached(hit)
-            }
-            return nil
-
-        case "error":
-            return .error(data)
-
-        case "done":
-            return .done
-
-        default:
-            return nil
-        }
+        // 注意：HTTPClient.streamingPost 已处理 session 创建
     }
 }
