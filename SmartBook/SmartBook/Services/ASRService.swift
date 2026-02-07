@@ -158,7 +158,7 @@ class ASRService: ObservableObject {
             try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
         } catch {
             Logger.error("音频会话配置失败: \(error)")
-            self.error = "音频会话配置失败"
+            self.error = ASRError.audioSessionFailed.localizedDescription
             return
         }
         
@@ -186,7 +186,7 @@ class ASRService: ObservableObject {
             Logger.info("开始录音（后端 ASR）")
         } catch {
             Logger.error("音频引擎启动失败: \(error)")
-            self.error = "无法启动录音"
+            self.error = ASRError.recordingFailed.localizedDescription
         }
     }
     
@@ -232,9 +232,7 @@ class ASRService: ObservableObject {
             // 构建请求
             let urlString = "\(AppConfig.apiBaseURL)/api/asr/recognize"
             guard let url = URL(string: urlString) else {
-                throw NSError(domain: "ASRService", code: -1, userInfo: [
-                    NSLocalizedDescriptionKey: "无效的 API URL"
-                ])
+                throw APIError.invalidRequest
             }
             
             var request = URLRequest(url: url)
@@ -256,15 +254,11 @@ class ASRService: ObservableObject {
             
             // 检查响应
             guard let httpResponse = response as? HTTPURLResponse else {
-                throw NSError(domain: "ASRService", code: -1, userInfo: [
-                    NSLocalizedDescriptionKey: "无效的响应"
-                ])
+                throw APIError.networkError
             }
             
             guard httpResponse.statusCode == 200 else {
-                throw NSError(domain: "ASRService", code: httpResponse.statusCode, userInfo: [
-                    NSLocalizedDescriptionKey: "服务器错误: \(httpResponse.statusCode)"
-                ])
+                throw APIError.from(statusCode: httpResponse.statusCode)
             }
             
             // 尝试解析两种格式的响应
@@ -316,25 +310,19 @@ class ASRService: ObservableObject {
             // 先尝试解析包装格式
             if let wrappedResponse = try? JSONDecoder().decode(WrappedResponse.self, from: data) {
                 guard wrappedResponse.success else {
-                    throw NSError(domain: "ASRService", code: -1, userInfo: [
-                        NSLocalizedDescriptionKey: "识别失败"
-                    ])
+                    throw ASRError.recognitionFailed
                 }
                 asrResult = wrappedResponse.data
             }
             // 再尝试直接格式
             else if let directResponse = try? JSONDecoder().decode(DirectResponse.self, from: data) {
                 guard directResponse.success else {
-                    throw NSError(domain: "ASRService", code: -1, userInfo: [
-                        NSLocalizedDescriptionKey: "识别失败"
-                    ])
+                    throw ASRError.recognitionFailed
                 }
                 asrResult = directResponse.toASRResult()
             }
             else {
-                throw NSError(domain: "ASRService", code: -1, userInfo: [
-                    NSLocalizedDescriptionKey: "无法解析服务器响应"
-                ])
+                throw APIError.parseError
             }
             
             let text = asrResult.transcript

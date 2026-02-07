@@ -306,6 +306,14 @@
 "error.media.invalidImage" = "Invalid image format";
 "error.media.tooLarge" = "File is too large, please choose a smaller file";
 
+/* ASR Errors */
+"error.asr.microphoneAccessDenied" = "Cannot access microphone, please authorize in Settings";
+"error.asr.audioSessionFailed" = "Audio session configuration failed";
+"error.asr.recordingFailed" = "Recording failed";
+"error.asr.recognitionFailed" = "Speech recognition failed";
+"error.asr.noAudioData" = "No audio data";
+"error.asr.invalidAudioFormat" = "Invalid audio format";
+
 /* Navigation */
 "nav.library" = "Library";
 "nav.recent" = "Recent";

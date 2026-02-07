@@ -259,6 +259,43 @@
 "error.storageFull" = "儲存空間不足";
 "error.loading" = "載入失敗";
 
+/* API Errors */
+"error.api.serverError" = "伺服器錯誤，請稍後重試";
+"error.api.networkError" = "網路連線失敗，請檢查網路";
+"error.api.timeout" = "請求逾時，請重試";
+"error.api.unauthorized" = "未授權，請檢查 API Key";
+"error.api.notFound" = "請求的資源未找到";
+"error.api.invalidRequest" = "請求參數錯誤";
+"error.api.parseError" = "資料解析失敗";
+"error.api.unknown" = "未知錯誤";
+
+/* Book Errors */
+"error.book.notFound" = "書籍檔案未找到";
+"error.book.invalidFormat" = "不支援的書籍格式";
+"error.book.corrupted" = "書籍檔案已損壞";
+"error.book.uploadFailed" = "上傳失敗，請重試";
+"error.book.deleteFailed" = "刪除失敗";
+"error.book.cannotDeleteBundled" = "無法刪除內建書籍";
+
+/* Chat Errors */
+"error.chat.sendFailed" = "傳送訊息失敗";
+"error.chat.noBook" = "請先選擇一本書";
+"error.chat.emptyMessage" = "訊息不能為空";
+"error.chat.streamError" = "串流回應錯誤";
+
+/* Media Errors */
+"error.media.accessDenied" = "無法存取相簿，請在設定中授權";
+"error.media.invalidImage" = "無效的圖片格式";
+"error.media.tooLarge" = "檔案過大，請選擇較小的檔案";
+
+/* ASR Errors */
+"error.asr.microphoneAccessDenied" = "無法存取麥克風，請在設定中授權";
+"error.asr.audioSessionFailed" = "音訊對話配置失敗";
+"error.asr.recordingFailed" = "錄音失敗";
+"error.asr.recognitionFailed" = "語音辨識失敗";
+"error.asr.noAudioData" = "沒有錄音資料";
+"error.asr.invalidAudioFormat" = "無效的音訊格式";
+
 /* Navigation */
 "nav.library" = "資料庫";
 "nav.recent" = "最近";

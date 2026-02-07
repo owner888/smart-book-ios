@@ -171,7 +171,7 @@ class ChatViewModel: ObservableObject {
         let (summary, recentMessages) = summarizationService?.getContext(
             messages: messages,
             conversation: historyService?.currentConversation
-        ) ?? (nil, Array(messages.suffix(3)))
+        ) ?? (nil, Array(messages.suffix(summarizationThreshold)))
 
         // 再添加用户消息
         let userMessage = ChatMessage(role: .user, content: finalContent)

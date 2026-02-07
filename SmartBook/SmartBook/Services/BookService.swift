@@ -206,14 +206,14 @@ class BookService {
         }
         
         guard sourceURL.startAccessingSecurityScopedResource() else {
-            throw APIError.custom("无法访问该文件")
+            throw MediaError.accessDenied
         }
         defer { sourceURL.stopAccessingSecurityScopedResource() }
         
         try fileManager.copyItem(at: sourceURL, to: destinationURL)
         
         guard let book = createBook(from: filename, path: destinationURL.path) else {
-            throw APIError.custom("无法创建书籍")
+            throw BookError.corrupted
         }
         
         return book
@@ -221,11 +221,11 @@ class BookService {
     
     func deleteBook(_ book: Book) throws {
         guard let filePath = book.filePath else {
-            throw APIError.custom("书籍路径不存在")
+            throw BookError.notFound
         }
         
         guard filePath.contains("Documents/Books") else {
-            throw APIError.custom("只能删除用户导入的书籍")
+            throw BookError.cannotDeleteBundled
         }
         
         let fileURL = URL(fileURLWithPath: filePath)
@@ -302,9 +302,12 @@ class BookService {
         
         let (data, response) = try await URLSession.shared.data(from: url)
         
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw APIError.serverError
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.networkError
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.from(statusCode: httpResponse.statusCode)
         }
         
         let booksResponse = try JSONDecoder().decode(BooksResponse.self, from: data)
@@ -328,9 +331,12 @@ class BookService {
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
-            throw APIError.serverError
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.networkError
+        }
+        
+        guard httpResponse.statusCode == 200 else {
+            throw APIError.from(statusCode: httpResponse.statusCode)
         }
         
         let searchResponse = try JSONDecoder().decode(SearchResponse.self, from: data)
@@ -343,7 +349,7 @@ class BookService {
     func selectBook(_ book: Book, onProgress: ((Double) -> Void)? = nil) async throws {
         // 从书籍路径中提取文件名
         guard let filePath = book.filePath else {
-            throw APIError.custom("书籍路径不存在")
+            throw BookError.notFound
         }
         
         let filename = URL(fileURLWithPath: filePath).lastPathComponent
@@ -460,16 +466,18 @@ class BookService {
             let result = try JSONDecoder().decode(UploadResponse.self, from: data)
             if result.success != true {
                 Logger.error("❌ 上传失败: \(result.error ?? "未知错误")")
-                throw APIError.custom(result.error ?? "上传失败")
+                throw BookError.uploadFailed
             }
             
             Logger.info("✅ 书籍上传成功: \(filename)")
             
         } catch let error as APIError {
             throw error
+        } catch let error as BookError {
+            throw error
         } catch {
             Logger.error("❌ 上传异常: \(error.localizedDescription)")
-            throw APIError.custom("上传失败: \(error.localizedDescription)")
+            throw BookError.uploadFailed
         }
     }
     

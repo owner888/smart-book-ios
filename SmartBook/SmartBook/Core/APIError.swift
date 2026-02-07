@@ -122,6 +122,33 @@ enum MediaError: LocalizedError {
     }
 }
 
+// MARK: - ASR 错误
+enum ASRError: LocalizedError {
+    case microphoneAccessDenied
+    case audioSessionFailed
+    case recordingFailed
+    case recognitionFailed
+    case noAudioData
+    case invalidAudioFormat
+    
+    var errorDescription: String? {
+        switch self {
+        case .microphoneAccessDenied:
+            return L("error.asr.microphoneAccessDenied")
+        case .audioSessionFailed:
+            return L("error.asr.audioSessionFailed")
+        case .recordingFailed:
+            return L("error.asr.recordingFailed")
+        case .recognitionFailed:
+            return L("error.asr.recognitionFailed")
+        case .noAudioData:
+            return L("error.asr.noAudioData")
+        case .invalidAudioFormat:
+            return L("error.asr.invalidAudioFormat")
+        }
+    }
+}
+
 // MARK: - 搜索结果模型
 struct SearchResult: Codable, Identifiable {
     let content: String

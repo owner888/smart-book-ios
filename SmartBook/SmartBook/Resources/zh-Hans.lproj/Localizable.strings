@@ -306,6 +306,14 @@
 "error.media.invalidImage" = "无效的图片格式";
 "error.media.tooLarge" = "文件过大，请选择较小的文件";
 
+/* ASR Errors */
+"error.asr.microphoneAccessDenied" = "无法访问麦克风，请在设置中授权";
+"error.asr.audioSessionFailed" = "音频会话配置失败";
+"error.asr.recordingFailed" = "录音失败";
+"error.asr.recognitionFailed" = "语音识别失败";
+"error.asr.noAudioData" = "没有录音数据";
+"error.asr.invalidAudioFormat" = "无效的音频格式";
+
 /* Navigation */
 "nav.library" = "资料库";
 "nav.recent" = "最近";
