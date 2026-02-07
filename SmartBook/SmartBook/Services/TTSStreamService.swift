@@ -34,13 +34,17 @@ enum AudioEncoding: String {
 
 class TTSStreamService: NSObject, ObservableObject {
     @Published var isPlaying = false
-    @Published var isConnected = false
     @Published var error: String?
 
     // ✅ 使用统一的 WebSocketClient
     private var wsClient: WebSocketClient?
     private var audioPlayer: AudioStreamPlayer?
     private var audioEncoding: AudioEncoding = .mp3  // 默认使用 MP3
+    
+    // ✅ 连接状态直接从 WebSocketClient 获取
+    var isConnected: Bool {
+        wsClient?.isConnected ?? false
+    }
 
     override init() {
         super.init()
@@ -88,12 +92,10 @@ class TTSStreamService: NSObject, ObservableObject {
         wsClient = WebSocketClient(url: url)
         
         wsClient?.connect(
-            onConnected: { [weak self] in
-                self?.isConnected = true
+            onConnected: {
                 Logger.info("TTS WebSocket 连接成功")
             },
             onDisconnected: { [weak self] error in
-                self?.isConnected = false
                 if let error = error {
                     Logger.error("TTS WebSocket 断开: \(error.localizedDescription)")
                     self?.error = error.localizedDescription
@@ -108,8 +110,6 @@ class TTSStreamService: NSObject, ObservableObject {
                 }
             }
         )
-        
-        isConnected = true
     }
 
     @MainActor
@@ -122,7 +122,6 @@ class TTSStreamService: NSObject, ObservableObject {
         // ✅ 使用 WebSocketClient 断开
         wsClient?.disconnect()
         wsClient = nil
-        isConnected = false
 
         // 停止播放
         audioPlayer?.stop()
