@@ -36,28 +36,35 @@ class ChatViewModel: ObservableObject {
     private var currentMessageIndex = 0
     private var wordTimer: Timer?
 
-    // 流式 TTS 服务（Google TTS）
-    @Published var ttsStreamService: TTSStreamService
+    // TTS 协调服务（统一管理多个 TTS 提供商）
+    private let ttsCoordinator: TTSCoordinatorService
 
-    // 原生 TTS 服务（iOS 系统语音）
-    private let ttsService: TTSService
+    // 流式 TTS 服务（Google TTS）- 保留用于直接访问
+    @Published var ttsStreamService: TTSStreamService
 
     // 媒体处理服务
     private let mediaService: MediaProcessingService
 
     // TTS 提供商配置
-    @AppStorage(AppConfig.Keys.ttsProvider) private var ttsProvider = AppConfig.DefaultValues.ttsProvider
+    @AppStorage(AppConfig.Keys.ttsProvider) private var ttsProvider = AppConfig.DefaultValues.ttsProvider {
+        didSet {
+            // 提供商变化时更新协调服务
+            ttsCoordinator.updateProvider(ttsProvider)
+        }
+    }
 
     // ✅ 依赖注入，方便测试和管理
     init(
         streamingService: StreamingChatService = StreamingChatService(),
+        ttsCoordinator: TTSCoordinatorService? = nil,
         ttsStreamService: TTSStreamService? = nil,
-        ttsService: TTSService? = nil,
         mediaService: MediaProcessingService? = nil
     ) {
         self.streamingService = streamingService
         self.ttsStreamService = ttsStreamService ?? DIContainer.shared.makeTTSStreamService()
-        self.ttsService = ttsService ?? DIContainer.shared.makeTTSService()
+        self.ttsCoordinator =
+            ttsCoordinator
+            ?? DIContainer.shared.makeTTSCoordinatorService(provider: AppConfig.DefaultValues.ttsProvider)
         self.mediaService = mediaService ?? MediaProcessingService()
 
         // 设置 TTS 播放完成回调（合并所有必要逻辑）
@@ -119,15 +126,9 @@ class ChatViewModel: ObservableObject {
         streamingService.stopStreaming()
         isLoading = false
 
-        // 停止所有 TTS 播放
+        // ✅ 使用协调服务停止所有 TTS
         Task { @MainActor in
-            // 停止 Google TTS
-            await ttsStreamService.stopTTS()
-
-            // 停止原生 TTS
-            ttsService.stop()
-
-            Logger.info("⏹️ 已停止 AI 生成和所有 TTS 播放")
+            await ttsCoordinator.stopAll()
         }
     }
 
@@ -179,18 +180,10 @@ class ChatViewModel: ObservableObject {
         let messageIndex = messages.count - 1
         currentMessageIndex = messageIndex
 
-        // 如果启用 TTS 且使用 Google，启动流式 TTS
-        if enableTTS && ttsProvider == "google" {
+        // ✅ 如果启用 TTS，准备流式 TTS（仅 Google）
+        if enableTTS {
             Task {
-                if !ttsStreamService.isConnected {
-                    await ttsStreamService.connect()
-                }
-                await ttsStreamService.startTTS()
-
-                // 等待一点时间确保 Deepgram 握手成功
-                try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5秒
-
-                Logger.info("🔊 Google TTS 已就绪")
+                await ttsCoordinator.prepareStreaming()
             }
         }
 
@@ -219,10 +212,10 @@ class ChatViewModel: ObservableObject {
                     self.answerContents.append(content)
                     self.wordByWordDisplay()
 
-                    // 只在使用 Google TTS 时发送流式文本
-                    if enableTTS && self.ttsProvider == "google" {
+                    // ✅ 使用协调服务发送流式文本
+                    if enableTTS {
                         Task {
-                            await self.ttsStreamService.sendText(content)
+                            await self.ttsCoordinator.sendStreamingText(content)
                         }
                     }
 
@@ -252,10 +245,9 @@ class ChatViewModel: ObservableObject {
                     self.isLoading = false
                     self.cancelDisplay()
 
-                    // 停止 TTS（用户取消时）
+                    // ✅ 使用协调服务停止 TTS
                     Task {
-                        await self.ttsStreamService.stopTTS()
-                        self.ttsService.stop()
+                        await self.ttsCoordinator.stopAll()
                     }
 
                     // 检查是否是用户主动取消
@@ -306,25 +298,10 @@ class ChatViewModel: ObservableObject {
                         self.historyService?.saveMessage(finalMessage)
                         Logger.info("💾 保存助手回复到数据库")
 
-                        // 根据 TTS provider 选择播放方式
+                        // ✅ 使用协调服务播放 TTS
                         if enableTTS {
-                            Logger.info("🔊 TTS Provider: \(self.ttsProvider)")
-
-                            if self.ttsProvider == "native" {
-                                // 使用 iOS 原生语音
-                                Task {
-                                    await self.ttsService.speak(messageContent)
-                                    Logger.info("🔊 使用 iOS 原生语音朗读")
-                                }
-                            } else if self.ttsProvider == "google" {
-                                // Google TTS 已通过 WebSocket 接收音频
-                                // 发送 flush 触发播放
-                                Task {
-                                    await self.ttsStreamService.flush()
-                                    Logger.info("🔊 Google TTS flush 已发送，等待播放")
-                                }
-                            } else {
-                                Logger.warning("⚠️ 未知的 TTS provider: \(self.ttsProvider)")
+                            Task {
+                                await self.ttsCoordinator.speak(messageContent)
                             }
                         }
 

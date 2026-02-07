@@ -84,19 +84,26 @@ class DIContainer {
         MediaProcessingService()
     }
     
+    /// 创建 TTSCoordinatorService 实例
+    func makeTTSCoordinatorService(provider: String) -> TTSCoordinatorService {
+        let nativeTTS = makeTTSService()
+        let streamTTS = makeTTSStreamService()
+        return TTSCoordinatorService(nativeTTS: nativeTTS, streamTTS: streamTTS, provider: provider)
+    }
+    
     // MARK: - ViewModel 工厂方法
     
     /// 创建 ChatViewModel 实例
     func makeChatViewModel() -> ChatViewModel {
         let streamingService = makeStreamingChatService()
+        let ttsCoordinator = makeTTSCoordinatorService(provider: AppConfig.DefaultValues.ttsProvider)
         let ttsStreamService = makeTTSStreamService()
-        let ttsService = makeTTSService()
         let mediaService = makeMediaProcessingService()
         
         return ChatViewModel(
             streamingService: streamingService,
+            ttsCoordinator: ttsCoordinator,
             ttsStreamService: ttsStreamService,
-            ttsService: ttsService,
             mediaService: mediaService
         )
     }
