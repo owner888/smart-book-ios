@@ -6,32 +6,6 @@ import Combine
 import CryptoKit
 import Foundation
 
-/// 音频编码格式
-enum AudioEncoding: String {
-    case mp3 = "mp3"
-    case pcm = "pcm"
-    case opus = "opus"
-    case mulaw = "mulaw"
-
-    var fileExtension: String {
-        switch self {
-        case .mp3: return "mp3"
-        case .pcm: return "pcm"
-        case .opus: return "opus"
-        case .mulaw: return "wav"
-        }
-    }
-
-    var mimeType: String {
-        switch self {
-        case .mp3: return "audio/mpeg"
-        case .pcm: return "audio/pcm"
-        case .opus: return "audio/opus"
-        case .mulaw: return "audio/wav"
-        }
-    }
-}
-
 class TTSStreamService: NSObject, ObservableObject {
     @Published var isPlaying = false
     @Published var error: String?
