@@ -79,12 +79,26 @@ class DIContainer {
         SummarizationService(threshold: threshold)
     }
     
+    /// 创建 MediaProcessingService 实例
+    func makeMediaProcessingService() -> MediaProcessingService {
+        MediaProcessingService()
+    }
+    
     // MARK: - ViewModel 工厂方法
     
     /// 创建 ChatViewModel 实例
     func makeChatViewModel() -> ChatViewModel {
         let streamingService = makeStreamingChatService()
-        return ChatViewModel(streamingService: streamingService)
+        let ttsStreamService = makeTTSStreamService()
+        let ttsService = makeTTSService()
+        let mediaService = makeMediaProcessingService()
+        
+        return ChatViewModel(
+            streamingService: streamingService,
+            ttsStreamService: ttsStreamService,
+            ttsService: ttsService,
+            mediaService: mediaService
+        )
     }
     
     // MARK: - 访问单例服务

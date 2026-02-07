@@ -42,6 +42,9 @@ class ChatViewModel: ObservableObject {
     // 原生 TTS 服务（iOS 系统语音）
     private let ttsService: TTSService
 
+    // 媒体处理服务
+    private let mediaService: MediaProcessingService
+
     // TTS 提供商配置
     @AppStorage(AppConfig.Keys.ttsProvider) private var ttsProvider = AppConfig.DefaultValues.ttsProvider
 
@@ -49,11 +52,13 @@ class ChatViewModel: ObservableObject {
     init(
         streamingService: StreamingChatService = StreamingChatService(),
         ttsStreamService: TTSStreamService? = nil,
-        ttsService: TTSService? = nil
+        ttsService: TTSService? = nil,
+        mediaService: MediaProcessingService? = nil
     ) {
         self.streamingService = streamingService
         self.ttsStreamService = ttsStreamService ?? DIContainer.shared.makeTTSStreamService()
         self.ttsService = ttsService ?? DIContainer.shared.makeTTSService()
+        self.mediaService = mediaService ?? MediaProcessingService()
 
         // 设置 TTS 播放完成回调（合并所有必要逻辑）
         Logger.info("🔧 ChatViewModel.init: 正在设置播放完成回调")
@@ -130,45 +135,18 @@ class ChatViewModel: ObservableObject {
     func sendMessage(_ text: String, mediaItems: [MediaItem] = [], enableTTS: Bool = false) async {
         guard let bookState = bookState else { return }
 
-        // 处理媒体数据
-        var mediaDescription = ""
-        if !mediaItems.isEmpty {
-            Logger.info("📎 处理 \(mediaItems.count) 个媒体项")
-
-            for (index, item) in mediaItems.enumerated() {
-                switch item.type {
-                case .image(let image):
-                    // 图片转base64（供日志使用）
-                    if let imageData = image.jpegData(compressionQuality: 0.8) {
-                        let sizeKB = Double(imageData.count) / 1024.0
-                        mediaDescription +=
-                            "\n[图片 \(index + 1): \(Int(image.size.width))x\(Int(image.size.height)), \(String(format: "%.1f", sizeKB))KB]"
-                        Logger.info(
-                            "📸 图片 \(index + 1): \(Int(image.size.width))x\(Int(image.size.height)), \(String(format: "%.1f", sizeKB))KB"
-                        )
-                    }
-
-                case .document(let url):
-                    // 读取文档内容
-                    if let content = try? String(contentsOf: url, encoding: .utf8) {
-                        let preview = String(content.prefix(100))
-                        mediaDescription +=
-                            "\n[文档 \(index + 1): \(url.lastPathComponent), \(content.count) 字符]\n预览: \(preview)..."
-                        Logger.info("📄 文档 \(index + 1): \(url.lastPathComponent), \(content.count) 字符")
-                    }
-                }
-            }
-        }
+        // ✅ 使用媒体处理服务
+        let processedMedia = mediaService.processMediaItems(mediaItems)
 
         // 过滤空字符串（如果有媒体，文本可以为空）
         let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if trimmedText.count == 0 && mediaItems.isEmpty {
+        if trimmedText.isEmpty && processedMedia.images == nil {
             Logger.warning("⚠️ 消息太短且无媒体，拒绝发送")
             return
         }
 
         // 组合消息内容
-        let finalContent = trimmedText + mediaDescription
+        let finalContent = trimmedText + processedMedia.description
         Logger.info(
             "📤 发送消息: \(trimmedText.isEmpty ? "[仅媒体]" : trimmedText), 媒体: \(mediaItems.count), TTS: \(enableTTS)"
         )
@@ -216,33 +194,6 @@ class ChatViewModel: ObservableObject {
             }
         }
 
-        // 处理图片数据（转base64）
-        var imagesData: [[String: Any]]? = nil
-        if !mediaItems.isEmpty {
-            var images: [[String: Any]] = []
-            for item in mediaItems {
-                switch item.type {
-                case .image(let image):
-                    // 转JPEG并编码为base64
-                    if let jpegData = image.jpegData(compressionQuality: 0.8) {
-                        let base64String = jpegData.base64EncodedString()
-                        images.append([
-                            "data": base64String,
-                            "mime_type": "image/jpeg",
-                        ])
-                    }
-                case .document:
-                    // 文档暂不支持Vision，跳过
-                    break
-                }
-            }
-
-            if !images.isEmpty {
-                imagesData = images
-                Logger.info("📸 准备发送 \(images.count) 张图片到服务器")
-            }
-        }
-
         // 使用流式API
         let assistant = selectedAssistant ?? Assistant.defaultAssistants.first!
         streamingService.sendMessageStream(
@@ -253,7 +204,7 @@ class ChatViewModel: ObservableObject {
             ragEnabled: false,
             summary: summary,
             history: recentMessages,
-            images: imagesData
+            images: processedMedia.images  // ✅ 直接使用处理后的图片数据
         ) { [weak self] event in
             guard let self = self else { return }
 
