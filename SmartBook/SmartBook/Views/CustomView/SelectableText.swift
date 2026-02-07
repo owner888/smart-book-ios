@@ -14,8 +14,8 @@ struct SelectableText: UIViewRepresentable {
     var textColor: UIColor = .white
     var backgroundColor: UIColor = .clear
     
-    func makeUIView(context: Context) -> UITextView {
-        let textView = UITextView()
+    func makeUIView(context: Context) -> CustomTextView {
+        let textView = CustomTextView()
         textView.isEditable = false
         textView.isSelectable = true
         textView.isScrollEnabled = false
@@ -26,16 +26,32 @@ struct SelectableText: UIViewRepresentable {
         
         // 确保文本视图可以换行和调整大小
         textView.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        textView.setContentHuggingPriority(.defaultLow, for: .vertical)
+        textView.setContentHuggingPriority(.required, for: .vertical)
         textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)  // 允许水平压缩（换行）
         textView.setContentCompressionResistancePriority(.required, for: .vertical)
         
         return textView
     }
     
-    func updateUIView(_ uiView: UITextView, context: Context) {
+    func updateUIView(_ uiView: CustomTextView, context: Context) {
         uiView.attributedText = attributedText
         uiView.backgroundColor = backgroundColor
+        // 强制重新计算尺寸
+        uiView.invalidateIntrinsicContentSize()
+    }
+}
+
+// MARK: - Custom TextView with proper sizing
+class CustomTextView: UITextView {
+    override var intrinsicContentSize: CGSize {
+        // 计算文本的实际大小
+        let textSize = sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude))
+        return CGSize(width: UIView.noIntrinsicMetric, height: textSize.height)
+    }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        invalidateIntrinsicContentSize()
     }
 }
 

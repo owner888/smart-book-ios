@@ -120,6 +120,7 @@ struct MessageContentView: View {
         if message.role == .user {
             Text(message.content)
                 .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)  // 允许垂直扩展
         } else {
             // 使用SelectableText实现真正的文本选择
             let attributedString = markdownToAttributedString(message.content)
@@ -128,6 +129,7 @@ struct MessageContentView: View {
                 textColor: UIColor(colors.primaryText),
                 backgroundColor: .clear
             )
+            .frame(maxWidth: .infinity, alignment: .leading)  // 占满宽度，左对齐
         }
     }
     /// 将Markdown内容转换为NSMutableAttributedString

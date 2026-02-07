@@ -120,6 +120,7 @@ struct MessageBubble: View {
                 .foregroundColor(colors.primaryText)
             }
             .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
+            .fixedSize(horizontal: false, vertical: true)  // 允许垂直扩展，不允许水平扩展
             .contextMenu {
                 // 用户消息长按菜单：拷贝
                 if message.role == .user {
