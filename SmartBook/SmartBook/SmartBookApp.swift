@@ -6,18 +6,8 @@ import SwiftUI
 
 @main
 struct SmartBookApp: App {
-    // 状态管理（按功能领域拆分）
-    let bookState = BookState()
-    let themeManager = ThemeManager.shared
-    
-    // AI 服务
-    let assistantService = AssistantService.shared  // 使用单例
-    let modelService = ModelService.shared  // 使用单例
-    
-    // 业务服务
-    let bookService = BookService()
-    let ttsService = TTSService()
-    let checkInService = CheckInService()
+    // ✅ 使用依赖注入容器统一管理所有服务
+    private let container = DIContainer.shared
 
     init() {
         // 在 Debug 模式下打印配置信息
@@ -35,14 +25,15 @@ struct SmartBookApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environment(themeManager)
-                .environment(modelService)
-                .environment(assistantService)
-                .environment(bookState)
-                .environment(bookService)
-                .environmentObject(ttsService)
-                .environment(checkInService)
-                .preferredColorScheme(themeManager.colorScheme)
+                .environment(\.diContainer, container)
+                .environment(container.themeManager)
+                .environment(container.modelService)
+                .environment(container.assistantService)
+                .environment(container.bookState)
+                .environment(container.makeBookService())
+                .environmentObject(container.makeTTSService())
+                .environment(container.makeCheckInService())
+                .preferredColorScheme(container.themeManager.colorScheme)
         }
         .modelContainer(
             for: [
