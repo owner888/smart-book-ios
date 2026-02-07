@@ -71,13 +71,11 @@ class ConfigService<Item: ConfigItem> {
         isLoading = true
         defer { isLoading = false }
         
-        let url = URL(string: "\(AppConfig.apiBaseURL)\(apiEndpoint)")!
-        
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            // ✅ 使用 APIClient 统一请求
+            let (data, httpResponse) = try await APIClient.shared.get(apiEndpoint)
             
-            guard let httpResponse = response as? HTTPURLResponse,
-                  httpResponse.statusCode == 200 else {
+            guard httpResponse.statusCode == 200 else {
                 // 使用默认配置
                 Logger.debug("⚠️ Failed to load from API, using default items")
                 return

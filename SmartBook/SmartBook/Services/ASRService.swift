@@ -229,16 +229,7 @@ class ASRService: ObservableObject {
             // Base64 编码
             let base64Audio = wavData.base64EncodedString()
             
-            // 构建请求
-            let urlString = "\(AppConfig.apiBaseURL)/api/asr/recognize"
-            guard let url = URL(string: urlString) else {
-                throw APIError.invalidRequest
-            }
-            
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            
+            // ✅ 使用 APIClient 发送请求
             let requestBody: [String: Any] = [
                 "audio": base64Audio,
                 "encoding": "LINEAR16",
@@ -247,15 +238,11 @@ class ASRService: ObservableObject {
                 "model": config?.defaultModel ?? "nova-2"
             ]
             
-            request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
-            
-            // 发送请求
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            // 检查响应
-            guard let httpResponse = response as? HTTPURLResponse else {
-                throw APIError.networkError
-            }
+            let (data, httpResponse) = try await APIClient.shared.post(
+                "/api/asr/recognize",
+                body: requestBody,
+                timeout: 60  // ASR 可能需要较长时间
+            )
             
             guard httpResponse.statusCode == 200 else {
                 throw APIError.from(statusCode: httpResponse.statusCode)
