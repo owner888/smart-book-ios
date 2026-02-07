@@ -12,23 +12,17 @@ class StreamingChatService: NSObject {
     private var onCompleteHandler: CompletionHandler?
     private var buffer = ""  // 添加缓冲区，避免 SSE 数据丢失
 
-    // 复用 URLSession 实例，避免内存泄漏
-    private var session: URLSession!
-
     // SSE 事件处理闭包
     typealias SSEEventHandler = (SSEEvent) -> Void
     typealias CompletionHandler = (Result<Void, Error>) -> Void
 
     override init() {
         super.init()
-        // 在 init 中创建 session
-        let config = URLSessionConfiguration.default
-        self.session = URLSession(configuration: config, delegate: self, delegateQueue: nil)
     }
 
     deinit {
         // 清理资源
-        session.invalidateAndCancel()
+        currentTask?.cancel()
     }
 
     // 发送消息（SSE 流式）

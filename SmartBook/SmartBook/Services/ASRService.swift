@@ -116,13 +116,13 @@ class ASRService: ObservableObject {
     @MainActor
     func loadConfig() async {
         do {
-            let urlString = "\(AppConfig.apiBaseURL)/api/asr/config"
-            guard let url = URL(string: urlString) else {
-                Logger.error("无效的 API URL: \(urlString)")
+            // ✅ 使用 HTTPClient 统一请求
+            let (data, httpResponse) = try await HTTPClient.shared.get("/api/asr/config")
+            
+            guard httpResponse.statusCode == 200 else {
+                Logger.error("ASR 配置加载失败，状态码: \(httpResponse.statusCode)")
                 return
             }
-            
-            let (data, _) = try await URLSession.shared.data(from: url)
             
             struct Response: Codable {
                 let success: Bool
