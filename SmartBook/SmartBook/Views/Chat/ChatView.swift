@@ -3,6 +3,7 @@
 import SwiftUI
 
 struct ChatView: View {
+    @Environment(\.diContainer) private var container
     @Environment(BookState.self) var bookState
     @Environment(BookService.self) var bookService
     @Environment(ThemeManager.self) var themeManager
@@ -11,8 +12,14 @@ struct ChatView: View {
     @Environment(ModelService.self) var modelService
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var systemColorScheme
-    @StateObject private var viewModel = ChatViewModel()
+    @StateObject private var viewModel: ChatViewModel
     @State private var historyService: ChatHistoryService?
+    
+    // ✅ 使用 DI 容器创建 ViewModel
+    init() {
+        let container = DIContainer.shared
+        _viewModel = StateObject(wrappedValue: container.makeChatViewModel())
+    }
     @State private var inputText = ""
     @State private var showBookPicker = false
     @State private var showSettings = false
@@ -132,9 +139,9 @@ struct ChatView: View {
                 .environment(themeManager)
         }
         .onAppear {
-            // 初始化历史服务
+            // ✅ 使用 DI 容器初始化历史服务
             if historyService == nil {
-                historyService = ChatHistoryService(modelContext: modelContext)
+                historyService = container.makeChatHistoryService(modelContext: modelContext)
                 viewModel.historyService = historyService
 
                 // 如果有当前对话（从历史列表选择的），加载消息
@@ -147,9 +154,11 @@ struct ChatView: View {
                 }
             }
 
-            // 初始化摘要服务
+            // ✅ 使用 DI 容器初始化摘要服务
             if viewModel.summarizationService == nil {
-                viewModel.summarizationService = SummarizationService(threshold: viewModel.summarizationThreshold)
+                viewModel.summarizationService = container.makeSummarizationService(
+                    threshold: viewModel.summarizationThreshold
+                )
                 Logger.info("✅ 摘要服务已初始化，阈值: \(viewModel.summarizationThreshold)")
             }
 
