@@ -16,12 +16,6 @@ struct TabletSidebarView: View {
         VStack(alignment: .leading, spacing: 0) {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
-                    // Insights 卡片
-                    InsightsCard()
-
-                    // Places 卡片
-                    PlacesCard()
-
                     // Journals 部分
                     JournalsSection(
                         historyService: historyService,
@@ -36,72 +30,6 @@ struct TabletSidebarView: View {
         .background(
             Color(red: 0.1, green: 0.1, blue: 0.12)
                 .ignoresSafeArea()
-        )
-    }
-}
-
-// MARK: - Insights 卡片
-struct InsightsCard: View {
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Insights")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.9))
-
-            Text("0")
-                .font(.system(size: 72, weight: .bold))
-                .foregroundColor(.white)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Entries")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundColor(.white.opacity(0.9))
-                Text("This Year")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.6))
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(20)
-        .background(
-            LinearGradient(
-                colors: [
-                    Color(red: 0.55, green: 0.45, blue: 0.85),
-                    Color(red: 0.45, green: 0.35, blue: 0.75),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .cornerRadius(16)
-    }
-}
-
-// MARK: - Places 卡片
-struct PlacesCard: View {
-    @State private var region = MKCoordinateRegion(
-        center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
-        span: MKCoordinateSpan(latitudeDelta: 10, longitudeDelta: 10)
-    )
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("Places")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.9))
-                .padding(.horizontal, 16)
-                .padding(.top, 16)
-                .padding(.bottom, 12)
-
-            Map(coordinateRegion: $region, interactionModes: [])
-                .frame(height: 120)
-                .disabled(true)
-        }
-        .background(Color(red: 0.15, green: 0.15, blue: 0.17))
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.05), lineWidth: 1)
         )
     }
 }
