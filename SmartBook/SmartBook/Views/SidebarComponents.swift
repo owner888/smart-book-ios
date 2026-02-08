@@ -86,6 +86,7 @@ struct ConversationsSectionView: View {
     var viewModel: ChatViewModel?
     var onSelectChat: () -> Void
     @Binding var isExpanded: Bool
+    var searchText: String
     var style: SidebarStyle
     
     var body: some View {
@@ -120,6 +121,7 @@ struct ConversationsSectionView: View {
                     ConversationsListView(
                         historyService: historyService,
                         viewModel: viewModel,
+                        searchText: searchText,
                         onSelectConversation: onSelectChat,
                         style: style
                     )
@@ -135,12 +137,25 @@ struct ConversationsSectionView: View {
 struct ConversationsListView: View {
     @ObservedObject var historyService: ChatHistoryService
     var viewModel: ChatViewModel
+    var searchText: String
     var onSelectConversation: () -> Void
     var style: SidebarStyle
     
+    // 过滤后的对话列表
+    var filteredConversations: [Conversation] {
+        if searchText.isEmpty {
+            return historyService.conversations
+        } else {
+            return historyService.conversations.filter { conversation in
+                conversation.title.localizedCaseInsensitiveContains(searchText) ||
+                (conversation.bookTitle?.localizedCaseInsensitiveContains(searchText) ?? false)
+            }
+        }
+    }
+    
     var body: some View {
         LazyVStack(spacing: 8) {
-            ForEach(historyService.conversations) { conversation in
+            ForEach(filteredConversations) { conversation in
                 ConversationItemView(
                     conversation: conversation,
                     isSelected: historyService.currentConversation?.id == conversation.id,
