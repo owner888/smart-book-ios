@@ -2,6 +2,7 @@
 
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 struct ChatView: View {
     @Environment(\.diContainer) private var container
@@ -24,7 +25,7 @@ struct ChatView: View {
     @State private var inputText = ""
     @State private var showBookPicker = false
     @State private var showSettings = false
-
+    @State private var showBookImporter = false
     @State private var showBookshelf = false
     @State private var keyboardHeight: CGFloat = 0
     @State private var uploadProgress: Double = 0
@@ -176,6 +177,39 @@ struct ChatView: View {
                 .environment(bookState)
                 .environment(themeManager)
         }
+        .fileImporter(
+            isPresented: $showBookImporter,
+            allowedContentTypes: [UTType(filenameExtension: "epub") ?? .data],
+            allowsMultipleSelection: true
+        ) { result in
+            Task {
+                await handleBookImport(result)
+            }
+        }
+        .overlay {
+            if isUploading {
+                ZStack {
+                    Color.black.opacity(0.4)
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 16) {
+                        ProgressView(value: uploadProgress)
+                            .progressViewStyle(.linear)
+                            .frame(width: 200)
+                            .tint(.green)
+
+                        Text("📤 \(uploadProgress < 0.01 ? "导入书籍中..." : "上传书籍中... \(Int(uploadProgress * 100))%")")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                    }
+                    .padding(24)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(colors.cardBackground)
+                    )
+                }
+            }
+        }
         .onAppear {
             // ✅ 使用 DI 容器初始化历史服务
             if historyService == nil {
@@ -235,7 +269,7 @@ struct ChatView: View {
                                                 EmptyStateView(
                                                     colors: colors,
                                                     onAddBook: {
-                                                        showBookPicker = true
+                                                        showBookImporter = true
                                                     }
                                                 )
                                             } else {
@@ -571,6 +605,60 @@ struct ChatView: View {
             let rootVC = windowScene.windows.first?.rootViewController
         {
             rootVC.present(activityVC, animated: true)
+        }
+    }
+    
+    // MARK: - 书籍导入处理
+    func handleBookImport(_ result: Result<[URL], Error>) async {
+        switch result {
+        case .success(let urls):
+            guard !urls.isEmpty else { return }
+            
+            // 显示上传进度
+            await MainActor.run {
+                isUploading = true
+                uploadProgress = 0
+            }
+            
+            var importedCount = 0
+            for url in urls {
+                do {
+                    let book = try bookService.importBook(from: url)
+                    importedCount += 1
+                    
+                    // 导入成功后，上传并选择第一本书
+                    if importedCount == 1 {
+                        try await bookService.selectBook(book) { progress in
+                            DispatchQueue.main.async {
+                                uploadProgress = progress
+                            }
+                        }
+                        
+                        await MainActor.run {
+                            withAnimation {
+                                bookState.selectedBook = book
+                            }
+                        }
+                    }
+                } catch {
+                    Logger.error("导入书籍失败: \(error.localizedDescription)")
+                }
+            }
+            
+            // 重新加载书籍列表
+            if importedCount > 0 {
+                await bookState.loadBooks(using: bookService)
+            }
+            
+            await MainActor.run {
+                isUploading = false
+            }
+            
+        case .failure(let error):
+            Logger.error("选择文件失败: \(error.localizedDescription)")
+            await MainActor.run {
+                isUploading = false
+            }
         }
     }
 }
