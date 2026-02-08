@@ -1,7 +1,7 @@
 // TabletSidebarView.swift - 平板端侧边栏视图（iPad/macOS专用，Journal风格）
 
-import SwiftUI
 import MapKit
+import SwiftUI
 
 // MARK: - 平板端侧边栏视图
 struct TabletSidebarView: View {
@@ -11,43 +11,17 @@ struct TabletSidebarView: View {
     var onSelectChat: () -> Void
     var onSelectBookshelf: () -> Void
     var onSelectSettings: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // 顶部工具栏
-            HStack {
-                Button(action: {}) {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(12)
-                }
-                
-                Spacer()
-                
-                Button(action: {}) {
-                    Image(systemName: "rectangle.split.2x1")
-                        .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.white.opacity(0.1))
-                        .cornerRadius(12)
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
-            .padding(.bottom, 12)
-            
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     // Insights 卡片
                     InsightsCard()
-                    
+
                     // Places 卡片
                     PlacesCard()
-                    
+
                     // Journals 部分
                     JournalsSection(
                         historyService: historyService,
@@ -73,11 +47,11 @@ struct InsightsCard: View {
             Text("Insights")
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
-            
+
             Text("0")
                 .font(.system(size: 72, weight: .bold))
                 .foregroundColor(.white)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text("Entries")
                     .font(.system(size: 15, weight: .medium))
@@ -93,7 +67,7 @@ struct InsightsCard: View {
             LinearGradient(
                 colors: [
                     Color(red: 0.55, green: 0.45, blue: 0.85),
-                    Color(red: 0.45, green: 0.35, blue: 0.75)
+                    Color(red: 0.45, green: 0.35, blue: 0.75),
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -109,7 +83,7 @@ struct PlacesCard: View {
         center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
         span: MKCoordinateSpan(latitudeDelta: 10, longitudeDelta: 10)
     )
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Places")
@@ -118,7 +92,7 @@ struct PlacesCard: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 16)
                 .padding(.bottom, 12)
-            
+
             Map(coordinateRegion: $region, interactionModes: [])
                 .frame(height: 120)
                 .disabled(true)
@@ -137,9 +111,9 @@ struct JournalsSection: View {
     var historyService: ChatHistoryService?
     var viewModel: ChatViewModel?
     var onSelectChat: () -> Void
-    
+
     @State private var isExpanded = true
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // 标题栏
@@ -149,9 +123,9 @@ struct JournalsSection: View {
                     .foregroundColor(.white.opacity(0.5))
                     .textCase(.uppercase)
                     .tracking(0.5)
-                
+
                 Spacer()
-                
+
                 Button(action: {
                     if let viewModel = viewModel {
                         viewModel.startNewConversation()
@@ -164,7 +138,7 @@ struct JournalsSection: View {
                 }
             }
             .padding(.horizontal, 4)
-            
+
             // Journal 列表项
             if let historyService = historyService, let viewModel = viewModel {
                 // 使用现有的对话历史
@@ -192,21 +166,21 @@ struct JournalItemView: View {
     let title: String
     let count: Int
     var isSelected: Bool = false
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // 图标
             Text(icon)
                 .font(.system(size: 24))
                 .frame(width: 32, height: 32)
-            
+
             // 标题
             Text(title)
                 .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
-            
+
             Spacer()
-            
+
             // 计数
             Text("\(count)")
                 .font(.system(size: 13, weight: .medium))
@@ -226,7 +200,7 @@ struct ChatHistoryJournalListView: View {
     var historyService: ChatHistoryService
     var viewModel: ChatViewModel
     var onSelectConversation: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 4) {
             ForEach(historyService.conversations) { conversation in

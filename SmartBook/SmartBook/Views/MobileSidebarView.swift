@@ -27,7 +27,7 @@ struct MobileSidebarView: View {
 
             Divider()
                 .background(colors.secondaryText.opacity(0.3))
-            
+
             // 历史对话列表（当前对话会在列表中显示为选中状态）
             if let historyService = historyService, let viewModel = viewModel {
                 ChatHistoryListView(
@@ -39,11 +39,11 @@ struct MobileSidebarView: View {
             } else {
                 Spacer()
             }
-            
+
             Divider()
                 .background(colors.secondaryText.opacity(0.3))
                 .padding(.vertical, 8)
-            
+
             // 底部菜单
             VStack(alignment: .leading, spacing: 4) {
                 // 书架
