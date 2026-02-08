@@ -110,7 +110,8 @@ struct ConversationsSectionView: View {
                         onSelectConversation: onSelectChat,
                         style: style
                     )
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 8)
                 }
             }
         }
@@ -125,19 +126,17 @@ struct ConversationsListView: View {
     var style: SidebarStyle
     
     var body: some View {
-        VStack(spacing: 4) {
+        LazyVStack(spacing: 8) {
             ForEach(historyService.conversations) { conversation in
-                Button(action: {
-                    viewModel.switchToConversation(conversation)
-                    onSelectConversation()
-                }) {
-                    ConversationItemView(
-                        conversation: conversation,
-                        isSelected: historyService.currentConversation?.id == conversation.id,
-                        style: style
-                    )
-                }
-                .buttonStyle(.plain)
+                ConversationItemView(
+                    conversation: conversation,
+                    isSelected: historyService.currentConversation?.id == conversation.id,
+                    style: style,
+                    onTap: {
+                        viewModel.switchToConversation(conversation)
+                        onSelectConversation()
+                    }
+                )
             }
         }
     }
@@ -148,6 +147,7 @@ struct ConversationItemView: View {
     let conversation: Conversation
     var isSelected: Bool = false
     var style: SidebarStyle
+    var onTap: () -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -178,10 +178,10 @@ struct ConversationItemView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isSelected ? style.selectedBackgroundColor : Color.clear)
-        )
+        .background(isSelected ? style.selectedBackgroundColor : Color.clear)
+        .cornerRadius(8)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onTap)
     }
 }
 
