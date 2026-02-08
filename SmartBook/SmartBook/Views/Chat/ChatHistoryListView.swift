@@ -5,8 +5,8 @@
 //  Created by kaka on 26/1/26.
 //
 
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 /// 聊天历史列表视图
 struct ChatHistoryListView: View {
@@ -14,13 +14,13 @@ struct ChatHistoryListView: View {
     @ObservedObject var viewModel: ChatViewModel
     let colors: ThemeColors
     let onSelectConversation: () -> Void
-    
+
     @State private var editingConversation: Conversation?
     @State private var showRenameAlert = false
     @State private var showDeleteAlert = false
     @State private var conversationToDelete: Conversation?
     @State private var newTitle = ""
-    
+
     var body: some View {
         VStack(spacing: 0) {
 
@@ -28,13 +28,13 @@ struct ChatHistoryListView: View {
             if historyService.conversations.isEmpty {
                 VStack(spacing: 12) {
                     Image(systemName: "text.bubble")
-                        .font(.system(size: 50)) // 装饰性大图标
+                        .font(.system(size: 50))  // 装饰性大图标
                         .foregroundColor(colors.secondaryText)
-                    
+
                     Text(L("chatHistory.empty"))
                         .font(.subheadline)
                         .foregroundColor(colors.secondaryText)
-                    
+
                     Button(action: {
                         viewModel.startNewConversation()
                         onSelectConversation()
@@ -82,7 +82,7 @@ struct ChatHistoryListView: View {
         .background(colors.background)
         .alert(L("chatHistory.rename.title"), isPresented: $showRenameAlert) {
             TextField(L("chatHistory.rename.placeholder"), text: $newTitle)
-            Button(L("common.cancel"), role: .cancel) { }
+            Button(L("common.cancel"), role: .cancel) {}
             Button(L("common.confirm")) {
                 if let conversation = editingConversation {
                     historyService.renameConversation(conversation, newTitle: newTitle)
@@ -90,7 +90,7 @@ struct ChatHistoryListView: View {
             }
         }
         .alert(L("chatHistory.delete.title"), isPresented: $showDeleteAlert) {
-            Button(L("common.cancel"), role: .cancel) { }
+            Button(L("common.cancel"), role: .cancel) {}
             Button(L("common.delete"), role: .destructive) {
                 if let conversation = conversationToDelete {
                     historyService.deleteConversation(conversation)
@@ -110,26 +110,26 @@ struct ConversationRow: View {
     let onTap: () -> Void
     let onRename: () -> Void
     let onDelete: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(conversation.title)
                 .font(.subheadline)
                 .foregroundColor(colors.primaryText)
                 .lineLimit(1)
-            
+
             HStack(spacing: 4) {
                 if let bookTitle = conversation.bookTitle {
                     Text(bookTitle)
                         .font(.caption2)
                         .foregroundColor(colors.secondaryText)
                         .lineLimit(1)
-                    
+
                     Text("•")
                         .font(.caption2)
                         .foregroundColor(colors.secondaryText)
                 }
-                
+
                 Text(conversation.updatedAt.formatted(.relative(presentation: .named)))
                     .font(.caption2)
                     .foregroundColor(colors.secondaryText)
@@ -146,7 +146,7 @@ struct ConversationRow: View {
             Button(action: onRename) {
                 Label(L("chatHistory.menu.rename"), systemImage: "pencil")
             }
-            
+
             Button(role: .destructive, action: onDelete) {
                 Label(L("chatHistory.menu.delete"), systemImage: "trash")
             }
