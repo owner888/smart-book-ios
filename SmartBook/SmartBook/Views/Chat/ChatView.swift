@@ -1,6 +1,7 @@
 // ChatView.swift - AI 对话视图（支持多语言，类似 ChatGPT 的极简设计）
 
 import SwiftUI
+import UIKit
 
 struct ChatView: View {
     @Environment(\.diContainer) private var container
@@ -37,9 +38,43 @@ struct ChatView: View {
 
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
+    @State private var splitVisibility: NavigationSplitViewVisibility = .all
+
+    private var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
 
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
+    }
+
+    private var sidebarView: some View {
+        SidebarView(
+            colors: colors,
+            historyService: historyService,
+            viewModel: viewModel,
+            onSelectChat: {
+                if !isPad {
+                    sideObser.jumpToPage(1)
+                }
+            },
+            onSelectBookshelf: {
+                showBookshelf = true
+                if !isPad {
+                    sideObser.jumpToPage(1)
+                }
+            },
+            onSelectSettings: {
+                showSettings = true
+                if !isPad {
+                    sideObser.jumpToPage(1)
+                }
+            }
+        )
+        .environment(bookState)
+        .environment(themeManager)
+        .frame(minWidth: 300, idealWidth: 340, maxWidth: 360)
+        .background(colors.cardBackground)
     }
 
     var scrollViewHeight: CGFloat {
@@ -47,32 +82,22 @@ struct ChatView: View {
     }
 
     var body: some View {
-        ExpandSideView {
-            // 侧边栏（从左侧滑出，非全屏）
-            SidebarView(
-                colors: colors,
-                historyService: historyService,
-                viewModel: viewModel,
-                onSelectChat: {
-                    sideObser.jumpToPage(1)
-                },
-                onSelectBookshelf: {
-                    showBookshelf = true
-                    sideObser.jumpToPage(1)
-                },
-                onSelectSettings: {
-                    showSettings = true
-                    sideObser.jumpToPage(1)
+        Group {
+            if isPad {
+                NavigationSplitView(columnVisibility: $splitVisibility) {
+                    sidebarView
+                } detail: {
+                    chatContent
                 }
-            )
-            .environment(bookState)
-            .environment(themeManager)
-            .frame(width: 340)
-            .background(colors.cardBackground)
-        } content: {
-            chatContent
+            } else {
+                ExpandSideView {
+                    sidebarView
+                } content: {
+                    chatContent
+                }
+                .environmentObject(sideObser)
+            }
         }
-        .environmentObject(sideObser)
         .sheet(isPresented: $showBookPicker) {
             BookPickerView(colors: colors) { book in
                 // 选择书籍时调用后端 API
@@ -329,7 +354,13 @@ struct ChatView: View {
             .navigationTitle(L("chat.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button(action: { sideObser.jumpToPage(0) }) {
+                    Button(action: {
+                        if isPad {
+                            splitVisibility = splitVisibility == .detailOnly ? .all : .detailOnly
+                        } else {
+                            sideObser.jumpToPage(0)
+                        }
+                    }) {
                         Image(systemName: "line.3.horizontal")
                     }
                 }
