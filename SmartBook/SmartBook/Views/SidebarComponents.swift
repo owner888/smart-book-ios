@@ -21,6 +21,19 @@ struct SidebarContent: View {
             
             SidebarDivider(style: style)
             
+            // Library 菜单项
+            MenuItemView(
+                icon: "book",
+                title: L("library.title"),
+                isSelected: false,
+                style: style,
+                action: onSelectBookshelf
+            )
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            
+            SidebarDivider(style: style)
+            
             // 可滚动内容区域
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
@@ -32,18 +45,11 @@ struct SidebarContent: View {
                         isExpanded: $isConversationsExpanded,
                         style: style
                     )
-                    
-                    SidebarDivider(style: style)
-                        .padding(.vertical, 8)
                 }
             }
             
-            // 底部固定区域
-            BottomMenuView(
-                onSelectBookshelf: onSelectBookshelf,
-                onSelectSettings: onSelectSettings,
-                style: style
-            )
+            // 底部用户信息
+            UserInfoView(style: style)
         }
         .background(style.backgroundColor.ignoresSafeArea())
     }
