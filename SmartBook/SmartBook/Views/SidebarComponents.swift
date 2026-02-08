@@ -13,43 +13,54 @@ struct SidebarContent: View {
     var style: SidebarStyle
     
     @State private var isConversationsExpanded = true
+    @State private var searchText = ""
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // App 标题
-            AppTitleView(style: style)
-            
-            SidebarDivider(style: style)
-            
-            // Library 菜单项
-            MenuItemView(
-                icon: "book",
-                title: L("library.title"),
-                isSelected: false,
-                style: style,
-                action: onSelectBookshelf
-            )
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            
-            SidebarDivider(style: style)
-            
-            // 可滚动内容区域
-            ScrollView(showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 0) {
-                    // Conversations 可折叠部分
-                    ConversationsSectionView(
-                        historyService: historyService,
-                        viewModel: viewModel,
-                        onSelectChat: onSelectChat,
-                        isExpanded: $isConversationsExpanded,
-                        style: style
-                    )
+        ZStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 0) {
+                // App 标题
+                AppTitleView(style: style)
+                
+                SidebarDivider(style: style)
+                
+                // Library 菜单项
+                MenuItemView(
+                    icon: "book",
+                    title: L("library.title"),
+                    isSelected: false,
+                    style: style,
+                    action: onSelectBookshelf
+                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                
+                SidebarDivider(style: style)
+                
+                // 可滚动内容区域（会话列表可以滚动到底部搜索框下方）
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Conversations 可折叠部分
+                        ConversationsSectionView(
+                            historyService: historyService,
+                            viewModel: viewModel,
+                            onSelectChat: onSelectChat,
+                            isExpanded: $isConversationsExpanded,
+                            style: style
+                        )
+                        
+                        // 底部留空间给搜索框
+                        Color.clear.frame(height: 80)
+                    }
                 }
             }
             
-            // 底部用户信息
-            UserInfoView(style: style)
+            // 浮动在底部的搜索框和新建按钮
+            SearchAndNewChatView(
+                searchText: $searchText,
+                viewModel: viewModel,
+                onSelectChat: onSelectChat,
+                style: style
+            )
         }
         .background(style.backgroundColor.ignoresSafeArea())
     }
@@ -184,8 +195,34 @@ struct ConversationItemView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(isSelected ? style.selectedBackgroundColor : Color.clear)
+        .background(
+            Group {
+                if isSelected {
+                    ZStack {
+                        Color.black.opacity(0.1)
+                            .background(.ultraThinMaterial)
+                        Color.white.opacity(0.03)
+                    }
+                } else {
+                    Color.clear
+                }
+            }
+        )
         .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(
+                    isSelected ? LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.15),
+                            Color.white.opacity(0.03)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ) : LinearGradient(colors: [Color.clear], startPoint: .top, endPoint: .bottom),
+                    lineWidth: 0.5
+                )
+        )
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
     }
@@ -262,7 +299,103 @@ struct MenuItemView: View {
     }
 }
 
-// MARK: - 用户信息
+// MARK: - 搜索和新建会话
+struct SearchAndNewChatView: View {
+    @Binding var searchText: String
+    var viewModel: ChatViewModel?
+    var onSelectChat: () -> Void
+    var style: SidebarStyle
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                // 搜索框 - Grok风格
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(style.secondaryTextColor)
+                    
+                    TextField("Search", text: $searchText)
+                        .font(.subheadline)
+                        .foregroundColor(style.textColor)
+                        .textFieldStyle(.plain)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
+                .background(
+                    ZStack {
+                        // 液态玻璃效果 - 高透明度
+                        Color.white.opacity(0.08)
+                        
+                        // 微妙的模糊层
+                        Color.black.opacity(0.03)
+                    }
+                    .blur(radius: 10)
+                    .background(
+                        Color.white.opacity(0.05)
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 20))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.25),
+                                    Color.white.opacity(0.08)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 3)
+                
+                // 新建会话按钮
+                Button(action: {
+                    if let viewModel = viewModel {
+                        viewModel.startNewConversation()
+                        onSelectChat()
+                    }
+                }) {
+                    Image(systemName: "square.and.pencil")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(style.iconColor)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            ZStack {
+                                Color.black.opacity(0.15)
+                                    .background(.ultraThinMaterial)
+                                Color.white.opacity(0.05)
+                            }
+                        )
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.2),
+                                            Color.white.opacity(0.05)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.8
+                                )
+                        )
+                        .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+        }
+    }
+}
+
+// MARK: - 用户信息（保留用于其他地方）
 struct UserInfoView: View {
     var style: SidebarStyle
     
@@ -317,6 +450,7 @@ struct SidebarStyle {
     var dividerColor: Color
     var selectedBackgroundColor: Color
     var userAvatarBackground: Color
+    var searchBackground: Color
     
     // 浅色样式（Mobile）
     static func light(colors: ThemeColors) -> SidebarStyle {
@@ -330,7 +464,8 @@ struct SidebarStyle {
             countColor: colors.secondaryText,
             dividerColor: colors.secondaryText.opacity(0.3),
             selectedBackgroundColor: colors.sidebarCardBackground,
-            userAvatarBackground: colors.secondaryText.opacity(0.3)
+            userAvatarBackground: colors.secondaryText.opacity(0.3),
+            searchBackground: Color.gray.opacity(0.1)
         )
     }
     
@@ -346,7 +481,8 @@ struct SidebarStyle {
             countColor: Color.white.opacity(0.4),
             dividerColor: Color.white.opacity(0.1),
             selectedBackgroundColor: Color.white.opacity(0.15),
-            userAvatarBackground: Color.white.opacity(0.1)
+            userAvatarBackground: Color.white.opacity(0.1),
+            searchBackground: Color.white.opacity(0.08)
         )
     }
 }
