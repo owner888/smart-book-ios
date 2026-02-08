@@ -5,7 +5,7 @@ import SwiftUI
 struct ContentView: View {
     @Environment(BookState.self) private var bookState
     @Environment(BookService.self) private var bookService
-    
+
     var body: some View {
         ChatView()
             .task {

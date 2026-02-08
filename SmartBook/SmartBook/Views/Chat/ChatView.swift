@@ -366,17 +366,17 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .navigationTitle(L("chat.title"))
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button(action: {
-                        if isPad {
-                            splitVisibility = splitVisibility == .detailOnly ? .all : .detailOnly
-                        } else {
+                // 收缩按钮（只在iPhone显示，iPad使用系统自带的）
+                if !isPad {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button(action: {
                             sideObser.jumpToPage(0)
+                        }) {
+                            Image(systemName: "line.3.horizontal")
                         }
-                    }) {
-                        Image(systemName: "line.3.horizontal")
                     }
                 }
+                
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
                         // 新对话按钮（只在有消息时显示）
