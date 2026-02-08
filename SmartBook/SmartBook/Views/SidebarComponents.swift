@@ -228,43 +228,6 @@ struct ConversationItemView: View {
     }
 }
 
-// MARK: - 底部菜单
-struct BottomMenuView: View {
-    var onSelectBookshelf: () -> Void
-    var onSelectSettings: () -> Void
-    var style: SidebarStyle
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            SidebarDivider(style: style)
-            
-            // 菜单项
-            VStack(alignment: .leading, spacing: 4) {
-                MenuItemView(
-                    icon: "book",
-                    title: L("library.title"),
-                    isSelected: false,
-                    style: style,
-                    action: onSelectBookshelf
-                )
-                
-                MenuItemView(
-                    icon: "gearshape",
-                    title: L("settings.title"),
-                    isSelected: false,
-                    style: style,
-                    action: onSelectSettings
-                )
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            
-            // 用户信息
-            UserInfoView(style: style)
-        }
-    }
-}
-
 // MARK: - 菜单项
 struct MenuItemView: View {
     let icon: String
