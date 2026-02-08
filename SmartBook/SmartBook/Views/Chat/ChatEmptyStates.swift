@@ -30,11 +30,34 @@ struct EmptyStateView: View {
                     systemImage: "plus.circle.fill"
                 )
                 .font(.headline)
-                .foregroundColor(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
+                .foregroundColor(colors.primaryText)
             }
-            .buttonStyle(.glass)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 14)
+            .background(
+                ZStack {
+                    // 液态玻璃效果 - 多层叠加
+                    Color.black.opacity(0.15)
+                        .background(.ultraThinMaterial)
+                    Color.white.opacity(0.05)
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.25),
+                                Color.white.opacity(0.08),
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 4)
             .padding(.top, 8)
         }
         .padding()
