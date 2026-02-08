@@ -85,6 +85,48 @@ struct GlassIconButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - 主要操作按钮样式（用于空状态等场景）
+struct PrimaryActionButtonStyle: ButtonStyle {
+    var colors: ThemeColors = .dark
+    
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .padding(.horizontal, 24)
+            .padding(.vertical, 14)
+            .background(
+                ZStack {
+                    // 液态玻璃效果 - 多层叠加
+                    Color.black.opacity(0.15)
+                        .background(.ultraThinMaterial)
+                    Color.white.opacity(configuration.isPressed ? 0.08 : 0.05)
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 22))
+            .overlay(
+                RoundedRectangle(cornerRadius: 22)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(configuration.isPressed ? 0.2 : 0.25),
+                                Color.white.opacity(configuration.isPressed ? 0.05 : 0.08),
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(
+                color: Color.black.opacity(configuration.isPressed ? 0.08 : 0.12),
+                radius: configuration.isPressed ? 8 : 12,
+                x: 0,
+                y: configuration.isPressed ? 2 : 4
+            )
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+    }
+}
+
 // MARK: - 按钮样式扩展
 extension ButtonStyle where Self == GlassButtonStyle {
     static var glass: GlassButtonStyle {
@@ -95,6 +137,12 @@ extension ButtonStyle where Self == GlassButtonStyle {
 extension ButtonStyle where Self == GlassIconButtonStyle {
     static var glassIcon: GlassIconButtonStyle {
         GlassIconButtonStyle()
+    }
+}
+
+extension ButtonStyle where Self == PrimaryActionButtonStyle {
+    static func primaryAction(colors: ThemeColors = .dark) -> PrimaryActionButtonStyle {
+        PrimaryActionButtonStyle(colors: colors)
     }
 }
 
