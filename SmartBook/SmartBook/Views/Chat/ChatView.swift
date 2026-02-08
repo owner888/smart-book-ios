@@ -64,6 +64,20 @@ struct ChatView: View {
                         showSettings = true
                     }
                 )
+                .overlay(alignment: .trailing) {
+                    // 玻璃渐变边框（右侧）
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.15),
+                            Color.white.opacity(0.05),
+                            Color.clear,
+                            Color.white.opacity(0.03)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(width: 1)
+                }
             } else {
                 // iPhone使用传统侧边栏
                 MobileSidebarView(
