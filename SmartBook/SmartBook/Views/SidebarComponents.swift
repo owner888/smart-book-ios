@@ -16,27 +16,26 @@ struct SidebarContent: View {
     @State private var searchText = ""
     
     var body: some View {
-        ZStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 0) {
-                // App 标题
-                AppTitleView(style: style)
-                
-                SidebarDivider(style: style)
-                
-                // Library 菜单项
-                MenuItemView(
-                    icon: "book",
-                    title: L("library.title"),
-                    isSelected: false,
-                    style: style,
-                    action: onSelectBookshelf
-                )
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                
-                SidebarDivider(style: style)
-                
-                // 可滚动内容区域（会话列表可以滚动到底部搜索框下方）
+        VStack(alignment: .leading, spacing: 0) {
+            // App 标题
+            AppTitleView(style: style)
+            
+            SidebarDivider(style: style)
+            
+            // Library 菜单项
+            MenuItemView(
+                icon: "book",
+                title: L("library.title"),
+                isSelected: false,
+                style: style,
+                action: onSelectBookshelf
+            )
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            
+            SidebarDivider(style: style)
+            
+                // 可滚动内容区域
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 0) {
                         // Conversations 可折叠部分
@@ -45,16 +44,13 @@ struct SidebarContent: View {
                             viewModel: viewModel,
                             onSelectChat: onSelectChat,
                             isExpanded: $isConversationsExpanded,
+                            searchText: searchText,
                             style: style
                         )
-                        
-                        // 底部留空间给搜索框
-                        Color.clear.frame(height: 80)
                     }
                 }
-            }
             
-            // 浮动在底部的搜索框和新建按钮
+            // 底部固定搜索框和新建按钮
             SearchAndNewChatView(
                 searchText: $searchText,
                 viewModel: viewModel,
