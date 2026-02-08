@@ -126,7 +126,7 @@ struct ConversationsSectionView: View {
 
 // MARK: - 对话列表
 struct ConversationsListView: View {
-    var historyService: ChatHistoryService
+    @ObservedObject var historyService: ChatHistoryService
     var viewModel: ChatViewModel
     var onSelectConversation: () -> Void
     var style: SidebarStyle
@@ -345,7 +345,7 @@ struct SidebarStyle {
             sectionTitleColor: Color.white.opacity(0.5),
             countColor: Color.white.opacity(0.4),
             dividerColor: Color.white.opacity(0.1),
-            selectedBackgroundColor: Color(white: 0.11),
+            selectedBackgroundColor: Color.white.opacity(0.15),
             userAvatarBackground: Color.white.opacity(0.1)
         )
     }
