@@ -11,17 +11,17 @@ struct SidebarContent: View {
     var onSelectBookshelf: () -> Void
     var onSelectSettings: () -> Void
     var style: SidebarStyle
-    
+
     @State private var isConversationsExpanded = true
     @State private var searchText = ""
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // App 标题
             AppTitleView(style: style)
-            
+
             SidebarDivider(style: style)
-            
+
             // Library 菜单项
             MenuItemView(
                 icon: "book",
@@ -32,24 +32,24 @@ struct SidebarContent: View {
             )
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            
+
             SidebarDivider(style: style)
-            
-                // 可滚动内容区域
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 0) {
-                        // Conversations 可折叠部分
-                        ConversationsSectionView(
-                            historyService: historyService,
-                            viewModel: viewModel,
-                            onSelectChat: onSelectChat,
-                            isExpanded: $isConversationsExpanded,
-                            searchText: searchText,
-                            style: style
-                        )
-                    }
+
+            // 可滚动内容区域
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Conversations 可折叠部分
+                    ConversationsSectionView(
+                        historyService: historyService,
+                        viewModel: viewModel,
+                        onSelectChat: onSelectChat,
+                        isExpanded: $isConversationsExpanded,
+                        searchText: searchText,
+                        style: style
+                    )
                 }
-            
+            }
+
             // 底部固定搜索框和新建按钮
             SearchAndNewChatView(
                 searchText: $searchText,
@@ -65,7 +65,7 @@ struct SidebarContent: View {
 // MARK: - App 标题视图
 struct AppTitleView: View {
     var style: SidebarStyle
-    
+
     var body: some View {
         HStack {
             Image(systemName: "book.circle.fill")
@@ -88,7 +88,7 @@ struct ConversationsSectionView: View {
     @Binding var isExpanded: Bool
     var searchText: String
     var style: SidebarStyle
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // 标题栏
@@ -103,9 +103,9 @@ struct ConversationsSectionView: View {
                         .foregroundColor(style.sectionTitleColor)
                         .textCase(.uppercase)
                         .tracking(0.5)
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(style.sectionTitleColor)
@@ -114,7 +114,7 @@ struct ConversationsSectionView: View {
                 .padding(.vertical, 12)
             }
             .buttonStyle(.plain)
-            
+
             // 对话列表
             if isExpanded {
                 if let historyService = historyService, let viewModel = viewModel {
@@ -140,19 +140,19 @@ struct ConversationsListView: View {
     var searchText: String
     var onSelectConversation: () -> Void
     var style: SidebarStyle
-    
+
     // 过滤后的对话列表
     var filteredConversations: [Conversation] {
         if searchText.isEmpty {
             return historyService.conversations
         } else {
             return historyService.conversations.filter { conversation in
-                conversation.title.localizedCaseInsensitiveContains(searchText) ||
-                (conversation.bookTitle?.localizedCaseInsensitiveContains(searchText) ?? false)
+                conversation.title.localizedCaseInsensitiveContains(searchText)
+                    || (conversation.bookTitle?.localizedCaseInsensitiveContains(searchText) ?? false)
             }
         }
     }
-    
+
     var body: some View {
         LazyVStack(spacing: 8) {
             ForEach(filteredConversations) { conversation in
@@ -176,7 +176,7 @@ struct ConversationItemView: View {
     var isSelected: Bool = false
     var style: SidebarStyle
     var onTap: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             // 标题
@@ -184,7 +184,7 @@ struct ConversationItemView: View {
                 .font(.subheadline)
                 .foregroundColor(style.textColor)
                 .lineLimit(1)
-            
+
             // 时间和书籍信息
             HStack(spacing: 4) {
                 if let bookTitle = conversation.bookTitle {
@@ -192,12 +192,12 @@ struct ConversationItemView: View {
                         .font(.caption2)
                         .foregroundColor(style.secondaryTextColor)
                         .lineLimit(1)
-                    
+
                     Text("•")
                         .font(.caption2)
                         .foregroundColor(style.secondaryTextColor)
                 }
-                
+
                 Text(conversation.updatedAt.formatted(.relative(presentation: .named)))
                     .font(.caption2)
                     .foregroundColor(style.secondaryTextColor)
@@ -223,14 +223,15 @@ struct ConversationItemView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(
-                    isSelected ? LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.15),
-                            Color.white.opacity(0.03)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ) : LinearGradient(colors: [Color.clear], startPoint: .top, endPoint: .bottom),
+                    isSelected
+                        ? LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.15),
+                                Color.white.opacity(0.03),
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ) : LinearGradient(colors: [Color.clear], startPoint: .top, endPoint: .bottom),
                     lineWidth: 0.5
                 )
         )
@@ -246,7 +247,7 @@ struct MenuItemView: View {
     var isSelected: Bool = false
     var style: SidebarStyle
     var action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 12) {
@@ -254,12 +255,12 @@ struct MenuItemView: View {
                     .font(.title3)
                     .foregroundColor(isSelected ? style.titleColor : style.iconColor)
                     .frame(width: 28)
-                
+
                 Text(title)
                     .font(.body)
                     .fontWeight(isSelected ? .semibold : .regular)
                     .foregroundColor(isSelected ? style.titleColor : style.textColor)
-                
+
                 Spacer()
             }
             .padding(.horizontal, 12)
@@ -279,7 +280,7 @@ struct SearchAndNewChatView: View {
     var viewModel: ChatViewModel?
     var onSelectChat: () -> Void
     var style: SidebarStyle
-    
+
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
@@ -288,7 +289,7 @@ struct SearchAndNewChatView: View {
                     Image(systemName: "magnifyingglass")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(style.secondaryTextColor)
-                    
+
                     TextField("Search", text: $searchText)
                         .font(.subheadline)
                         .foregroundColor(style.textColor)
@@ -300,7 +301,7 @@ struct SearchAndNewChatView: View {
                     ZStack {
                         // 液态玻璃效果 - 高透明度
                         Color.white.opacity(0.08)
-                        
+
                         // 微妙的模糊层
                         Color.black.opacity(0.03)
                     }
@@ -316,7 +317,7 @@ struct SearchAndNewChatView: View {
                             LinearGradient(
                                 colors: [
                                     Color.white.opacity(0.25),
-                                    Color.white.opacity(0.08)
+                                    Color.white.opacity(0.08),
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -325,7 +326,7 @@ struct SearchAndNewChatView: View {
                         )
                 )
                 .shadow(color: Color.black.opacity(0.08), radius: 8, x: 0, y: 3)
-                
+
                 // 新建会话按钮
                 Button(action: {
                     if let viewModel = viewModel {
@@ -351,7 +352,7 @@ struct SearchAndNewChatView: View {
                                     LinearGradient(
                                         colors: [
                                             Color.white.opacity(0.2),
-                                            Color.white.opacity(0.05)
+                                            Color.white.opacity(0.05),
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -372,11 +373,11 @@ struct SearchAndNewChatView: View {
 // MARK: - 用户信息（保留用于其他地方）
 struct UserInfoView: View {
     var style: SidebarStyle
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             SidebarDivider(style: style)
-            
+
             HStack(spacing: 12) {
                 Circle()
                     .fill(style.userAvatarBackground)
@@ -385,7 +386,7 @@ struct UserInfoView: View {
                         Image(systemName: "person.fill")
                             .foregroundColor(style.iconColor)
                     }
-                
+
                 VStack(alignment: .leading) {
                     Text(L("user.name"))
                         .font(.subheadline)
@@ -405,7 +406,7 @@ struct UserInfoView: View {
 // MARK: - 分割线
 struct SidebarDivider: View {
     var style: SidebarStyle
-    
+
     var body: some View {
         Divider()
             .background(style.dividerColor)
@@ -425,7 +426,7 @@ struct SidebarStyle {
     var selectedBackgroundColor: Color
     var userAvatarBackground: Color
     var searchBackground: Color
-    
+
     // 浅色样式（Mobile）
     static func light(colors: ThemeColors) -> SidebarStyle {
         SidebarStyle(
@@ -442,7 +443,7 @@ struct SidebarStyle {
             searchBackground: Color.gray.opacity(0.1)
         )
     }
-    
+
     // 深色样式（Tablet - Journal风格）
     static var dark: SidebarStyle {
         SidebarStyle(
