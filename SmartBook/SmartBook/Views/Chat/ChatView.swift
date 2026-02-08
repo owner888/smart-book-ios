@@ -49,28 +49,41 @@ struct ChatView: View {
     }
 
     private var sidebarView: some View {
-        SidebarView(
-            colors: colors,
-            historyService: historyService,
-            viewModel: viewModel,
-            onSelectChat: {
-                if !isPad {
-                    sideObser.jumpToPage(1)
-                }
-            },
-            onSelectBookshelf: {
-                showBookshelf = true
-                if !isPad {
-                    sideObser.jumpToPage(1)
-                }
-            },
-            onSelectSettings: {
-                showSettings = true
-                if !isPad {
-                    sideObser.jumpToPage(1)
-                }
+        Group {
+            if isPad {
+                // iPad/macOS使用Journal风格侧边栏
+                TabletSidebarView(
+                    colors: colors,
+                    historyService: historyService,
+                    viewModel: viewModel,
+                    onSelectChat: {},
+                    onSelectBookshelf: {
+                        showBookshelf = true
+                    },
+                    onSelectSettings: {
+                        showSettings = true
+                    }
+                )
+            } else {
+                // iPhone使用传统侧边栏
+                MobileSidebarView(
+                    colors: colors,
+                    historyService: historyService,
+                    viewModel: viewModel,
+                    onSelectChat: {
+                        sideObser.jumpToPage(1)
+                    },
+                    onSelectBookshelf: {
+                        showBookshelf = true
+                        sideObser.jumpToPage(1)
+                    },
+                    onSelectSettings: {
+                        showSettings = true
+                        sideObser.jumpToPage(1)
+                    }
+                )
             }
-        )
+        }
         .environment(bookState)
         .environment(themeManager)
         .frame(minWidth: 300, idealWidth: 340, maxWidth: 360)

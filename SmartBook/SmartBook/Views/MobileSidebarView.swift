@@ -1,9 +1,9 @@
-// SidebarView.swift - 侧边栏视图
+// MobileSidebarView.swift - 移动端侧边栏视图（iPhone专用）
 
 import SwiftUI
 
-// MARK: - 侧边栏视图
-struct SidebarView: View {
+// MARK: - 移动端侧边栏视图
+struct MobileSidebarView: View {
     var colors: ThemeColors
     var historyService: ChatHistoryService?
     var viewModel: ChatViewModel?
