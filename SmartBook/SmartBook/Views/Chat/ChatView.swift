@@ -36,6 +36,7 @@ struct ChatView: View {
     @State private var adaptationBottom: CGFloat?
     @State private var answerInitialHeight = 0.0
     @State private var lastAnchorPosition: CGFloat?
+    @State private var showBookRequiredAlert = false  // 显示需要选择书籍的提示
 
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
@@ -193,6 +194,14 @@ struct ChatView: View {
         }
         .onChange(of: modelService.currentModel) { _, newModel in
             viewModel.selectedModel = newModel.id
+        }
+        .alert("需要选择书籍", isPresented: $showBookRequiredAlert) {
+            Button("取消", role: .cancel) { }
+            Button("选择书籍") {
+                showBookPicker = true
+            }
+        } message: {
+            Text("使用此助手需要先选择一本书籍")
         }
     }
 
@@ -514,6 +523,16 @@ struct ChatView: View {
 
         // 至少需要文本或媒体之一
         guard hasText || !viewModel.mediaItems.isEmpty else { return }
+
+        // 检查 Ask 或 Continue 助手是否已选择书籍
+        let currentAssistantId = assistantService.currentAssistant.id
+        let requiresBook = currentAssistantId == "ask" || currentAssistantId == "continue"
+        
+        if requiresBook && bookState.selectedBook == nil {
+            // 显示提示，要求用户选择书籍
+            showBookRequiredAlert = true
+            return
+        }
 
         // 保存媒体副本
         let mediaToSend = viewModel.mediaItems

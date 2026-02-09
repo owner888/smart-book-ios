@@ -63,6 +63,18 @@ struct EmptyChatStateView: View {
                     .foregroundColor(colors.secondaryText)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 32)
+
+                // 显示 Select Book 按钮
+                Button(action: onAddBook) {
+                    Label(
+                        L("chat.menu.selectBook"),
+                        systemImage: "book"
+                    )
+                    .font(.headline)
+                    .foregroundColor(colors.primaryText)
+                }
+                .buttonStyle(.primaryAction(colors: colors))
+                .padding(.top, 8)
             }
         }
         .padding()
