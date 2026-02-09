@@ -81,6 +81,7 @@ class StreamingChatService: NSObject {
             "rag": ragEnabled,
             "model": model,
             "assistant_id": assistant.id,
+            "language": Locale.current.language.languageCode?.identifier ?? "en", // 传递当前语言
         ]
 
         // 添加摘要（如果有）
