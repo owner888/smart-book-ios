@@ -112,59 +112,9 @@ struct ChatView: View {
                 .environmentObject(sideObser)
             }
         }
-        .sheet(isPresented: $showBookPicker) {
+        .fullScreenCover(isPresented: $showBookPicker) {
             BookPickerView(colors: colors) { book in
-                // 选择书籍时调用后端 API
-                Task {
-                    do {
-                        try await bookService.selectBook(book) { progress in
-                            // 只有在上传时才显示进度（progress > 0 表示正在上传）
-                            DispatchQueue.main.async {
-                                if progress > 0 {
-                                    isUploading = true
-                                    uploadProgress = progress
-                                }
-                            }
-                        }
-
-                        await MainActor.run {
-                            isUploading = false
-                            withAnimation {
-                                bookState.selectedBook = book
-                            }
-                            showBookPicker = false
-                        }
-                    } catch {
-                        await MainActor.run {
-                            isUploading = false
-                        }
-                        Logger.error("选择书籍失败: \(error.localizedDescription)")
-                    }
-                }
-            }
-            .overlay {
-                if isUploading {
-                    ZStack {
-                        Color.black.opacity(0.4)
-                            .ignoresSafeArea()
-
-                        VStack(spacing: 16) {
-                            ProgressView(value: uploadProgress)
-                                .progressViewStyle(.linear)
-                                .frame(width: 200)
-                                .tint(.green)
-
-                            Text("📤 上传书籍中... \(Int(uploadProgress * 100))%")
-                                .font(.caption)
-                                .foregroundColor(.white)
-                        }
-                        .padding(24)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(colors.cardBackground)
-                        )
-                    }
-                }
+                handleBookSelection(book)
             }
         }
         .sheet(isPresented: $showSettings) {
@@ -605,6 +555,35 @@ struct ChatView: View {
             let rootVC = windowScene.windows.first?.rootViewController
         {
             rootVC.present(activityVC, animated: true)
+        }
+    }
+    
+    // MARK: - 书籍选择处理
+    func handleBookSelection(_ book: Book) {
+        Task {
+            do {
+                try await bookService.selectBook(book) { progress in
+                    DispatchQueue.main.async {
+                        if progress > 0 {
+                            isUploading = true
+                            uploadProgress = progress
+                        }
+                    }
+                }
+                
+                await MainActor.run {
+                    isUploading = false
+                    withAnimation {
+                        bookState.selectedBook = book
+                    }
+                    showBookPicker = false
+                }
+            } catch {
+                await MainActor.run {
+                    isUploading = false
+                }
+                Logger.error("选择书籍失败: \(error.localizedDescription)")
+            }
         }
     }
     

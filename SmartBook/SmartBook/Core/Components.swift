@@ -148,6 +148,16 @@ extension ButtonStyle where Self == PrimaryActionButtonStyle {
 
 // MARK: - 玻璃效果视图扩展
 extension View {
+    /// 条件修饰器扩展
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
+    
     func glassEffect() -> some View {
         self
             .background {
