@@ -119,23 +119,24 @@ class SummarizationService {
 
         Logger.info("🤖 开始生成摘要，处理 \(messagesToSummarize.count) 条消息（保留最近\(threshold)条作为历史）...")
 
-        // 构建摘要请求
+        // 构建摘要请求（使用英文 + 语言指令）
         var conversationText = ""
         if let existingSummary = conversation.summary {
-            conversationText += "【之前的摘要】\n\(existingSummary)\n\n【新对话】\n"
+            conversationText += "Previous summary of earlier conversation:\n\(existingSummary)\n\n"
+            conversationText += "New conversation since the summary:\n"
         }
 
         for msg in messagesToSummarize {
-            let role = msg.role == .user ? "用户" : "AI"
+            let role = msg.role == .user ? "User" : "AI"
             conversationText += "\(role): \(msg.content)\n\n"
         }
 
+        // 获取当前语言
+        let currentLanguage = Locale.current.language.languageCode?.identifier ?? "en"
+        let languageName = currentLanguage == "zh" ? "Chinese" : "English"
+        
         let summarizePrompt = """
-            请将以上对话总结成一个简洁的摘要，保留关键信息和上下文。
-            摘要应该：
-            1. 概括主要讨论的话题
-            2. 记录重要的结论或决定
-            3. 保持简洁，不超过200字
+            Please concisely summarize the key points of the above conversation, including: 1) The main topics discussed by the user 2) The key information and conclusions provided by AI 3) Any important background context. The summary should be brief and concise (100-200 words) for reference in subsequent conversations. If you can speak in \(languageName), then respond in \(languageName).
             """
 
         // 调用 AI 生成摘要（使用流式 API）
