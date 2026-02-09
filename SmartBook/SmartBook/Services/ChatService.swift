@@ -30,7 +30,7 @@ class StreamingChatService: NSObject {
         message: String,
         assistant: Assistant,
         bookId: String?,
-        model: String = "gemini-2.0-flash",
+        model: String = "gemini-2.5-flash",
         ragEnabled: Bool = false,
         summary: String? = nil,
         history: [ChatMessage] = [],

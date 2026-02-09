@@ -195,7 +195,7 @@ class MenuConfig {
             case .fast:
                 return "gemini-2.5-flash-lite"  // Fast -> gemini-2.5-flash-lite
             case .auto:
-                return "gemini-2.0-flash"  // Auto -> gemini-2.0-flash (免费)
+                return "gemini-2.5-flash"  // Auto -> gemini-2.5-flash (支持 thinking)
             case .dynamic(let model):
                 return model.id
             case .super:
