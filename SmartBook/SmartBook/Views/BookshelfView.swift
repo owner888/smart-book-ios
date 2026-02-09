@@ -13,82 +13,130 @@ struct BookshelfView: View {
     @Environment(\.dismiss) var dismiss
     
     // ViewModel - 使用 Environment 依赖注入
-    @State private var viewModel: BookshelfViewModel
-    
-    init() {
-        // 使用空的初始化，在 onAppear 中注入依赖
-        _viewModel = State(wrappedValue: BookshelfViewModel(
-            bookService: BookService(),
-            bookState: BookState()
-        ))
-    }
+    @State private var viewModel: BookshelfViewModel?
     
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
     
     var body: some View {
+        mainContent
+            .onAppear(perform: setupViewModel)
+    }
+    
+    private var mainContent: some View {
         NavigationStack {
             ZStack {
                 colors.background.ignoresSafeArea()
-                
                 contentView
             }
             .navigationTitle(L("library.title"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .foregroundColor(colors.primaryText)
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        viewModel.showImporter()
-                    } label: {
-                        Image(systemName: "plus")
-                            .foregroundColor(colors.primaryText)
-                    }
-                }
-            }
-            .task {
-                await viewModel.loadBooks()
-            }
-            .refreshable {
-                await viewModel.loadBooks()
-            }
+            .toolbar { toolbarContent }
+            .task { await loadBooksTask() }
+            .refreshable { await loadBooksTask() }
             .fileImporter(
-                isPresented: $viewModel.showingImporter,
+                isPresented: importerBinding,
                 allowedContentTypes: [UTType(filenameExtension: "epub") ?? .data],
-                allowsMultipleSelection: true
-            ) { result in
-                Task {
-                    await viewModel.handleImport(result)
-                }
-            }
-            .alert(L("library.delete.title"), isPresented: $viewModel.showingDeleteAlert) {
-                Button(L("common.cancel"), role: .cancel) { }
-                Button(L("common.delete"), role: .destructive) {
-                    if let book = viewModel.bookToDelete {
-                        viewModel.deleteBook(book)
-                    }
-                }
-            } message: {
-                Text(L("library.delete.message"))
-            }
-            .alert(L("library.import.failed"), isPresented: $viewModel.showingError) {
-                Button(L("common.ok"), role: .cancel) { }
-            } message: {
-                Text(viewModel.importError ?? L("error.generic"))
-            }
-            .fullScreenCover(item: $viewModel.selectedBookForReading) { book in
+                allowsMultipleSelection: true,
+                onCompletion: handleImportResult
+            )
+            .alert(L("library.delete.title"), isPresented: deleteAlertBinding, actions: deleteAlertActions, message: deleteAlertMessage)
+            .alert(L("library.import.failed"), isPresented: errorAlertBinding, actions: errorAlertActions, message: errorAlertMessage)
+            .fullScreenCover(item: readerCoverBinding) { book in
                 ReaderView(book: book)
             }
         }
+    }
+    
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .navigationBarLeading) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark")
+                    .foregroundColor(colors.primaryText)
+            }
+        }
+        
+        ToolbarItem(placement: .navigationBarTrailing) {
+            Button {
+                viewModel?.showImporter()
+            } label: {
+                Image(systemName: "plus")
+                    .foregroundColor(colors.primaryText)
+            }
+        }
+    }
+    
+    private func setupViewModel() {
+        if viewModel == nil {
+            viewModel = BookshelfViewModel(bookService: bookService, bookState: bookState)
+        }
+    }
+    
+    private func loadBooksTask() async {
+        if let viewModel = viewModel {
+            await viewModel.loadBooks()
+        }
+    }
+    
+    private func handleImportResult(_ result: Result<[URL], Error>) {
+        Task {
+            await viewModel?.handleImport(result)
+        }
+    }
+    
+    private var importerBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel?.showingImporter ?? false },
+            set: { viewModel?.showingImporter = $0 }
+        )
+    }
+    
+    private var deleteAlertBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel?.showingDeleteAlert ?? false },
+            set: { viewModel?.showingDeleteAlert = $0 }
+        )
+    }
+    
+    @ViewBuilder
+    private func deleteAlertActions() -> some View {
+        Button(L("common.cancel"), role: .cancel) { }
+        Button(L("common.delete"), role: .destructive) {
+            if let viewModel = viewModel, let book = viewModel.bookToDelete {
+                viewModel.deleteBook(book)
+            }
+        }
+    }
+    
+    private func deleteAlertMessage() -> some View {
+        Text(L("library.delete.message"))
+    }
+    
+    private var errorAlertBinding: Binding<Bool> {
+        Binding(
+            get: { viewModel?.showingError ?? false },
+            set: { viewModel?.showingError = $0 }
+        )
+    }
+    
+    @ViewBuilder
+    private func errorAlertActions() -> some View {
+        Button(L("common.ok"), role: .cancel) { }
+    }
+    
+    private func errorAlertMessage() -> some View {
+        Text(viewModel?.importError ?? L("error.generic"))
+    }
+    
+    private var readerCoverBinding: Binding<Book?> {
+        Binding(
+            get: { viewModel?.selectedBookForReading },
+            set: { viewModel?.selectedBookForReading = $0 }
+        )
     }
     
     @ViewBuilder
@@ -125,7 +173,7 @@ struct BookshelfView: View {
                 .foregroundColor(colors.secondaryText.opacity(0.7))
             
             Button {
-                viewModel.showImporter()
+                viewModel?.showImporter()
             } label: {
                 Label(L("library.import"), systemImage: "plus.circle.fill")
                     .font(.headline)
@@ -151,9 +199,9 @@ struct BookshelfView: View {
             
             LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 24) {
                 ForEach(bookState.books) { book in
-                    BookCard(book: book, isUserImported: viewModel.isUserImportedBook(book), colors: colors)
+                    BookCard(book: book, isUserImported: viewModel?.isUserImportedBook(book) ?? false, colors: colors)
                         .onTapGesture {
-                            viewModel.selectBookForReading(book)
+                            viewModel?.selectBookForReading(book)
                         }
                         .contextMenu {
                             contextMenuItems(for: book)
@@ -169,7 +217,7 @@ struct BookshelfView: View {
     private func contextMenuItems(for book: Book) -> some View {
         if book.filePath != nil {
             Button {
-                viewModel.selectBookForReading(book)
+                viewModel?.selectBookForReading(book)
             } label: {
                 Label(L("reader.title"), systemImage: "book")
             }
@@ -181,9 +229,9 @@ struct BookshelfView: View {
             Label(L("chat.title"), systemImage: "bubble.left.and.bubble.right")
         }
         
-        if viewModel.isUserImportedBook(book) {
+        if viewModel?.isUserImportedBook(book) ?? false {
             Button(role: .destructive) {
-                viewModel.requestDelete(book)
+                viewModel?.requestDelete(book)
             } label: {
                 Label(L("common.delete"), systemImage: "trash")
             }
