@@ -227,7 +227,8 @@ struct ChatView: View {
                                                     colors: colors,
                                                     onAddBook: {
                                                         showBookPicker = true
-                                                    }
+                                                    },
+                                                    isDefaultChatAssistant: assistantService.currentAssistant.id == "chat"
                                                 )
                                             }
                                             Spacer()

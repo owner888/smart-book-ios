@@ -43,6 +43,7 @@ struct EmptyStateView: View {
 struct EmptyChatStateView: View {
     var colors: ThemeColors = .dark
     var onAddBook: () -> Void
+    var isDefaultChatAssistant: Bool = false  // 是否为默认 Chat 助手
 
     var body: some View {
         VStack(spacing: 20) {
@@ -50,16 +51,19 @@ struct EmptyChatStateView: View {
                 .font(.system(size: 64))  // 装饰性大图标
                 .foregroundColor(colors.secondaryText.opacity(0.6))
 
-            Text(L("chat.emptyState.noBookTitle"))
-                .font(.title2)
-                .fontWeight(.semibold)
-                .foregroundColor(colors.primaryText)
+            // 只在非默认 Chat 助手时显示文字和按钮
+            if !isDefaultChatAssistant {
+                Text(L("chat.emptyState.noBookTitle"))
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(colors.primaryText)
 
-            Text(L("chat.emptyState.noBookDesc"))
-                .font(.body)
-                .foregroundColor(colors.secondaryText)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                Text(L("chat.emptyState.noBookDesc"))
+                    .font(.body)
+                    .foregroundColor(colors.secondaryText)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
         }
         .padding()
     }
