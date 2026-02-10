@@ -150,27 +150,6 @@ struct MessageBubble: View {
                 }
             }
         }
-        .overlay(alignment: .top) {
-            // 复制成功提示（类似ChatGPT）
-            if showCopyTip {
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("Message copied")
-                        .font(.subheadline)
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(
-                    Capsule()
-                        .fill(Color.black.opacity(0.85))
-                )
-                .transition(.move(edge: .top).combined(with: .opacity))
-                .zIndex(1000)
-                .offset(y: -50)
-            }
-        }
-        .animation(.easeInOut(duration: 0.3), value: showCopyTip)
+        .successTips(isShowing: $showCopyTip, message: "Message copied")
     }
 }
