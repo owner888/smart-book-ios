@@ -195,7 +195,7 @@ class MenuConfig {
             case .fast:
                 return "gemini-2.5-flash-lite"  // Fast -> gemini-2.5-flash-lite
             case .auto:
-                return "gemini-2.5-flash"  // Auto -> gemini-2.5-flash (支持 thinking)
+                return AppConfig.DefaultValues.defaultModel  // Auto -> 默认模型
             case .dynamic(let model):
                 return model.id
             case .super:

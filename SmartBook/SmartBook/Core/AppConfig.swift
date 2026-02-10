@@ -48,5 +48,6 @@ enum AppConfig {
         static let asrProvider = "deepgram" // native, google, deepgram
         static let asrLanguage = "zh-CN" // 默认中文
         static let ttsProvider = "google" // native（系统语音）, google（Google TTS）
+        static let defaultModel = "gemini-2.5-flash" // 默认 AI 模型（支持 thinking）
     }
 }

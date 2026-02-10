@@ -161,7 +161,7 @@ extension AIModel {
     static var defaultItems: [AIModel] { defaultModels }
     
     static let defaultModels: [AIModel] = [
-        AIModel(id: "gemini-2.0-flash", name: "Gemini 2.0 Flash", provider: "Google", rate: "0x", description: "Free model (Auto)", maxTokens: 1000000, costPer1MInput: 0, costPer1MOutput: 0),
+        AIModel(id: AppConfig.DefaultValues.defaultModel, name: "Gemini 2.5 Flash", provider: "Google", rate: "0x", description: "支持 thinking (Auto)", maxTokens: 1000000, costPer1MInput: 0.3, costPer1MOutput: 2.5),
         AIModel(id: "gemini-2.5-flash", name: "Gemini 2.5 Flash", provider: "Google", rate: "0x", description: "Free experimental model", maxTokens: 1000000, costPer1MInput: 0, costPer1MOutput: 0),
         AIModel(id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash-Lite", provider: "Google", rate: "0x", description: "Free lite model", maxTokens: 32000, costPer1MInput: 0, costPer1MOutput: 0),
         AIModel(id: "gemini-3-pro-preview", name: "Gemini 3.0 Pro", provider: "Google", rate: "1x", description: "Expert model", maxTokens: 2000000, costPer1MInput: 1.25, costPer1MOutput: 5.0),

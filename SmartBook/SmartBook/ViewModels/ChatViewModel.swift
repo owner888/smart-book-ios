@@ -27,7 +27,7 @@ class ChatViewModel: ObservableObject {
     var historyService: ChatHistoryService?
     var summarizationService: SummarizationService?
     var selectedAssistant: Assistant?
-    var selectedModel: String = "gemini-2.5-flash"
+    var selectedModel: String = AppConfig.DefaultValues.defaultModel
     private let streamingService: StreamingChatService
     private var streamingContent = ""
     private var answerContents = [String]()

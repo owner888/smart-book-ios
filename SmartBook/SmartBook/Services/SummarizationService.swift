@@ -147,7 +147,7 @@ class SummarizationService {
                 message: conversationText + "\n\n" + summarizePrompt,
                 assistant: Self.summaryAssistant,
                 bookId: nil,
-                model: "gemini-2.5-flash",
+                model: AppConfig.DefaultValues.defaultModel,
                 ragEnabled: false,
                 summary: nil,
                 history: []
