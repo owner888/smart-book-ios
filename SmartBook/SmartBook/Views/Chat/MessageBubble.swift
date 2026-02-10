@@ -40,6 +40,7 @@ struct MessageBubble: View {
     @State private var isThinkingExpanded = false
     @State private var isSystemPromptExpanded = false
     @State private var isSourcesExpanded = true
+    @State private var showCopyTip = false  // 复制提示
 
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
@@ -115,6 +116,12 @@ struct MessageBubble: View {
                                 onSpeak: nil,  // 简单模式不提供TTS
                                 onCopy: {
                                     UIPasteboard.general.string = message.content
+                                    // 显示复制提示
+                                    showCopyTip = true
+                                    // 2秒后自动隐藏
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                        showCopyTip = false
+                                    }
                                 }
                             )
                         }
@@ -143,5 +150,27 @@ struct MessageBubble: View {
                 }
             }
         }
+        .overlay(alignment: .top) {
+            // 复制成功提示（类似ChatGPT）
+            if showCopyTip {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                    Text("Message copied")
+                        .font(.subheadline)
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(
+                    Capsule()
+                        .fill(Color.black.opacity(0.85))
+                )
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(1000)
+                .offset(y: -50)
+            }
+        }
+        .animation(.easeInOut(duration: 0.3), value: showCopyTip)
     }
 }
