@@ -30,6 +30,7 @@ class ChatViewModel: ObservableObject {
     var selectedModel: String = AppConfig.DefaultValues.defaultModel
     private let streamingService: StreamingChatService
     private var streamingContent = ""
+    private var streamingThinking = ""  // 思考过程
     private var answerContents = [String]()
     private var contentIndex = 0
     private var wordIndex = 0
@@ -169,6 +170,7 @@ class ChatViewModel: ObservableObject {
 
         isLoading = true
         streamingContent = ""
+        streamingThinking = ""  // 重置思考内容
         answerContents.removeAll()
         contentIndex = 0
         cancelDisplay()
@@ -206,6 +208,22 @@ class ChatViewModel: ObservableObject {
                 guard let self = self else { return }
 
                 switch event {
+                case .thinking(let thinkingText):
+                    Logger.info("🧠 收到思考: \(thinkingText.prefix(50))...")
+                    // 累积思考内容
+                    self.streamingThinking += thinkingText
+                    
+                    // 更新消息显示思考过程
+                    if messageIndex < self.messages.count {
+                        self.messages[messageIndex] = ChatMessage(
+                            id: self.messages[messageIndex].id,
+                            role: .assistant,
+                            content: self.streamingContent,
+                            thinking: self.streamingThinking,  // 添加思考内容
+                            isStreaming: true
+                        )
+                    }
+                    
                 case .content(let content):
                     Logger.info("💬 收到内容: \(content)")
                     // 逐步更新内容
@@ -287,16 +305,17 @@ class ChatViewModel: ObservableObject {
                 case .success:
                     // 流式完成，内容已经在事件中更新
 
-                    // 保存助手消息到数据库
+                    // 保存助手消息到数据库（包含 thinking）
                     if messageIndex < self.messages.count {
                         let messageContent = self.answerContents.joined()
                         let finalMessage = ChatMessage(
                             id: self.messages[messageIndex].id,
                             role: .assistant,
-                            content: messageContent
+                            content: messageContent,
+                            thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking  // 保存思考内容
                         )
                         self.historyService?.saveMessage(finalMessage)
-                        Logger.info("💾 保存助手回复到数据库")
+                        Logger.info("💾 保存助手回复到数据库（thinking: \(self.streamingThinking.isEmpty ? "无" : "有")）")
 
                         // ✅ 使用协调服务播放 TTS
                         if enableTTS {
