@@ -390,21 +390,27 @@ struct MessageSourcesView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Button(action: { isExpanded.toggle() }) {
-                HStack {
-                    Image(systemName: "books.vertical")
-                        .foregroundColor(.green)
-                    Text(L("chat.sources.title", sources.count))
-                        .font(.caption) // 12号
-                        .fontWeight(.medium)
-                    Spacer()
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.caption) // 12号
-                }
-                .foregroundColor(colors.primaryText)
+            // 头部：整栏可点击
+            HStack {
+                Image(systemName: "books.vertical")
+                    .foregroundColor(.green)
+                Text(L("chat.sources.title", sources.count))
+                    .font(.caption) // 12号
+                    .fontWeight(.medium)
+                Spacer()
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.caption) // 12号
             }
-            .buttonStyle(.plain)
+            .foregroundColor(colors.primaryText)
+            .padding(8)
+            .contentShape(Rectangle())  // 整个区域都可以点击
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
+            }
             
+            // 展开的内容
             if isExpanded {
                 VStack(alignment: .leading, spacing: 6) {
                     ForEach(sources.prefix(3)) { source in
@@ -432,9 +438,10 @@ struct MessageSourcesView: View {
                         )
                     }
                 }
+                .padding(.horizontal, 8)
+                .padding(.bottom, 8)
             }
         }
-        .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.green.opacity(0.3), lineWidth: 1)
