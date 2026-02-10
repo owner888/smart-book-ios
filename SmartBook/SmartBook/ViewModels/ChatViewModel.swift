@@ -200,7 +200,7 @@ class ChatViewModel: ObservableObject {
             assistant: assistant,
             bookId: bookState.selectedBook?.id,
             model: selectedModel,
-            ragEnabled: false,
+            enableRag: false,
             summary: summary,
             history: recentMessages,
             images: processedMedia.images  // ✅ 直接使用处理后的图片数据

@@ -148,7 +148,7 @@ class SummarizationService {
                 assistant: Self.summaryAssistant,
                 bookId: nil,
                 model: AppConfig.DefaultValues.defaultModel,
-                ragEnabled: false,
+                enableRag: false,
                 summary: nil,
                 history: []
             ) { event in

@@ -31,7 +31,7 @@ class StreamingChatService: NSObject {
         assistant: Assistant,
         bookId: String?,
         model: String = AppConfig.DefaultValues.defaultModel,
-        ragEnabled: Bool = false,
+        enableRag: Bool = false,
         summary: String? = nil,
         history: [ChatMessage] = [],
         images: [[String: Any]]? = nil,
@@ -77,12 +77,12 @@ class StreamingChatService: NSObject {
         var body: [String: Any] = [
             "messages": messagesArray,
             "chat_id": UUID().uuidString,
-            "search": false,
-            "rag": ragEnabled,
+            "search": true,  // ✅ 启用 Google Search
+            "tools": true,  // ✅ 启用 MCP 工具
+            "rag": enableRag,
             "model": model,
             "assistant_id": assistant.id,
             "language": Locale.current.language.languageCode?.identifier ?? "en", // 传递当前语言
-            "engine": "mcp",  // ✅ 启用 MCP 工具（让 Gemini 智能调用）
         ]
 
         // 添加摘要（如果有）
