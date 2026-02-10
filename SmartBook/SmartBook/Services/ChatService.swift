@@ -73,12 +73,22 @@ class StreamingChatService: NSObject {
             "content": message
         ])
 
+        // 从配置读取工具开关（如果没有设置过，使用默认值）
+        var enableSearch = UserDefaults.standard.object(forKey: AppConfig.Keys.enableGoogleSearch) as? Bool ?? AppConfig.DefaultValues.enableGoogleSearch
+        var enableTools = UserDefaults.standard.object(forKey: AppConfig.Keys.enableMCPTools) as? Bool ?? AppConfig.DefaultValues.enableMCPTools
+        
+        // ✅ 互斥检查（Gemini 不支持同时使用）
+        if enableSearch && enableTools {
+            // 优先使用 MCP Tools
+            enableSearch = false
+        }
+        
         // 构建统一的请求体（OpenAI 格式 + 扩展字段）
         var body: [String: Any] = [
             "messages": messagesArray,
             "chat_id": UUID().uuidString,
-            "search": true,  // ✅ 启用 Google Search
-            "tools": true,  // ✅ 启用 MCP 工具
+            "search": enableSearch,  // ✅ 从配置读取
+            "tools": enableTools,  // ✅ 从配置读取
             "rag": enableRag,
             "model": model,
             "assistant_id": assistant.id,

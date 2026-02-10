@@ -36,7 +36,9 @@ enum AppConfig {
         static let selectedVoice = "selectedVoice"
         static let asrProvider = "asrProvider"
         static let asrLanguage = "asrLanguage"
-        static let ttsProvider = "ttsProvider"  // 新增：TTS 提供商
+        static let ttsProvider = "ttsProvider"  // TTS 提供商
+        static let enableGoogleSearch = "enableGoogleSearch"  // Google Search 开关
+        static let enableMCPTools = "enableMCPTools"  // MCP 工具开关
     }
     
     // MARK: - 默认值
@@ -49,5 +51,7 @@ enum AppConfig {
         static let asrLanguage = "zh-CN" // 默认中文
         static let ttsProvider = "google" // native（系统语音）, google（Google TTS）
         static let defaultModel = "gemini-2.5-flash" // 默认 AI 模型（支持 thinking）
+        static let enableGoogleSearch = false  // 默认关闭（与 MCP 冲突）
+        static let enableMCPTools = true  // 默认开启 MCP 工具
     }
 }

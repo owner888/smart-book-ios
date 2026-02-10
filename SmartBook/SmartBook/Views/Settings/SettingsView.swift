@@ -14,6 +14,8 @@ struct SettingsView: View {
     @AppStorage(AppConfig.Keys.asrProvider) private var asrProvider = AppConfig.DefaultValues.asrProvider
     @AppStorage(AppConfig.Keys.asrLanguage) private var asrLanguage = AppConfig.DefaultValues.asrLanguage
     @AppStorage(AppConfig.Keys.ttsProvider) private var ttsProvider = AppConfig.DefaultValues.ttsProvider
+    @AppStorage(AppConfig.Keys.enableGoogleSearch) private var enableGoogleSearch = AppConfig.DefaultValues.enableGoogleSearch
+    @AppStorage(AppConfig.Keys.enableMCPTools) private var enableMCPTools = AppConfig.DefaultValues.enableMCPTools
     
     @State private var showServerEditor = false
     @State private var editingURL = ""
@@ -174,6 +176,52 @@ struct SettingsView: View {
                 }
                 .listRowBackground(colors.cardBackground)
                 
+                // AI 工具设置
+                Section {
+                    // MCP 工具开关
+                    Toggle(isOn: $enableMCPTools) {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "wrench.and.screwdriver.fill", color: .blue)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("MCP 工具")
+                                    .foregroundColor(colors.primaryText)
+                                Text("时间、计算、网页抓取、书籍搜索")
+                                    .font(.caption)
+                                    .foregroundColor(colors.secondaryText)
+                            }
+                        }
+                    }
+                    .tint(.blue)
+                    
+                    // Google Search 开关
+                    Toggle(isOn: $enableGoogleSearch) {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "magnifyingglass", color: .green)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Google Search")
+                                    .foregroundColor(colors.primaryText)
+                                Text("搜索最新信息")
+                                    .font(.caption)
+                                    .foregroundColor(colors.secondaryText)
+                            }
+                        }
+                    }
+                    .tint(.green)
+                    
+                } header: {
+                    Text("AI 工具")
+                        .foregroundColor(colors.secondaryText)
+                } footer: {
+                    if enableGoogleSearch && enableMCPTools {
+                        Text("⚠️ Google Search 和 MCP 工具不能同时使用，将优先使用 MCP 工具")
+                            .foregroundColor(.orange)
+                    } else {
+                        Text("AI 可以根据需要智能调用工具获取实时信息")
+                            .foregroundColor(colors.secondaryText)
+                    }
+                }
+                .listRowBackground(colors.cardBackground)
+                
                 // 数据管理
                 Section {
                     // 重置设置
@@ -299,6 +347,8 @@ struct SettingsView: View {
         ttsProvider = AppConfig.DefaultValues.ttsProvider
         autoTTS = AppConfig.DefaultValues.autoTTS
         ttsRate = AppConfig.DefaultValues.ttsRate
+        enableGoogleSearch = AppConfig.DefaultValues.enableGoogleSearch
+        enableMCPTools = AppConfig.DefaultValues.enableMCPTools
     }
     
     /// 计算缓存大小
