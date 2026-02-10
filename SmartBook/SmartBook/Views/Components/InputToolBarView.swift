@@ -42,7 +42,6 @@ struct InputToolBarView<Content: View>: View {
     @State private var showCameraPicker = false
     @State private var showPhotoPicker = false
     @State private var showDocumentPicker = false
-    @State private var mediaItems: [MediaItem] = []
 
     var body: some View {
         GeometryReader { proxy in
@@ -78,7 +77,7 @@ struct InputToolBarView<Content: View>: View {
                             aiFunction: $aiFunction,
                             assistant: $assistant,
                             inputText: $inputText,
-                            mediaItems: $mediaItems,
+                            mediaItems: $viewModel.mediaItems,
                             openMedia: { rect in
                                 mediaMenuEdge = buttonRelatively(
                                     rect,
@@ -273,30 +272,30 @@ struct InputToolBarView<Content: View>: View {
     
     private func handleImagePicked(_ image: UIImage) {
         let item = MediaItem(type: .image(image))
-        mediaItems.append(item)
-        Logger.info("✅ Image selected: \(image.size), total: \(mediaItems.count)")
+        viewModel.mediaItems.append(item)
+        Logger.info("✅ Image selected: \(image.size), total: \(viewModel.mediaItems.count)")
     }
     
     private func handleMultipleImagesPicked(_ images: [UIImage]) {
         for image in images {
             let item = MediaItem(type: .image(image))
-            mediaItems.append(item)
+            viewModel.mediaItems.append(item)
         }
-        Logger.info("✅ \(images.count) images selected, total: \(mediaItems.count)")
+        Logger.info("✅ \(images.count) images selected, total: \(viewModel.mediaItems.count)")
     }
     
     private func handleDocumentPicked(_ url: URL) {
         let item = MediaItem(type: .document(url))
-        mediaItems.append(item)
-        Logger.info("✅ Document selected: \(url.lastPathComponent), total: \(mediaItems.count)")
+        viewModel.mediaItems.append(item)
+        Logger.info("✅ Document selected: \(url.lastPathComponent), total: \(viewModel.mediaItems.count)")
     }
     
     private func handleMultipleDocumentsPicked(_ urls: [URL]) {
         for url in urls {
             let item = MediaItem(type: .document(url))
-            mediaItems.append(item)
+            viewModel.mediaItems.append(item)
         }
-        Logger.info("✅ \(urls.count) documents selected, total: \(mediaItems.count)")
+        Logger.info("✅ \(urls.count) documents selected, total: \(viewModel.mediaItems.count)")
     }
 
     private func updateAIFunction(from modelId: String) {
