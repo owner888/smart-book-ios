@@ -382,74 +382,37 @@ struct MessageContentView: View {
 
 }
 
-// MARK: - 检索来源视图
+// MARK: - 检索来源视图（简洁胶囊显示）
 struct MessageSourcesView: View {
     let sources: [RAGSource]
     var colors: ThemeColors
-    @Binding var isExpanded: Bool
+    @Binding var isExpanded: Bool  // 保留参数保持兼容
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // 头部：整栏可点击
-            HStack {
-                Image(systemName: "books.vertical")
-                    .foregroundColor(.green)
-                Text(L("chat.sources.title", sources.count))
-                    .font(.caption) // 12号
+        if let firstSource = sources.first {
+            HStack(spacing: 6) {
+                // 显示评分
+                Text("\(firstSource.scorePercentage)%")
+                    .font(.caption2)
                     .fontWeight(.medium)
-                Spacer()
-                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                    .font(.caption) // 12号
+                    .foregroundColor(.green)
+                // 显示来源文本
+                Text(firstSource.text)
+                    .font(.caption2)
+                    .foregroundColor(colors.secondaryText)
+                    .lineLimit(1)
             }
-            .foregroundColor(colors.primaryText)
-            .padding(8)
-            .contentShape(Rectangle())  // 整个区域都可以点击
-            .onTapGesture {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    isExpanded.toggle()
-                }
-            }
-            
-            // 展开的内容
-            if isExpanded {
-                VStack(alignment: .leading, spacing: 6) {
-                    ForEach(sources.prefix(3)) { source in
-                        HStack(alignment: .top, spacing: 8) {
-                            Text("\(source.scorePercentage)%")
-                                .font(.caption2) // 11号
-                                .fontWeight(.bold)
-                                .foregroundColor(.green)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.green.opacity(0.2))
-                                )
-                            
-                            Text(source.text)
-                                .font(.caption) // 12号
-                                .foregroundColor(colors.secondaryText)
-                                .lineLimit(3)
-                        }
-                        .padding(8)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.green.opacity(0.05))
-                        )
-                    }
-                }
-                .padding(.horizontal, 8)
-                .padding(.bottom, 8)
-            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.green.opacity(0.1))
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.green.opacity(0.3), lineWidth: 0.5)
+                    )
+            )
         }
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.green.opacity(0.3), lineWidth: 1)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.green.opacity(0.05))
-                )
-        )
     }
 }
 
