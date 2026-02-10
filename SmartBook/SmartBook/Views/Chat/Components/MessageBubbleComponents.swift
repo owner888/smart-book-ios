@@ -180,8 +180,14 @@ struct MessageContentView: View {
                     let elementAttributedString = createAttributedString(for: type, match: match, in: remaining)
                     attributedString.append(elementAttributedString)
 
-                    // 更新剩余文本
-                    remaining = String(remaining.suffix(from: remaining.index(remaining.startIndex, offsetBy: match.range.location + match.range.length)))
+                    // 更新剩余文本（添加边界检查）
+                    let nextIndex = match.range.location + match.range.length
+                    if nextIndex < remaining.count {
+                        let stringIndex = remaining.index(remaining.startIndex, offsetBy: nextIndex)
+                        remaining = String(remaining.suffix(from: stringIndex))
+                    } else {
+                        remaining = ""
+                    }
                     foundMatch = true
                     break
                 }
