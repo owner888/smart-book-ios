@@ -100,12 +100,24 @@ struct MessageBubble: View {
 
                     // 消息操作按钮（仅助手消息）
                     if message.role == .assistant {
-                        MessageActionsView(
-                            colors: colors,
-                            onSpeak: onSpeak.map { action in { action(message.content) } },
-                            onCopy: onCopy.map { action in { action(message.content) } },
-                            onRegenerate: onRegenerate
-                        )
+                        // 如果有回调则使用回调，否则使用默认行为
+                        if onSpeak != nil || onCopy != nil {
+                            MessageActionsView(
+                                colors: colors,
+                                onSpeak: onSpeak.map { action in { action(message.content) } },
+                                onCopy: onCopy.map { action in { action(message.content) } },
+                                onRegenerate: onRegenerate
+                            )
+                        } else {
+                            // 简单模式：只显示复制按钮
+                            MessageActionsView(
+                                colors: colors,
+                                onSpeak: nil,  // 简单模式不提供TTS
+                                onCopy: {
+                                    UIPasteboard.general.string = message.content
+                                }
+                            )
+                        }
                     }
                 }
                 .padding(12)

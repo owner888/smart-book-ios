@@ -16,7 +16,7 @@ struct ChatView: View {
     @Environment(\.colorScheme) var systemColorScheme
     @StateObject private var viewModel: ChatViewModel
     @State private var historyService: ChatHistoryService?
-    
+
     // ✅ 使用 DI 容器创建 ViewModel
     init() {
         let container = DIContainer.shared
@@ -196,7 +196,7 @@ struct ChatView: View {
             viewModel.selectedModel = newModel.id
         }
         .alert("需要选择书籍", isPresented: $showBookRequiredAlert) {
-            Button("取消", role: .cancel) { }
+            Button("取消", role: .cancel) {}
             Button("选择书籍") {
                 showBookPicker = true
             }
@@ -237,7 +237,8 @@ struct ChatView: View {
                                                     onAddBook: {
                                                         showBookPicker = true
                                                     },
-                                                    isDefaultChatAssistant: assistantService.currentAssistant.id == "chat"
+                                                    isDefaultChatAssistant: assistantService.currentAssistant.id
+                                                        == "chat"
                                                 )
                                             }
                                             Spacer()
@@ -251,30 +252,18 @@ struct ChatView: View {
                                                     scrollProxy
                                                 ScrollView {
                                                     LazyVStack(spacing: 12) {
-                                                        ForEach(
-                                                            viewModel.messages
-                                                        ) { message in
+                                                        ForEach(viewModel.messages) { message in
                                                             MessageBubble(
-                                                                message:
-                                                                    message,
+                                                                message: message,
                                                                 colors: colors
-                                                            ).onGeometryChange(
-                                                                for: CGFloat
-                                                                    .self,
+                                                            )
+                                                            .onGeometryChange(
+                                                                for: CGFloat.self,
                                                                 of: { geo in
-                                                                    geo.frame(
-                                                                        in:
-                                                                            .global
-                                                                    ).height
+                                                                    geo.frame(in: .global).height
                                                                 },
-                                                                action: {
-                                                                    newValue in
-                                                                    messageChangedSize(
-                                                                        newValue,
-                                                                        id:
-                                                                            message
-                                                                            .id
-                                                                    )
+                                                                action: { newValue in
+                                                                    messageChangedSize(newValue, id: message.id)
                                                                 }
                                                             )
                                                             .id(message.id)
@@ -370,7 +359,7 @@ struct ChatView: View {
                         }
                     }
                 }
-                
+
                 ToolbarItem(placement: .topBarTrailing) {
                     HStack(spacing: 12) {
                         // 新对话按钮（只在有消息时显示）
@@ -527,7 +516,7 @@ struct ChatView: View {
         // 检查 Ask 或 Continue 助手是否已选择书籍
         let currentAssistantId = assistantService.currentAssistant.id
         let requiresBook = currentAssistantId == "ask" || currentAssistantId == "continue"
-        
+
         if requiresBook && bookState.selectedBook == nil {
             // 显示提示，要求用户选择书籍
             showBookRequiredAlert = true
@@ -577,7 +566,7 @@ struct ChatView: View {
             rootVC.present(activityVC, animated: true)
         }
     }
-    
+
     // MARK: - 书籍选择处理
     func handleBookSelection(_ book: Book) {
         Task {
@@ -590,7 +579,7 @@ struct ChatView: View {
                         }
                     }
                 }
-                
+
                 await MainActor.run {
                     isUploading = false
                     withAnimation {
@@ -606,25 +595,25 @@ struct ChatView: View {
             }
         }
     }
-    
+
     // MARK: - 书籍导入处理
     func handleBookImport(_ result: Result<[URL], Error>) async {
         switch result {
         case .success(let urls):
             guard !urls.isEmpty else { return }
-            
+
             // 显示上传进度
             await MainActor.run {
                 isUploading = true
                 uploadProgress = 0
             }
-            
+
             var importedCount = 0
             for url in urls {
                 do {
                     let book = try bookService.importBook(from: url)
                     importedCount += 1
-                    
+
                     // 导入成功后，上传并选择第一本书
                     if importedCount == 1 {
                         try await bookService.selectBook(book) { progress in
@@ -632,7 +621,7 @@ struct ChatView: View {
                                 uploadProgress = progress
                             }
                         }
-                        
+
                         await MainActor.run {
                             withAnimation {
                                 bookState.selectedBook = book
@@ -643,16 +632,16 @@ struct ChatView: View {
                     Logger.error("导入书籍失败: \(error.localizedDescription)")
                 }
             }
-            
+
             // 重新加载书籍列表
             if importedCount > 0 {
                 await bookState.loadBooks(using: bookService)
             }
-            
+
             await MainActor.run {
                 isUploading = false
             }
-            
+
         case .failure(let error):
             Logger.error("选择文件失败: \(error.localizedDescription)")
             await MainActor.run {
