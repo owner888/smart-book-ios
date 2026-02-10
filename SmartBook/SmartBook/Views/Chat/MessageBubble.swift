@@ -9,7 +9,7 @@ struct MessageBubble: View {
     var onSpeak: ((String) -> Void)?
     var onCopy: ((String) -> Void)?
     var onRegenerate: (() -> Void)?
-    
+
     // 简单模式初始化器
     init(message: ChatMessage, colors: ThemeColors = .dark) {
         self.message = message
@@ -19,7 +19,7 @@ struct MessageBubble: View {
         self.onCopy = nil
         self.onRegenerate = nil
     }
-    
+
     // 增强模式初始化器
     init(
         message: ChatMessage,
@@ -36,24 +36,24 @@ struct MessageBubble: View {
         self.onCopy = onCopy
         self.onRegenerate = onRegenerate
     }
-    
+
     @State private var isThinkingExpanded = false
     @State private var isSystemPromptExpanded = false
     @State private var isSourcesExpanded = true
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
             // 用户消息：前面用Spacer推到右边
             if message.role == .user {
                 Spacer()
             }
-            
+
             VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
                 // 增强模式：显示头像和角色名
                 if let assistant = assistant, message.role == .assistant {
                     MessageAssistantHeaderView(assistant: assistant, colors: colors)
                 }
-                
+
                 VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 12) {
                     // 系统提示词（如果有）
                     if let systemPrompt = message.systemPrompt {
@@ -63,7 +63,7 @@ struct MessageBubble: View {
                             isExpanded: $isSystemPromptExpanded
                         )
                     }
-                    
+
                     // 思考过程（如果有）
                     if let thinking = message.thinking, !thinking.isEmpty {
                         MessageThinkingView(
@@ -72,11 +72,10 @@ struct MessageBubble: View {
                             isExpanded: $isThinkingExpanded
                         )
                     }
-                    
+
                     // 主要内容
                     MessageContentView(message: message, colors: colors)
-                    
-                    
+
                     // 停止提示（如果被用户停止）
                     if message.stoppedByUser == true {
                         Text(L("chat.stoppedByUser"))
@@ -93,12 +92,12 @@ struct MessageBubble: View {
                             isExpanded: $isSourcesExpanded
                         )
                     }
-                    
+
                     // 使用统计（如果有）
                     if let usage = message.usage {
                         MessageUsageView(usage: usage, colors: colors)
                     }
-                    
+
                     // 消息操作按钮（仅助手消息）
                     if message.role == .assistant {
                         MessageActionsView(
@@ -134,4 +133,3 @@ struct MessageBubble: View {
         }
     }
 }
-

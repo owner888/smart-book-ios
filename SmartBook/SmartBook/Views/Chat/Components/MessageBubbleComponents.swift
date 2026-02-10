@@ -73,33 +73,41 @@ struct MessageThinkingView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Button(action: { isExpanded.toggle() }) {
-                HStack {
-                    Image(systemName: "brain.head.profile")
-                        .foregroundColor(.purple)
-                    Text("Thinking...")
-                        .font(.caption) // 12号
-                        .fontWeight(.medium)
-                    Spacer()
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.caption) // 12号
-                }
-                .foregroundColor(colors.primaryText)
+            // 头部：整栏可点击
+            HStack {
+                Image(systemName: "brain.head.profile")
+                    .foregroundColor(.purple)
+                Text("Thinking...")
+                    .font(.caption) // 12号
+                    .fontWeight(.medium)
+                Spacer()
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.caption) // 12号
             }
-            .buttonStyle(.plain)
+            .foregroundColor(colors.primaryText)
+            .padding(8)
+            .contentShape(Rectangle())  // 整个区域都可以点击
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isExpanded.toggle()
+                }
+            }
             
+            // 展开的内容
             if isExpanded {
                 Text(thinking)
                     .font(.caption) // 12号
                     .foregroundColor(colors.secondaryText)
                     .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
                             .fill(Color.purple.opacity(0.1))
                     )
+                    .padding(.horizontal, 8)
+                    .padding(.bottom, 8)
             }
         }
-        .padding(8)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .stroke(Color.purple.opacity(0.3), lineWidth: 1)

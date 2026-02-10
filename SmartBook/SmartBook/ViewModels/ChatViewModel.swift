@@ -363,6 +363,7 @@ class ChatViewModel: ObservableObject {
                                     id: self.messages[self.currentMessageIndex].id,
                                     role: .assistant,
                                     content: self.streamingContent,
+                                    thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking,  // 保留思考内容
                                     isStreaming: true
                                 )
                                 self.wordIndex += takeCount
@@ -376,6 +377,7 @@ class ChatViewModel: ObservableObject {
                             id: self.messages[self.currentMessageIndex].id,
                             role: .assistant,
                             content: self.streamingContent,
+                            thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking,  // 保留思考内容
                             isStreaming: false
                         )
                         self.isLoading = false
