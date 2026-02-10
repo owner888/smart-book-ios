@@ -85,21 +85,26 @@ struct MessageBubble: View {
                             .italic()
                             .padding(.top, 4)
                     }
-                    // 检索来源（如果有）
-                    if let sources = message.sources, !sources.isEmpty {
-                        MessageSourcesView(
-                            sources: sources,
-                            colors: colors,
-                            isExpanded: $isSourcesExpanded
-                        )
-                    }
-
-                    // 工具调用（如果有）
-                    if let tools = message.tools, !tools.isEmpty {
-                        MessageToolsView(
-                            tools: tools,
-                            colors: colors
-                        )
+                    // 检索来源和工具调用（放在同一排，自动换行）
+                    if (message.sources != nil && !message.sources!.isEmpty) || (message.tools != nil && !message.tools!.isEmpty) {
+                        HStack(spacing: 6) {
+                            // 检索来源
+                            if let sources = message.sources, !sources.isEmpty {
+                                MessageSourcesView(
+                                    sources: sources,
+                                    colors: colors,
+                                    isExpanded: $isSourcesExpanded
+                                )
+                            }
+                            
+                            // 工具调用
+                            if let tools = message.tools, !tools.isEmpty {
+                                MessageToolsView(
+                                    tools: tools,
+                                    colors: colors
+                                )
+                            }
+                        }
                     }
 
                     // 使用统计（如果有）

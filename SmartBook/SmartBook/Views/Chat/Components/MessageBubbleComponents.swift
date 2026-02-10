@@ -428,28 +428,22 @@ struct MessageToolsView: View {
     var colors: ThemeColors
     
     var body: some View {
-        if let firstTool = tools.first {
-            HStack(spacing: 6) {
-                // 显示工具图标
-                Image(systemName: firstTool.success ? "wrench.and.screwdriver.fill" : "exclamationmark.triangle.fill")
-                    .font(.caption2)
-                    .foregroundColor(firstTool.success ? .blue : .red)
-                // 显示工具名称
-                Text(firstTool.name)
-                    .font(.caption2)
-                    .fontWeight(.medium)
-                    .foregroundColor(colors.secondaryText)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(Color.blue.opacity(0.1))
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.blue.opacity(0.3), lineWidth: 0.5)
-                    )
-            )
+        // ✅ 显示所有工具，不要图标，和来源一样的样式
+        ForEach(tools, id: \.name) { tool in
+            Text(tool.name)
+                .font(.caption2)
+                .fontWeight(.medium)
+                .foregroundColor(tool.success ? colors.secondaryText : .red)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(tool.success ? Color.blue.opacity(0.1) : Color.red.opacity(0.1))
+                        .overlay(
+                            Capsule()
+                                .stroke(tool.success ? Color.blue.opacity(0.3) : Color.red.opacity(0.3), lineWidth: 0.5)
+                        )
+                )
         }
     }
 }
