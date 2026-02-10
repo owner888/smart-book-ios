@@ -82,6 +82,7 @@ class StreamingChatService: NSObject {
             "model": model,
             "assistant_id": assistant.id,
             "language": Locale.current.language.languageCode?.identifier ?? "en", // 传递当前语言
+            "engine": "mcp",  // ✅ 启用 MCP 工具（让 Gemini 智能调用）
         ]
 
         // 添加摘要（如果有）
