@@ -15,6 +15,7 @@ struct ChatMessage: Identifiable, Codable {
     let timestamp: Date
     var thinking: String?
     var sources: [RAGSource]?
+    var tools: [ToolInfo]?
     var usage: UsageInfo?
     var systemPrompt: String?
 
@@ -28,6 +29,7 @@ struct ChatMessage: Identifiable, Codable {
         timestamp: Date = Date(),
         thinking: String? = nil,
         sources: [RAGSource]? = nil,
+        tools: [ToolInfo]? = nil,
         usage: UsageInfo? = nil,
         systemPrompt: String? = nil,
         stoppedByUser: Bool? = nil,
@@ -40,6 +42,7 @@ struct ChatMessage: Identifiable, Codable {
         self.timestamp = timestamp
         self.thinking = thinking
         self.sources = sources
+        self.tools = tools
         self.usage = usage
         self.systemPrompt = systemPrompt
         self.stoppedByUser = stoppedByUser

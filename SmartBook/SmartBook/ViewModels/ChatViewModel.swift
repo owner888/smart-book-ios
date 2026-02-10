@@ -32,6 +32,7 @@ class ChatViewModel: ObservableObject {
     private var streamingContent = ""
     private var streamingThinking = ""  // 思考过程
     private var streamingSources: [RAGSource]?  // 检索来源
+    private var streamingTools: [ToolInfo]?  // 工具调用
     private var answerContents = [String]()
     private var contentIndex = 0
     private var wordIndex = 0
@@ -173,6 +174,7 @@ class ChatViewModel: ObservableObject {
         streamingContent = ""
         streamingThinking = ""  // 重置思考内容
         streamingSources = nil  // 重置检索来源
+        streamingTools = nil  // ✅ 重置工具调用
         answerContents.removeAll()
         contentIndex = 0
         cancelDisplay()
@@ -223,8 +225,33 @@ class ChatViewModel: ObservableObject {
                             content: self.streamingContent,
                             thinking: self.streamingThinking,
                             sources: sources,  // 添加检索来源
+                            tools: self.streamingTools,  // 保留工具
                             isStreaming: true
                         )
+                    }
+
+                case .tools(let tools):
+                    Logger.info("🔧 收到工具调用事件！")
+                    Logger.info("🔧 工具数量: \(tools.count)")
+                    Logger.info("🔧 工具详情: \(tools.map { "\($0.name)(\($0.success ? "成功" : "失败"))" })")
+                    
+                    // 保存工具调用
+                    self.streamingTools = tools
+
+                    // 更新消息显示工具
+                    if messageIndex < self.messages.count {
+                        Logger.info("🔧 更新消息显示工具")
+                        self.messages[messageIndex] = ChatMessage(
+                            id: self.messages[messageIndex].id,
+                            role: .assistant,
+                            content: self.streamingContent,
+                            thinking: self.streamingThinking,
+                            sources: self.streamingSources,  // 保留来源
+                            tools: tools,  // 添加工具调用
+                            isStreaming: true
+                        )
+                    } else {
+                        Logger.error("❌ messageIndex 越界: \(messageIndex) >= \(self.messages.count)")
                     }
 
                 case .thinking(let thinkingText):
@@ -388,6 +415,7 @@ class ChatViewModel: ObservableObject {
                                     content: self.streamingContent,
                                     thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking,  // 保留思考内容
                                     sources: self.streamingSources,  // 保留检索来源
+                                    tools: self.streamingTools,  // ✅ 保留工具调用
                                     isStreaming: true
                                 )
                                 self.wordIndex += takeCount
@@ -403,6 +431,7 @@ class ChatViewModel: ObservableObject {
                             content: self.streamingContent,
                             thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking,  // 保留思考内容
                             sources: self.streamingSources,  // 保留检索来源
+                            tools: self.streamingTools,  // ✅ 保留工具调用
                             isStreaming: false
                         )
                         self.isLoading = false

@@ -422,6 +422,38 @@ struct MessageSourcesView: View {
     }
 }
 
+// MARK: - 工具调用视图（简洁胶囊显示）
+struct MessageToolsView: View {
+    let tools: [ToolInfo]
+    var colors: ThemeColors
+    
+    var body: some View {
+        if let firstTool = tools.first {
+            HStack(spacing: 6) {
+                // 显示工具图标
+                Image(systemName: firstTool.success ? "wrench.and.screwdriver.fill" : "exclamationmark.triangle.fill")
+                    .font(.caption2)
+                    .foregroundColor(firstTool.success ? .blue : .red)
+                // 显示工具名称
+                Text(firstTool.name)
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .foregroundColor(colors.secondaryText)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                Capsule()
+                    .fill(Color.blue.opacity(0.1))
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.blue.opacity(0.3), lineWidth: 0.5)
+                    )
+            )
+        }
+    }
+}
+
 // MARK: - 使用统计视图
 struct MessageUsageView: View {
     let usage: UsageInfo

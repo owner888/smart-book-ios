@@ -3,12 +3,19 @@
 
 import Foundation
 
+/// 工具调用信息
+struct ToolInfo: Codable {
+    let name: String
+    let success: Bool
+}
+
 /// SSE 事件类型
 enum SSEEvent {
     case systemPrompt(String)
     case thinking(String)
     case content(String)
     case sources([RAGSource])
+    case tools([ToolInfo])
     case usage(UsageInfo)
     case cached(Bool)
     case error(String)
@@ -35,6 +42,14 @@ enum SSEEvent {
                 let sources = try? JSONDecoder().decode([RAGSource].self, from: jsonData)
             {
                 return .sources(sources)
+            }
+            return nil
+
+        case "tools":
+            if let jsonData = data.data(using: .utf8),
+                let tools = try? JSONDecoder().decode([ToolInfo].self, from: jsonData)
+            {
+                return .tools(tools)
             }
             return nil
 

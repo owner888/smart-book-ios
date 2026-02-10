@@ -94,6 +94,14 @@ struct MessageBubble: View {
                         )
                     }
 
+                    // 工具调用（如果有）
+                    if let tools = message.tools, !tools.isEmpty {
+                        MessageToolsView(
+                            tools: tools,
+                            colors: colors
+                        )
+                    }
+
                     // 使用统计（如果有）
                     if let usage = message.usage {
                         MessageUsageView(usage: usage, colors: colors)
