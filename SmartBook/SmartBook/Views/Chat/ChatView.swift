@@ -56,7 +56,7 @@ struct ChatView: View {
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
     @State private var splitVisibility: NavigationSplitViewVisibility = .all
-    
+
     @State private var showVIPSheet = false
     // 媒体选择器状态
     @State private var showCameraPicker = false
@@ -265,7 +265,21 @@ struct ChatView: View {
                     }
 
                     if showMediaMenu || showModelMenu || showAssistantMenu {
-                        PopoverBgView(showMediaMenu: $showMediaMenu, mediaMenuEdge: $mediaMenuEdge, showModelMenu: $showModelMenu, modelMenuEdge: $modelMenuEdge, showAssistantMenu: $showAssistantMenu, assistantMenuEdge: $assistantMenuEdge, aiFunction: $aiFunction, assistant: $assistant, mediaItems: $mediaItems,showVIPSheet: $showVIPSheet, showCameraPicker: $showCameraPicker, showPhotoPicker: $showPhotoPicker, showDocumentPicker: $showDocumentPicker).environmentObject(menuObser)
+                        PopoverBgView(
+                            showMediaMenu: $showMediaMenu,
+                            mediaMenuEdge: $mediaMenuEdge,
+                            showModelMenu: $showModelMenu,
+                            modelMenuEdge: $modelMenuEdge,
+                            showAssistantMenu: $showAssistantMenu,
+                            assistantMenuEdge: $assistantMenuEdge,
+                            aiFunction: $aiFunction,
+                            assistant: $assistant,
+                            mediaItems: $mediaItems,
+                            showVIPSheet: $showVIPSheet,
+                            showCameraPicker: $showCameraPicker,
+                            showPhotoPicker: $showPhotoPicker,
+                            showDocumentPicker: $showDocumentPicker
+                        ).environmentObject(menuObser)
                     }
 
                     /*
@@ -398,7 +412,16 @@ struct ChatView: View {
                 }.onAppear {
                     updateAIFunction(from: modelService.currentModel.id)
                     updateAssistantFromService()
-                }.modifier(MenuSheet(viewModel: viewModel, showVIPSheet: $showVIPSheet, showCameraPicker: $showCameraPicker, showPhotoPicker: $showPhotoPicker, showDocumentPicker: $showDocumentPicker, mediaItems: $mediaItems))
+                }.modifier(
+                    MenuSheet(
+                        viewModel: viewModel,
+                        showVIPSheet: $showVIPSheet,
+                        showCameraPicker: $showCameraPicker,
+                        showPhotoPicker: $showPhotoPicker,
+                        showDocumentPicker: $showDocumentPicker,
+                        mediaItems: $mediaItems
+                    )
+                )
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationTitle(L("chat.title"))
