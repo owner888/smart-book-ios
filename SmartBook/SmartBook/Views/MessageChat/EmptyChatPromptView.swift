@@ -148,14 +148,19 @@ final class UIEmptyStateView: UIView {
         applyColors()
     }
 
+    // MARK: - Theming
+
     private func applyColors() {
         let primaryText = UIColor(colors.primaryText)
         let secondaryText = UIColor(colors.secondaryText)
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
 
         iconImageView.tintColor = secondaryText.withAlphaComponent(0.6)
         titleLabel.textColor = primaryText
         descriptionLabel.textColor = secondaryText
-        addBookButton.configuration?.baseForegroundColor = .white
+        
+        // ✅ 根据主题模式设置文字颜色
+        addBookButton.configuration?.baseForegroundColor = isDarkMode ? .white : .black
         
         // ✅ 使用与 Create Videos 相同的背景色
         addBookButton.configuration?.baseBackgroundColor = .clear
