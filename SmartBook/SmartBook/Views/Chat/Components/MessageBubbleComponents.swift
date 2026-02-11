@@ -130,8 +130,9 @@ struct MessageContentView: View {
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)  // 允许垂直扩展
         } else {
+            let content = MessageDisplayContent(message: message, colors: colors)
             // 使用SelectableText实现真正的文本选择
-            let attributedString = markdownToAttributedString(message.content)
+            let attributedString = content.markdownToAttributedString()
             SelectableText(
                 attributedText: attributedString,
                 textColor: UIColor(colors.primaryText),
@@ -140,10 +141,33 @@ struct MessageContentView: View {
             .frame(maxWidth: .infinity, alignment: .leading)  // 占满宽度，左对齐
         }
     }
+    
+
+    
+    /// 计算AttributedString的精确高度
+    private func calculateTextHeight(for attributedString: NSAttributedString, width: CGFloat = .greatestFiniteMagnitude) -> CGFloat {
+        let boundingRect = attributedString.boundingRect(
+            with: CGSize(width: width, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            context: nil
+        )
+        return ceil(boundingRect.height)
+    }
+
+}
+
+public class MessageDisplayContent {
+    let message: ChatMessage
+    let colors: ThemeColors
+    
+    init(message: ChatMessage, colors: ThemeColors) {
+        self.message = message
+        self.colors = colors
+    }
     /// 将Markdown内容转换为NSMutableAttributedString
-    private func markdownToAttributedString(_ markdown: String) -> NSMutableAttributedString {
+    func markdownToAttributedString() -> NSMutableAttributedString {
         let attributedString = NSMutableAttributedString(string: "")
-        var remaining = markdown
+        var remaining = message.content
         if remaining.last == "\n" {
             remaining.removeLast()
         }
@@ -208,18 +232,7 @@ struct MessageContentView: View {
         // 注意：段落样式已经在 createAttributedString 中设置，这里不需要额外处理
         return attributedString
     }
-
     
-    /// 计算AttributedString的精确高度
-    private func calculateTextHeight(for attributedString: NSAttributedString, width: CGFloat = .greatestFiniteMagnitude) -> CGFloat {
-        let boundingRect = attributedString.boundingRect(
-            with: CGSize(width: width, height: .greatestFiniteMagnitude),
-            options: [.usesLineFragmentOrigin, .usesFontLeading],
-            context: nil
-        )
-        return ceil(boundingRect.height)
-    }
-
     /// 应用流式显示的透明度效果
     private func applyTransparencyEffects(to attributedString: NSMutableAttributedString, colors: ThemeColors) {
         let textLength = attributedString.length
@@ -236,7 +249,7 @@ struct MessageContentView: View {
     }
 
     /// 创建AttributedString
-    private func createAttributedString(for type: String, content: String) -> NSAttributedString {
+    func createAttributedString(for type: String, content: String) -> NSAttributedString {
         let attributedString = NSMutableAttributedString(string: content)
 
         // 创建紧凑的段落样式，移除底部空白

@@ -12,6 +12,7 @@ class ChatViewModel: ObservableObject {
     @Published var showScrollToBottom = false
     @Published var mediaItems: [MediaItem] = []
     @Published var scrollBottom = 0.0
+    @Published var inputText = ""
     var scrollProxy: ScrollViewProxy?
     var answerMessageId = UUID()
     var reducedScrollBottom = false
