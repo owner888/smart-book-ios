@@ -57,7 +57,7 @@ struct MessageBubble: View {
 
                 // 用户消息的媒体（Grok 风格：图片在顶部，单独显示）
                 if message.role == .user, let mediaItems = message.mediaItems, !mediaItems.isEmpty {
-                    HStack(alignment: .top, spacing: 6) {
+                    HStack(alignment: .top, spacing: 10) {
                         Spacer()
 
                         ForEach(mediaItems, id: \.id) { item in
@@ -66,102 +66,105 @@ struct MessageBubble: View {
                     }
                 }
 
-                VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 12) {
-                    // 系统提示词（如果有）
-                    if let systemPrompt = message.systemPrompt {
-                        MessageSystemPromptView(
-                            prompt: systemPrompt,
-                            colors: colors,
-                            isExpanded: $isSystemPromptExpanded
-                        )
-                    }
-
-                    // 思考过程（如果有）
-                    if let thinking = message.thinking, !thinking.isEmpty {
-                        MessageThinkingView(
-                            thinking: thinking,
-                            colors: colors,
-                            isExpanded: $isThinkingExpanded
-                        )
-                    }
-
-                    // 主要内容
-                    MessageContentView(message: message, colors: colors)
-
-                    // 停止提示（如果被用户停止）
-                    if message.stoppedByUser == true {
-                        Text(L("chat.stoppedByUser"))
-                            .font(.caption)
-                            .foregroundColor(colors.secondaryText.opacity(0.6))
-                            .italic()
-                            .padding(.top, 4)
-                    }
-                    // 检索来源和工具调用（放在同一排，自动换行）
-                    if (message.sources != nil && !message.sources!.isEmpty)
-                        || (message.tools != nil && !message.tools!.isEmpty)
-                    {
-                        HStack(spacing: 6) {
-                            // 检索来源
-                            if let sources = message.sources, !sources.isEmpty {
-                                MessageSourcesView(
-                                    sources: sources,
-                                    colors: colors,
-                                    isExpanded: $isSourcesExpanded
-                                )
-                            }
-
-                            // 工具调用
-                            if let tools = message.tools, !tools.isEmpty {
-                                MessageToolsView(
-                                    tools: tools,
-                                    colors: colors
-                                )
-                            }
-                        }
-                    }
-
-                    // 使用统计（如果有）
-                    if let usage = message.usage {
-                        MessageUsageView(usage: usage, colors: colors)
-                    }
-
-                    // 消息操作按钮（仅助手消息）
-                    if message.role == .assistant {
-                        // 如果有回调则使用回调，否则使用默认行为
-                        if onSpeak != nil || onCopy != nil {
-                            MessageActionsView(
+                // 只在有内容时显示气泡
+                if !message.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 12) {
+                        // 系统提示词（如果有）
+                        if let systemPrompt = message.systemPrompt {
+                            MessageSystemPromptView(
+                                prompt: systemPrompt,
                                 colors: colors,
-                                onSpeak: onSpeak.map { action in { action(message.content) } },
-                                onCopy: onCopy.map { action in { action(message.content) } },
-                                onRegenerate: onRegenerate
+                                isExpanded: $isSystemPromptExpanded
                             )
-                        } else {
-                            // 简单模式：只显示复制按钮
-                            MessageActionsView(
+                        }
+
+                        // 思考过程（如果有）
+                        if let thinking = message.thinking, !thinking.isEmpty {
+                            MessageThinkingView(
+                                thinking: thinking,
                                 colors: colors,
-                                onSpeak: nil,  // 简单模式不提供TTS
-                                onCopy: {
-                                    UIPasteboard.general.string = message.content
-                                    // 显示复制提示
-                                    showCopyTip = true
-                                    // 2秒后自动隐藏
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                        showCopyTip = false
-                                    }
+                                isExpanded: $isThinkingExpanded
+                            )
+                        }
+
+                        // 主要内容
+                        MessageContentView(message: message, colors: colors)
+
+                        // 停止提示（如果被用户停止）
+                        if message.stoppedByUser == true {
+                            Text(L("chat.stoppedByUser"))
+                                .font(.caption)
+                                .foregroundColor(colors.secondaryText.opacity(0.6))
+                                .italic()
+                                .padding(.top, 4)
+                        }
+                        // 检索来源和工具调用（放在同一排，自动换行）
+                        if (message.sources != nil && !message.sources!.isEmpty)
+                            || (message.tools != nil && !message.tools!.isEmpty)
+                        {
+                            HStack(spacing: 6) {
+                                // 检索来源
+                                if let sources = message.sources, !sources.isEmpty {
+                                    MessageSourcesView(
+                                        sources: sources,
+                                        colors: colors,
+                                        isExpanded: $isSourcesExpanded
+                                    )
                                 }
-                            )
+
+                                // 工具调用
+                                if let tools = message.tools, !tools.isEmpty {
+                                    MessageToolsView(
+                                        tools: tools,
+                                        colors: colors
+                                    )
+                                }
+                            }
+                        }
+
+                        // 使用统计（如果有）
+                        if let usage = message.usage {
+                            MessageUsageView(usage: usage, colors: colors)
+                        }
+
+                        // 消息操作按钮（仅助手消息）
+                        if message.role == .assistant {
+                            // 如果有回调则使用回调，否则使用默认行为
+                            if onSpeak != nil || onCopy != nil {
+                                MessageActionsView(
+                                    colors: colors,
+                                    onSpeak: onSpeak.map { action in { action(message.content) } },
+                                    onCopy: onCopy.map { action in { action(message.content) } },
+                                    onRegenerate: onRegenerate
+                                )
+                            } else {
+                                // 简单模式：只显示复制按钮
+                                MessageActionsView(
+                                    colors: colors,
+                                    onSpeak: nil,  // 简单模式不提供TTS
+                                    onCopy: {
+                                        UIPasteboard.general.string = message.content
+                                        // 显示复制提示
+                                        showCopyTip = true
+                                        // 2秒后自动隐藏
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                            showCopyTip = false
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
-                }
-                .padding(12)
-                .background {
-                    // 只有用户消息有气泡背景
-                    if message.role == .user {
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(colors.userBubble)
+                    .padding(12)
+                    .background {
+                        // 只有用户消息有气泡背景
+                        if message.role == .user {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(colors.userBubble)
+                        }
                     }
+                    .foregroundColor(colors.primaryText)
                 }
-                .foregroundColor(colors.primaryText)
             }
             .frame(maxWidth: .infinity, alignment: message.role == .user ? .trailing : .leading)
             .fixedSize(horizontal: false, vertical: true)  // 允许垂直扩展，不允许水平扩展
@@ -190,7 +193,7 @@ struct MediaItemThumbnail: View {
             Image(uiImage: image)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 100, height: 100)
+                .frame(width: 110, height: 110)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
@@ -206,7 +209,7 @@ struct MediaItemThumbnail: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
             }
-            .frame(width: 100, height: 100)
+            .frame(width: 120, height: 120)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
