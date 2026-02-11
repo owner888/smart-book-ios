@@ -31,9 +31,9 @@ struct InputToolBar: View {
     @StateObject private var speechService = SpeechService()
     @StateObject private var asrStreamService = ASRStreamService()
 
-    // 判断是否有输入内容
+    // 判断是否有输入内容（文本或媒体）
     private var hasInput: Bool {
-        !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !mediaItems.isEmpty
     }
 
     var body: some View {
