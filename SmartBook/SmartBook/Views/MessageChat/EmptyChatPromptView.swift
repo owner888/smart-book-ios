@@ -168,17 +168,27 @@ final class UIEmptyStateView: UIView {
     
     // iOS 25 及以下的手动玻璃效果
     private func applyGlassButtonStyle(to button: UIButton) {
-        // ✅ 与 Create Videos 相同：apprBlack 10% 透明度
-        button.backgroundColor = UIColor.apprBlack.withAlphaComponent(0.1)
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
+        
+        // ✅ 根据主题模式选择背景色
+        if isDarkMode {
+            // 深色模式：apprBlack 10% 透明度
+            button.backgroundColor = UIColor.apprBlack.withAlphaComponent(0.1)
+            button.layer.borderColor = UIColor.white.withAlphaComponent(0.2).cgColor
+        } else {
+            // 浅色模式：apprWhite 15% 透明度
+            button.backgroundColor = UIColor.apprWhite.withAlphaComponent(0.15)
+            button.layer.borderColor = UIColor.black.withAlphaComponent(0.1).cgColor
+        }
+        
         button.layer.cornerRadius = 22
         button.layer.borderWidth = 1
-        button.layer.borderColor = UIColor.white.withAlphaComponent(0.2).cgColor
         
         // 微妙阴影
         button.layer.shadowColor = UIColor.black.cgColor
         button.layer.shadowOffset = CGSize(width: 0, height: 4)
         button.layer.shadowRadius = 12
-        button.layer.shadowOpacity = 0.12
+        button.layer.shadowOpacity = isDarkMode ? 0.12 : 0.08
     }
 
     // MARK: - Actions
