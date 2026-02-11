@@ -149,8 +149,8 @@ class ChatViewModel: ObservableObject {
             return
         }
 
-        // 组合消息内容
-        let finalContent = trimmedText + processedMedia.description
+        // 用户消息内容（不包含媒体描述，像 Grok 一样）
+        let finalContent = trimmedText
         Logger.info(
             "📤 发送消息: \(trimmedText.isEmpty ? "[仅媒体]" : trimmedText), 媒体: \(mediaItems.count), TTS: \(enableTTS)"
         )

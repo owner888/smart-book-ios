@@ -49,25 +49,24 @@ struct MessageBubble: View {
                 Spacer()
             }
 
-            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 4) {
+            VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 8) {
                 // 增强模式：显示头像和角色名
                 if let assistant = assistant, message.role == .assistant {
                     MessageAssistantHeaderView(assistant: assistant, colors: colors)
                 }
 
-                VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 12) {
-                    // 用户消息的媒体（Grok 风格：图片在右上角）
-                    if message.role == .user, let mediaItems = message.mediaItems, !mediaItems.isEmpty {
-                        HStack(alignment: .top, spacing: 6) {
-                            Spacer()
-                            
-                            ForEach(mediaItems, id: \.id) { item in
-                                MediaItemThumbnail(item: item, colors: colors)
-                            }
+                // 用户消息的媒体（Grok 风格：图片在顶部，单独显示）
+                if message.role == .user, let mediaItems = message.mediaItems, !mediaItems.isEmpty {
+                    HStack(alignment: .top, spacing: 6) {
+                        Spacer()
+
+                        ForEach(mediaItems, id: \.id) { item in
+                            MediaItemThumbnail(item: item, colors: colors)
                         }
-                        .frame(maxWidth: 260, alignment: .trailing)
                     }
-                    
+                }
+
+                VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 12) {
                     // 系统提示词（如果有）
                     if let systemPrompt = message.systemPrompt {
                         MessageSystemPromptView(
@@ -98,7 +97,9 @@ struct MessageBubble: View {
                             .padding(.top, 4)
                     }
                     // 检索来源和工具调用（放在同一排，自动换行）
-                    if (message.sources != nil && !message.sources!.isEmpty) || (message.tools != nil && !message.tools!.isEmpty) {
+                    if (message.sources != nil && !message.sources!.isEmpty)
+                        || (message.tools != nil && !message.tools!.isEmpty)
+                    {
                         HStack(spacing: 6) {
                             // 检索来源
                             if let sources = message.sources, !sources.isEmpty {
@@ -108,7 +109,7 @@ struct MessageBubble: View {
                                     isExpanded: $isSourcesExpanded
                                 )
                             }
-                            
+
                             // 工具调用
                             if let tools = message.tools, !tools.isEmpty {
                                 MessageToolsView(
@@ -182,14 +183,14 @@ struct MessageBubble: View {
 struct MediaItemThumbnail: View {
     let item: MediaItem
     let colors: ThemeColors
-    
+
     var body: some View {
         switch item.type {
         case .image(let image):
             Image(uiImage: image)
                 .resizable()
                 .scaledToFill()
-                .frame(width: 80, height: 80)
+                .frame(width: 100, height: 100)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
@@ -205,8 +206,7 @@ struct MediaItemThumbnail: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
             }
-            .frame(width: 80, height: 80)
-            .background(colors.cardBackground)
+            .frame(width: 100, height: 100)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
