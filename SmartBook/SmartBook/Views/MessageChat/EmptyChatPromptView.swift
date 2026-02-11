@@ -5,8 +5,6 @@
 //  Created by Andrew on 2026/2/11.
 //
 
-//
-
 import Combine
 import SwiftUI
 import UIKit
@@ -56,7 +54,6 @@ final class UIEmptyStateView: UIView {
     }()
 
     private lazy var addBookButton: UIButton = {
-        // ✅ iOS 26+ 使用系统玻璃效果，否则用 filled
         var config: UIButton.Configuration
         if #available(iOS 26.0, *) {
             config = .glass()
@@ -69,7 +66,6 @@ final class UIEmptyStateView: UIView {
         config.imagePadding = 8
         config.baseForegroundColor = .white
         config.cornerStyle = .capsule
-        // ✅ 调整按钮大小 - 更大更舒适
         config.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 24, bottom: 14, trailing: 24)
 
         let button = UIButton(configuration: config)
@@ -158,37 +154,68 @@ final class UIEmptyStateView: UIView {
         iconImageView.tintColor = secondaryText.withAlphaComponent(0.6)
         titleLabel.textColor = primaryText
         descriptionLabel.textColor = secondaryText
-        
-        // ✅ 根据主题模式设置文字颜色
+
+        // 根据主题模式设置文字颜色
         addBookButton.configuration?.baseForegroundColor = isDarkMode ? .white : .black
-        
-        // ✅ 使用与 Create Videos 相同的背景色
+
+        // 使用与 Create Videos 相同的背景色
         addBookButton.configuration?.baseBackgroundColor = .clear
-        
+
         // iOS 26+ 使用 .glass() 配置，iOS 25- 需要手动玻璃样式
         if #unavailable(iOS 26.0) {
             applyGlassButtonStyle(to: addBookButton)
         }
     }
-    
+
     // iOS 25 及以下的手动玻璃效果
     private func applyGlassButtonStyle(to button: UIButton) {
         let isDarkMode = traitCollection.userInterfaceStyle == .dark
-        
-        // ✅ 根据主题模式选择背景色
+
+        // 根据主题模式选择背景色
         if isDarkMode {
-            // 深色模式：apprBlack 10% 透明度
             button.backgroundColor = UIColor.apprBlack.withAlphaComponent(0.1)
-            button.layer.borderColor = UIColor.white.withAlphaComponent(0.2).cgColor
         } else {
-            // 浅色模式：apprWhite 15% 透明度
             button.backgroundColor = UIColor.apprWhite.withAlphaComponent(0.15)
-            button.layer.borderColor = UIColor.black.withAlphaComponent(0.1).cgColor
         }
-        
+
         button.layer.cornerRadius = 22
-        button.layer.borderWidth = 1
-        
+        button.layer.borderWidth = 0  // 不使用普通边框，改用渐变
+
+        // 渐变边框层
+        button.layer.sublayers?.filter { $0.name == "gradientBorder" }.forEach { $0.removeFromSuperlayer() }
+
+        let gradientLayer = CAGradientLayer()
+        gradientLayer.name = "gradientBorder"
+        gradientLayer.frame = button.bounds
+        gradientLayer.cornerRadius = 22
+
+        // 渐变颜色
+        if isDarkMode {
+            gradientLayer.colors = [
+                UIColor.white.withAlphaComponent(0.25).cgColor,  // 左上亮
+                UIColor.white.withAlphaComponent(0.08).cgColor,  // 右下暗
+            ]
+        } else {
+            gradientLayer.colors = [
+                UIColor.black.withAlphaComponent(0.15).cgColor,  // 左上
+                UIColor.black.withAlphaComponent(0.05).cgColor,  // 右下
+            ]
+        }
+
+        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
+        gradientLayer.endPoint = CGPoint(x: 1, y: 1)
+
+        // 创建遮罩，只显示边框部分
+        let maskLayer = CAShapeLayer()
+        let outerPath = UIBezierPath(roundedRect: gradientLayer.bounds, cornerRadius: 22)
+        let innerPath = UIBezierPath(roundedRect: gradientLayer.bounds.insetBy(dx: 1, dy: 1), cornerRadius: 21)
+        outerPath.append(innerPath.reversing())
+        maskLayer.path = outerPath.cgPath
+        maskLayer.fillRule = .evenOdd
+        gradientLayer.mask = maskLayer
+
+        button.layer.insertSublayer(gradientLayer, at: 0)
+
         // 微妙阴影
         button.layer.shadowColor = UIColor.black.cgColor
         button.layer.shadowOffset = CGSize(width: 0, height: 4)
