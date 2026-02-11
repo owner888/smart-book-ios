@@ -56,12 +56,21 @@ final class UIEmptyStateView: UIView {
     }()
 
     private lazy var addBookButton: UIButton = {
-        var config = UIButton.Configuration.filled()
+        // ✅ iOS 26+ 使用系统玻璃效果，否则用 filled
+        var config: UIButton.Configuration
+        if #available(iOS 26.0, *) {
+            config = .glass()
+        } else {
+            config = .filled()
+        }
+
         config.title = L("chat.emptyState.addBook")
         config.image = UIImage(systemName: "plus.circle.fill")
         config.imagePadding = 8
         config.baseForegroundColor = .white
         config.cornerStyle = .capsule
+        // ✅ 调整按钮大小 - 更大更舒适
+        config.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 24, bottom: 14, trailing: 24)
 
         let button = UIButton(configuration: config)
         button.translatesAutoresizingMaskIntoConstraints = false
@@ -146,43 +155,30 @@ final class UIEmptyStateView: UIView {
         iconImageView.tintColor = secondaryText.withAlphaComponent(0.6)
         titleLabel.textColor = primaryText
         descriptionLabel.textColor = secondaryText
-        addBookButton.configuration?.baseForegroundColor = primaryText
-
-        // 应用液态玻璃按钮样式
-        applyGlassButtonStyle(to: addBookButton)
+        addBookButton.configuration?.baseForegroundColor = .white
+        
+        // ✅ 使用与 Create Videos 相同的背景色
+        addBookButton.configuration?.baseBackgroundColor = .clear
+        
+        // iOS 26+ 使用 .glass() 配置，iOS 25- 需要手动玻璃样式
+        if #unavailable(iOS 26.0) {
+            applyGlassButtonStyle(to: addBookButton)
+        }
     }
-
+    
+    // iOS 25 及以下的手动玻璃效果
     private func applyGlassButtonStyle(to button: UIButton) {
-        let isPressed = button.state == .highlighted
-        let opacity: CGFloat = isPressed ? 0.08 : 0.05
-        let borderOpacity: CGFloat = isPressed ? 0.2 : 0.25
-        let innerBorderOpacity: CGFloat = isPressed ? 0.05 : 0.08
-        let shadowOpacity: CGFloat = isPressed ? 0.08 : 0.12
-        let shadowRadius: CGFloat = isPressed ? 8 : 12
-        let shadowY: CGFloat = isPressed ? 2 : 4
-
-        button.backgroundColor = UIColor.black.withAlphaComponent(0.15)
+        // ✅ 与 Create Videos 相同：apprBlack 10% 透明度
+        button.backgroundColor = UIColor.apprBlack.withAlphaComponent(0.1)
         button.layer.cornerRadius = 22
         button.layer.borderWidth = 1
-
-        // 渐变边框
-        let gradientLayer = CAGradientLayer()
-        gradientLayer.frame = button.bounds
-        gradientLayer.cornerRadius = 22
-        gradientLayer.colors = [
-            UIColor.white.withAlphaComponent(borderOpacity).cgColor,
-            UIColor.white.withAlphaComponent(innerBorderOpacity).cgColor,
-        ]
-        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
-        gradientLayer.endPoint = CGPoint(x: 1, y: 1)
-
+        button.layer.borderColor = UIColor.white.withAlphaComponent(0.2).cgColor
+        
+        // 微妙阴影
         button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOffset = CGSize(width: 0, height: shadowY)
-        button.layer.shadowRadius = shadowRadius
-        button.layer.shadowOpacity = Float(shadowOpacity)
-
-        button.transform =
-            isPressed ? CGAffineTransform(scaleX: 0.97, y: 0.97) : .identity
+        button.layer.shadowOffset = CGSize(width: 0, height: 4)
+        button.layer.shadowRadius = 12
+        button.layer.shadowOpacity = 0.12
     }
 
     // MARK: - Actions
