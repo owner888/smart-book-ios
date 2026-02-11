@@ -54,30 +54,16 @@ final class UIEmptyStateView: UIView {
     }()
 
     private lazy var addBookButton: UIButton = {
-        var config: UIButton.Configuration
-        if #available(iOS 26.0, *) {
-            config = .glass()
-        } else {
-            config = .filled()
-        }
-
-        config.title = L("chat.emptyState.addBook")
-        config.image = UIImage(systemName: "plus.circle.fill")
-        config.imagePadding = 8
-        config.baseForegroundColor = .white
-        config.cornerStyle = .capsule
-        config.contentInsets = NSDirectionalEdgeInsets(top: 14, leading: 24, bottom: 14, trailing: 24)
-
-        let button = UIButton(configuration: config)
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.addTarget(
-            self,
-            action: #selector(addBookButtonTapped),
-            for: .touchUpInside
+        // ✅ 使用扩展创建液态玻璃按钮
+        return UIButton.glassButton(
+            title: L("chat.emptyState.addBook"),
+            icon: "plus.circle.fill",
+            target: self,
+            action: #selector(addBookButtonTapped)
         )
-        return button
     }()
 
+    // 使用 UIStackView 进行布局
     private lazy var stackView: UIStackView = {
         let stack = UIStackView(arrangedSubviews: [
             iconImageView, titleLabel, descriptionLabel, addBookButton,
@@ -155,72 +141,10 @@ final class UIEmptyStateView: UIView {
         titleLabel.textColor = primaryText
         descriptionLabel.textColor = secondaryText
 
-        // 根据主题模式设置文字颜色
+        // ✅ 使用扩展应用玻璃效果
         addBookButton.configuration?.baseForegroundColor = isDarkMode ? .white : .black
-
-        // 使用与 Create Videos 相同的背景色
         addBookButton.configuration?.baseBackgroundColor = .clear
-
-        // iOS 26+ 使用 .glass() 配置，iOS 25- 需要手动玻璃样式
-        if #unavailable(iOS 26.0) {
-            applyGlassButtonStyle(to: addBookButton)
-        }
-    }
-
-    // iOS 25 及以下的手动玻璃效果
-    private func applyGlassButtonStyle(to button: UIButton) {
-        let isDarkMode = traitCollection.userInterfaceStyle == .dark
-
-        // 根据主题模式选择背景色
-        if isDarkMode {
-            button.backgroundColor = UIColor.apprBlack.withAlphaComponent(0.1)
-        } else {
-            button.backgroundColor = UIColor.apprWhite.withAlphaComponent(0.15)
-        }
-
-        button.layer.cornerRadius = 22
-        button.layer.borderWidth = 0  // 不使用普通边框，改用渐变
-
-        // 渐变边框层
-        button.layer.sublayers?.filter { $0.name == "gradientBorder" }.forEach { $0.removeFromSuperlayer() }
-
-        let gradientLayer = CAGradientLayer()
-        gradientLayer.name = "gradientBorder"
-        gradientLayer.frame = button.bounds
-        gradientLayer.cornerRadius = 22
-
-        // 渐变颜色
-        if isDarkMode {
-            gradientLayer.colors = [
-                UIColor.white.withAlphaComponent(0.25).cgColor,  // 左上亮
-                UIColor.white.withAlphaComponent(0.08).cgColor,  // 右下暗
-            ]
-        } else {
-            gradientLayer.colors = [
-                UIColor.black.withAlphaComponent(0.15).cgColor,  // 左上
-                UIColor.black.withAlphaComponent(0.05).cgColor,  // 右下
-            ]
-        }
-
-        gradientLayer.startPoint = CGPoint(x: 0, y: 0)
-        gradientLayer.endPoint = CGPoint(x: 1, y: 1)
-
-        // 创建遮罩，只显示边框部分
-        let maskLayer = CAShapeLayer()
-        let outerPath = UIBezierPath(roundedRect: gradientLayer.bounds, cornerRadius: 22)
-        let innerPath = UIBezierPath(roundedRect: gradientLayer.bounds.insetBy(dx: 1, dy: 1), cornerRadius: 21)
-        outerPath.append(innerPath.reversing())
-        maskLayer.path = outerPath.cgPath
-        maskLayer.fillRule = .evenOdd
-        gradientLayer.mask = maskLayer
-
-        button.layer.insertSublayer(gradientLayer, at: 0)
-
-        // 微妙阴影
-        button.layer.shadowColor = UIColor.black.cgColor
-        button.layer.shadowOffset = CGSize(width: 0, height: 4)
-        button.layer.shadowRadius = 12
-        button.layer.shadowOpacity = isDarkMode ? 0.12 : 0.08
+        addBookButton.applyGlassEffect(isDarkMode: isDarkMode)
     }
 
     // MARK: - Actions
@@ -249,8 +173,8 @@ final class UIEmptyStateView: UIView {
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        // 更新按钮渐变层
-        let button = addBookButton
-        applyGlassButtonStyle(to: button)
+        // ✅ 更新按钮玻璃效果
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
+        addBookButton.applyGlassEffect(isDarkMode: isDarkMode)
     }
 }
