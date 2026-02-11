@@ -56,6 +56,18 @@ struct MessageBubble: View {
                 }
 
                 VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 12) {
+                    // 用户消息的媒体（Grok 风格：图片在右上角）
+                    if message.role == .user, let mediaItems = message.mediaItems, !mediaItems.isEmpty {
+                        HStack(alignment: .top, spacing: 6) {
+                            Spacer()
+                            
+                            ForEach(mediaItems, id: \.id) { item in
+                                MediaItemThumbnail(item: item, colors: colors)
+                            }
+                        }
+                        .frame(maxWidth: 260, alignment: .trailing)
+                    }
+                    
                     // 系统提示词（如果有）
                     if let systemPrompt = message.systemPrompt {
                         MessageSystemPromptView(
@@ -164,5 +176,42 @@ struct MessageBubble: View {
             }
         }
         .successTips(isShowing: $showCopyTip, message: "Message copied")
+    }
+}
+
+struct MediaItemThumbnail: View {
+    let item: MediaItem
+    let colors: ThemeColors
+    
+    var body: some View {
+        switch item.type {
+        case .image(let image):
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(colors.secondaryText.opacity(0.2), lineWidth: 1)
+                )
+        case .document(let url):
+            VStack(spacing: 4) {
+                Image(systemName: "doc.fill")
+                    .font(.title2)
+                    .foregroundStyle(colors.secondaryText)
+                Text(url.lastPathComponent)
+                    .font(.caption2)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(width: 80, height: 80)
+            .background(colors.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(colors.secondaryText.opacity(0.2), lineWidth: 1)
+            )
+        }
     }
 }

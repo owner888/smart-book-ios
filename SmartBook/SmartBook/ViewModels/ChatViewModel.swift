@@ -162,8 +162,12 @@ class ChatViewModel: ObservableObject {
                 conversation: historyService?.currentConversation
             ) ?? (nil, Array(messages.suffix(summarizationThreshold)))
 
-        // 再添加用户消息
-        let userMessage = ChatMessage(role: .user, content: finalContent)
+        // 再添加用户消息（包含媒体项）
+        let userMessage = ChatMessage(
+            role: .user, 
+            content: finalContent,
+            mediaItems: mediaItems.isEmpty ? nil : mediaItems
+        )
         messages.append(userMessage)
         currentMessageId = userMessage.id
 

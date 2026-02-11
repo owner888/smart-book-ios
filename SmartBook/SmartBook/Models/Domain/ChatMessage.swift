@@ -18,9 +18,16 @@ struct ChatMessage: Identifiable, Codable {
     var tools: [ToolInfo]?
     var usage: UsageInfo?
     var systemPrompt: String?
+    var mediaItems: [MediaItem]?
 
-    var stoppedByUser: Bool?  // 是否被用户停止
+    var stoppedByUser: Bool?
     var isStreaming: Bool
+    
+    enum CodingKeys: String, CodingKey {
+        case id, role, content, timestamp
+        case thinking, sources, tools, usage, systemPrompt
+        case stoppedByUser, isStreaming
+    }
 
     init(
         id: UUID = UUID(),
@@ -32,6 +39,7 @@ struct ChatMessage: Identifiable, Codable {
         tools: [ToolInfo]? = nil,
         usage: UsageInfo? = nil,
         systemPrompt: String? = nil,
+        mediaItems: [MediaItem]? = nil,
         stoppedByUser: Bool? = nil,
         isStreaming: Bool = false
     ) {
@@ -45,6 +53,7 @@ struct ChatMessage: Identifiable, Codable {
         self.tools = tools
         self.usage = usage
         self.systemPrompt = systemPrompt
+        self.mediaItems = mediaItems
         self.stoppedByUser = stoppedByUser
         self.isStreaming = isStreaming
     }
