@@ -1,5 +1,6 @@
 // ChatView.swift - AI 对话视图（支持多语言，类似 ChatGPT 的极简设计）
 
+import Combine
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
@@ -17,12 +18,24 @@ struct ChatView: View {
     @StateObject private var viewModel: ChatViewModel
     @State private var historyService: ChatHistoryService?
 
+    @State private var aiFunction: MenuConfig.AIModelFunctionType = .auto
+    @State private var assistant: MenuConfig.AssistantType = .chat
+    @State private var mediaMenuEdge = EdgeInsets()
+    @State private var modelMenuEdge = EdgeInsets()
+    @State private var assistantMenuEdge = EdgeInsets()
+    @State private var showMediaMenu = false
+    @State private var showModelMenu = false
+    @State private var showAssistantMenu = false
+    @State private var mediaItems: [MediaItem] = []
+
+    @StateObject private var menuObser = CustomMenuObservable()
+
     // ✅ 使用 DI 容器创建 ViewModel
     init() {
         let container = DIContainer.shared
         _viewModel = StateObject(wrappedValue: container.makeChatViewModel())
     }
-    @State private var inputText = ""
+
     @State private var showBookPicker = false
     @State private var showSettings = false
     @State private var showBookImporter = false
@@ -38,9 +51,17 @@ struct ChatView: View {
     @State private var lastAnchorPosition: CGFloat?
     @State private var showBookRequiredAlert = false  // 显示需要选择书籍的提示
 
+    @State private var currentKeyboard: CGFloat = 0
+
     @FocusState private var isInputFocused: Bool
     @StateObject private var sideObser = ExpandSideObservable()
     @State private var splitVisibility: NavigationSplitViewVisibility = .all
+    
+    @State private var showVIPSheet = false
+    // 媒体选择器状态
+    @State private var showCameraPicker = false
+    @State private var showPhotoPicker = false
+    @State private var showDocumentPicker = false
 
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
@@ -210,9 +231,44 @@ struct ChatView: View {
     var chatContent: some View {
         NavigationStack {
             GeometryReader { proxy in
-                viewModel.safeAreaBottom = proxy.safeAreaInsets.bottom
-                return ZStack {
+                // viewModel.safeAreaBottom = proxy.safeAreaInsets.bottom
+                ZStack {
                     colors.background.ignoresSafeArea()
+                    MessageChatViewViewWrapper(
+                        viewModel: viewModel,
+                        aiFunction: $aiFunction,
+                        assistant: $assistant
+                    ) { action in
+                        switch action {
+                        case .sendMessage:
+                            sendMessage()
+                        case .topFunction(let function):
+                            break
+                        case .popover(let type, let frame):
+                            let edge = buttonRelatively(frame, proxy: proxy)
+                            switch type {
+                            case .assistant:
+                                showAssistantMenu = true
+                                assistantMenuEdge = edge
+                                break
+                            case .openMedia:
+                                showMediaMenu = true
+                                mediaMenuEdge = edge
+                                break
+                            case .chooseModel:
+                                showModelMenu = true
+                                modelMenuEdge = edge
+                                break
+                            }
+                            break
+                        }
+                    }
+
+                    if showMediaMenu || showModelMenu || showAssistantMenu {
+                        PopoverBgView(showMediaMenu: $showMediaMenu, mediaMenuEdge: $mediaMenuEdge, showModelMenu: $showModelMenu, modelMenuEdge: $modelMenuEdge, showAssistantMenu: $showAssistantMenu, assistantMenuEdge: $assistantMenuEdge, aiFunction: $aiFunction, assistant: $assistant, mediaItems: $mediaItems,showVIPSheet: $showVIPSheet, showCameraPicker: $showCameraPicker, showPhotoPicker: $showPhotoPicker, showDocumentPicker: $showDocumentPicker).environmentObject(menuObser)
+                    }
+
+                    /*
                     VStack(spacing: 0) {
                         // 聊天内容区域
                         InputToolBarView(
@@ -274,8 +330,7 @@ struct ChatView: View {
                                                             .scrollBottom
                                                     )
                                                     bottomAnchorView
-
-                                                }.scrollClipDisabled()
+                                                }.scrollClipDisabled().scrollDismissesKeyboard(.interactively)
                                                     .contentMargins(
                                                         .top,
                                                         headerSpacer,
@@ -289,8 +344,8 @@ struct ChatView: View {
                                                         },
                                                         action: { newValue in
                                                             scrollViewFrame =
-                                                                newValue
-                                                            scrollViewChangedSize()
+                                                            newValue
+                                                            //scrollViewChangedSize()
                                                         }
                                                     )
                                             }
@@ -326,14 +381,10 @@ struct ChatView: View {
                                     }
                                 }
                             },
-                            onSend: { sendMessage() },
-                            keyboardHeightChanged: { value in
-                                keyboardHeight = value
-                            }
-                        )
+                            onSend: { sendMessage() }
+                         )
                         .environmentObject(sideObser)
-                    }
-                    .ignoresSafeArea(.container, edges: .bottom)
+                    }.ignoresSafeArea(.keyboard)
                     .onChange(
                         of: viewModel
                             .currentMessageId
@@ -343,8 +394,11 @@ struct ChatView: View {
                         {
                             onSended()
                         }
-                    }
-                }
+                    }*/
+                }.onAppear {
+                    updateAIFunction(from: modelService.currentModel.id)
+                    updateAssistantFromService()
+                }.modifier(MenuSheet(viewModel: viewModel, showVIPSheet: $showVIPSheet, showCameraPicker: $showCameraPicker, showPhotoPicker: $showPhotoPicker, showDocumentPicker: $showDocumentPicker, mediaItems: $mediaItems))
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationTitle(L("chat.title"))
@@ -446,10 +500,21 @@ struct ChatView: View {
         }
     }
 
+    // 按钮位置转换为相对于 ScrollView 的 EdgeInsets
+    func buttonRelatively(_ rect: CGRect, proxy: GeometryProxy) -> EdgeInsets {
+        let rRect = rect.applying(
+            CGAffineTransform(translationX: 0, y: proxy.safeAreaInsets.top)
+        )
+        var size = proxy.size
+        size.height = size.height + proxy.safeAreaInsets.top
+        return rRect.edgeInset(size)
+    }
+
     private func scrollViewChangedSize() {
-        if !viewModel.showScrollToBottom {
-            viewModel.scrollToBottom(animate: false)
-        }
+        //if !viewModel.showScrollToBottom {
+        print("scroll to bottom: \(scrollViewHeight)")
+        viewModel.scrollToBottom(animate: false)
+        //}
     }
 
     private func messageChangedSize(_ height: CGFloat, id: UUID) {
@@ -504,9 +569,36 @@ struct ChatView: View {
         }
     }
 
+    private func updateAIFunction(from modelId: String) {
+        if let matchingFunction = MenuConfig.aiFunctions.first(where: {
+            $0.modelId == modelId
+        }) {
+            aiFunction = matchingFunction
+        } else {
+            Logger.warning(
+                "⚠️ No matching aiFunction found for model: \(modelId)"
+            )
+        }
+    }
+
+    private func updateAssistantFromService() {
+        let currentAssistantId = assistantService.currentAssistant.id
+        if let matchingType = MenuConfig.assistants.first(where: {
+            switch $0 {
+            case .chat: return currentAssistantId == "chat"
+            case .ask: return currentAssistantId == "ask"
+            case .continue: return currentAssistantId == "continue"
+            case .dynamic(let dynamicAssistant):
+                return currentAssistantId == dynamicAssistant.id
+            }
+        }) {
+            assistant = matchingType
+        }
+    }
+
     // MARK: - 消息发送和处理
     func sendMessage() {
-        let text = inputText
+        let text = viewModel.inputText
         let hasText = !text.trimmingCharacters(in: .whitespacesAndNewlines)
             .isEmpty
 
@@ -527,7 +619,7 @@ struct ChatView: View {
         let mediaToSend = viewModel.mediaItems
 
         // 清空输入
-        inputText = ""
+        viewModel.inputText = ""
         viewModel.mediaItems.removeAll()
 
         // 立即收起键盘
