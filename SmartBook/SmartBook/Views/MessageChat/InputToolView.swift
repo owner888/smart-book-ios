@@ -133,18 +133,8 @@ class InputToolView: UIView {
         modelBgView?.layer.masksToBounds = true
         modelBgView?.layer.cornerRadius = 12
         
-        // ✅ 调试日志：检查 voiceBtn 是否正确连接
-        Logger.info("🔧 InputToolView setUp 完成")
-        Logger.info("🔧 voiceBtn: \(voiceBtn != nil ? "已连接" : "未连接")")
-        Logger.info("🔧 ASR Provider: \(asrProvider)")
-        
         // ✅ 直接用代码添加点击事件，不依赖 XIB 连接
-        if let voiceBtn = voiceBtn {
-            voiceBtn.addTarget(self, action: #selector(toggleVoiceRecording(_:)), for: .touchUpInside)
-            Logger.info("✅ 已通过代码添加 Speaking 按钮点击事件")
-        } else {
-            Logger.error("❌ voiceBtn 为 nil，无法添加点击事件")
-        }
+        voiceBtn?.addTarget(self, action: #selector(toggleVoiceRecording(_:)), for: .touchUpInside)
     }
 
     func bind(to model: ChatViewModel) {
@@ -288,13 +278,9 @@ class InputToolView: UIView {
     // MARK: - Speaking Button Action
     
     @IBAction func toggleVoiceRecording(_ sender: UIButton) {
-        Logger.info("🔘 Speaking 按钮被点击！isRecording: \(isRecording)")
-        
         if isRecording {
-            Logger.info("🛑 准备停止录音...")
             stopRecording()
         } else {
-            Logger.info("🎤 准备开始录音...")
             startRecording()
         }
     }
