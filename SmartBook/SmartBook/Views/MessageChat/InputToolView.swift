@@ -40,7 +40,7 @@ class InputToolView: UIView {
     var showPopover: ((MessagePopoverAction, UIView) -> Void)?
 
     private var cancellables = Set<AnyCancellable>()
-    
+
     // ✅ 媒体预览容器
     private lazy var mediaPreviewContainer: UIStackView = {
         let stack = UIStackView()
@@ -85,14 +85,14 @@ class InputToolView: UIView {
 
         // ✅ 调整占位符位置，往右下移动
         inputPromit.transform = CGAffineTransform(translationX: 8, y: 4)
-        
+
         // ✅ 添加媒体预览容器到 textView 内部顶部
         textView.addSubview(mediaPreviewContainer)
         NSLayoutConstraint.activate([
             mediaPreviewContainer.leadingAnchor.constraint(equalTo: textView.leadingAnchor, constant: 8),
             mediaPreviewContainer.trailingAnchor.constraint(equalTo: textView.trailingAnchor, constant: -8),
             mediaPreviewContainer.topAnchor.constraint(equalTo: textView.topAnchor, constant: 8),
-            mediaPreviewContainer.heightAnchor.constraint(equalToConstant: 60)
+            mediaPreviewContainer.heightAnchor.constraint(equalToConstant: 120),  // ✅ 改为 120
         ])
 
         sendBtn.configuration?.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15)
@@ -136,61 +136,84 @@ class InputToolView: UIView {
                 updateUI()
             }
         }.store(in: &cancellables)
-        
+
         // ✅ 监听 mediaItems 变化
         model.$mediaItems.receive(on: DispatchQueue.main).sink { [weak self] items in
             guard let self = self else { return }
             self.displayMediaItems(items)
         }.store(in: &cancellables)
     }
-    
+
     // ✅ 显示媒体预览
     private func displayMediaItems(_ items: [MediaItem]) {
         // 清空旧的预览
         mediaPreviewContainer.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        
+
         if items.isEmpty {
             mediaPreviewContainer.isHidden = true
             mediaPreviewContainer.backgroundColor = .clear
             return
         }
-        
-        // ✅ 调试：添加背景色看是否显示
-        mediaPreviewContainer.backgroundColor = .red.withAlphaComponent(0.3)
-        
-        // 显示媒体预览
+
+        mediaPreviewContainer.backgroundColor = .clear
+
+        // 显示媒体预览（120x120，圆角16，带删除按钮）
         for (index, item) in items.enumerated() {
+            let container = UIView()
+            container.translatesAutoresizingMaskIntoConstraints = false
+
             let imageView = UIImageView()
             imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true
-            imageView.layer.cornerRadius = 8
-            imageView.backgroundColor = .blue  // 调试背景
+            imageView.layer.cornerRadius = 16
             imageView.translatesAutoresizingMaskIntoConstraints = false
-            
+
             switch item.type {
             case .image(let uiImage):
                 imageView.image = uiImage
-                print("🖼️ 设置图片：\(uiImage.size)")
             case .document(let url):
                 imageView.image = UIImage(systemName: "doc.fill")
                 imageView.tintColor = .gray
             }
-            
-            // ✅ 降低优先级，避免约束冲突
-            let widthConstraint = imageView.widthAnchor.constraint(equalToConstant: 60)
-            widthConstraint.priority = .defaultHigh
+
+            // 删除按钮
+            let deleteBtn = UIButton(type: .custom)
+            deleteBtn.setImage(UIImage(systemName: "xmark"), for: .normal)
+            deleteBtn.tintColor = .white  // ✅ 白色X
+            deleteBtn.backgroundColor = .black.withAlphaComponent(0.8)  // ✅ 黑色背景
+            deleteBtn.layer.cornerRadius = 14
+            deleteBtn.translatesAutoresizingMaskIntoConstraints = false
+            deleteBtn.tag = index
+            deleteBtn.addTarget(self, action: #selector(deleteMediaItem(_:)), for: .touchUpInside)
+
+            container.addSubview(imageView)
+            container.addSubview(deleteBtn)
+
             NSLayoutConstraint.activate([
-                widthConstraint,
-                imageView.heightAnchor.constraint(equalToConstant: 60)
+                container.widthAnchor.constraint(equalToConstant: 120),
+                container.heightAnchor.constraint(equalToConstant: 120),
+
+                imageView.topAnchor.constraint(equalTo: container.topAnchor),
+                imageView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+                imageView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+                imageView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+
+                deleteBtn.widthAnchor.constraint(equalToConstant: 28),
+                deleteBtn.heightAnchor.constraint(equalToConstant: 28),
+                deleteBtn.topAnchor.constraint(equalTo: container.topAnchor, constant: 4),
+                deleteBtn.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -4),
             ])
-            
-            mediaPreviewContainer.addArrangedSubview(imageView)
+
+            mediaPreviewContainer.addArrangedSubview(container)
         }
-        
+
         mediaPreviewContainer.isHidden = false
-        print("📷 显示 \(items.count) 个媒体预览")
-        print("📐 容器 frame: \(mediaPreviewContainer.frame)")
-        print("📐 容器 isHidden: \(mediaPreviewContainer.isHidden)")
+    }
+
+    @objc private func deleteMediaItem(_ sender: UIButton) {
+        let index = sender.tag
+        guard let viewModel = viewModel, index < viewModel.mediaItems.count else { return }
+        viewModel.mediaItems.remove(at: index)
     }
 
     func configVoiceBtn() {
@@ -224,7 +247,6 @@ class InputToolView: UIView {
         inputPromit.isHidden = !isEmpty
         voiceBtn.superview?.isHidden = !isEmpty
         sendBtn.isHidden = isEmpty
-
     }
 
     @IBAction func openMedia(_ sender: UIButton) {
