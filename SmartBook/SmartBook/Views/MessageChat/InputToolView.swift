@@ -86,23 +86,21 @@ class InputToolView: UIView {
 
         voiceBtn.superview?.layer.masksToBounds = true
         voiceBtn.superview?.layer.cornerRadius = 15
-        [mediaBtn].forEach { btn in
+        // ✅ 统一 mediaBtn 和 modelButton 的样式
+        [mediaBtn, modelButton].forEach { btn in
             if #available(iOS 26, *) {
-                btn.configuration = .glass()
+                btn?.configuration = .glass()
             } else {
-                btn.configuration?.background.visualEffect = UIBlurEffect(style: .systemUltraThinMaterial)
+                btn?.configuration?.background.visualEffect = UIBlurEffect(style: .systemUltraThinMaterial)
             }
         }
 
+        // 媒体按钮图标
         mediaBtn.configuration?.image = UIImage(systemName: "link")
         let imageConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .small)
         mediaBtn.configuration?.preferredSymbolConfigurationForImage = imageConfig
-
-        if #available(iOS 26, *) {
-            modelButton.configuration = .glass()
-        } else {
-            modelButton.configuration?.background.visualEffect = UIBlurEffect(style: .systemUltraThinMaterial)
-        }
+        
+        // 模型按钮（保持原有的容器圆角处理）
         let modelBgView = modelButton.superview
         modelBgView?.layer.masksToBounds = true
         modelBgView?.layer.cornerRadius = 12
