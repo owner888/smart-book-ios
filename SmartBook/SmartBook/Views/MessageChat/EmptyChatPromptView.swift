@@ -48,7 +48,9 @@ final class UIEmptyStateView: UIView {
         label.text = L("chat.emptyState.desc")
         label.font = .systemFont(ofSize: 17)
         label.textAlignment = .center
-        label.numberOfLines = 0
+        label.numberOfLines = 0  // 无限行，自动换行
+        label.lineBreakMode = .byWordWrapping  // ✅ 按单词换行
+        label.preferredMaxLayoutWidth = UIScreen.main.bounds.width - 64 - 64  // ✅ 设置最大宽度：屏幕宽度 - stackView 边距 - descriptionLabel 边距
         label.translatesAutoresizingMaskIntoConstraints = false
         return label
     }()
@@ -112,11 +114,11 @@ final class UIEmptyStateView: UIView {
 
             descriptionLabel.leadingAnchor.constraint(
                 equalTo: stackView.leadingAnchor,
-                constant: 12
+                constant: 32  // ✅ 和 SwiftUI 一致，左右各 32pt
             ),
             descriptionLabel.trailingAnchor.constraint(
                 equalTo: stackView.trailingAnchor,
-                constant: -12
+                constant: -32  // ✅ 和 SwiftUI 一致
             ),
 
         ])
