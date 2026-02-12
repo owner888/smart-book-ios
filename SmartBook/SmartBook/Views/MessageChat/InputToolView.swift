@@ -5,10 +5,8 @@
 //  Created by Andrew on 2026/2/7.
 //
 
-import UIKit
 import Combine
-
-
+import UIKit
 
 class InputToolView: UIView {
     @IBOutlet weak private var textView: UITextView!
@@ -22,10 +20,10 @@ class InputToolView: UIView {
     @IBOutlet weak private var assistantBtn: UIButton!
     @IBOutlet weak private var chatBtnIcon: MenuIconView!
     @IBOutlet weak private var chatBtnTitle: UILabel!
-    
+
     private var isRecording = false
     private var isConnecting = false
-    
+
     var viewModel: ChatViewModel?
     var aiFunction = MenuConfig.AIModelFunctionType.auto {
         didSet {
@@ -39,38 +37,39 @@ class InputToolView: UIView {
         }
     }
     var send: (() -> Void)?
-    var showPopover: ((MessagePopoverAction,UIView) -> Void)?
-    
+    var showPopover: ((MessagePopoverAction, UIView) -> Void)?
+
     private var cancellables = Set<AnyCancellable>()
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         loadXib()
     }
-    
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         loadXib()
     }
-    
+
     func loadXib() {
         let nib = UINib(nibName: "InputToolView", bundle: nil)
         if let view = nib.instantiate(withOwner: self).first as? UIView {
             view.frame = self.bounds
-            view.autoresizingMask = [.flexibleWidth,.flexibleHeight]
+            view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             addSubview(view)
         }
         setUp()
     }
-    
+
     func setUp() {
         layer.masksToBounds = true
         layer.cornerRadius = 12
-        layer.borderWidth = 2
-        layer.borderColor = UIColor.apprBlack.withAlphaComponent(0.2).cgColor
+        // ✅ 使用液态玻璃边框代替普通边框
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
+        applyGlassBorder(cornerRadius: 12, isDarkMode: isDarkMode)
         sendBtn.configuration?.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15)
         configVoiceBtn()
-        
+
         voiceBtn.superview?.layer.masksToBounds = true
         voiceBtn.superview?.layer.cornerRadius = 15
         [mediaBtn].forEach { btn in
@@ -80,11 +79,11 @@ class InputToolView: UIView {
                 btn.configuration?.background.visualEffect = UIBlurEffect(style: .systemUltraThinMaterial)
             }
         }
-        
+
         mediaBtn.configuration?.image = UIImage(systemName: "link")
         let imageConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .small)
         mediaBtn.configuration?.preferredSymbolConfigurationForImage = imageConfig
-        
+
         if #available(iOS 26, *) {
             modelButton.configuration = .glass()
         } else {
@@ -94,18 +93,18 @@ class InputToolView: UIView {
         modelBgView?.layer.masksToBounds = true
         modelBgView?.layer.cornerRadius = 12
     }
-    
+
     func bind(to model: ChatViewModel) {
         self.viewModel = model
         model.$inputText.receive(on: DispatchQueue.main).sink { [weak self] text in
-            guard let self = self else {return}
+            guard let self = self else { return }
             if text.isEmpty {
                 textView.text = ""
                 updateUI()
             }
         }.store(in: &cancellables)
     }
-    
+
     func configVoiceBtn() {
         var icon = "waveform"
         var title = L("chat.voice.start")
@@ -130,9 +129,9 @@ class InputToolView: UIView {
             return outgoing
         }
         voiceBtn.configuration = config
-        
+
     }
-    
+
     func updateUI() {
         let isEmpty = textView.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         inputPromit.isHidden = !isEmpty
@@ -140,29 +139,47 @@ class InputToolView: UIView {
         sendBtn.isHidden = isEmpty
 
     }
-    
+
     @IBAction func openMedia(_ sender: UIButton) {
-        showPopover?(.openMedia,sender)
+        showPopover?(.openMedia, sender)
     }
-    
+
     @IBAction func changeModel(_ sender: UIButton) {
-        showPopover?(.chooseModel,sender)
+        showPopover?(.chooseModel, sender)
     }
-    
+
     @IBAction func changeAssistant(_ sender: UIButton) {
         showPopover?(.assistant, sender)
     }
-    
+
     @IBAction func sendMessage() {
         send?()
     }
 
+    // MARK: - Lifecycle
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        // ✅ 更新玻璃边框
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
+        applyGlassBorder(cornerRadius: 12, isDarkMode: isDarkMode)
+    }
+
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+
+        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
+            // ✅ 主题变化时更新边框
+            let isDarkMode = traitCollection.userInterfaceStyle == .dark
+            applyGlassBorder(cornerRadius: 12, isDarkMode: isDarkMode)
+        }
+    }
 }
 
 extension InputToolView: UITextViewDelegate {
     func textViewDidChange(_ textView: UITextView) {
         let size = textView.sizeThatFits(CGSize(width: textView.frame.width, height: .infinity))
-        inputHeight.constant = max(min(size.height,180),60)
+        inputHeight.constant = max(min(size.height, 180), 60)
         viewModel?.inputText = textView.text
         updateUI()
     }
