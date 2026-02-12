@@ -67,15 +67,22 @@ class InputToolView: UIView {
         // ✅ 使用液态玻璃边框代替普通边框
         let isDarkMode = traitCollection.userInterfaceStyle == .dark
         applyGlassBorder(cornerRadius: 22, isDarkMode: isDarkMode)
-        
+
         // ✅ 调整 textView 内边距，让文字往右下移
         textView.textContainerInset = UIEdgeInsets(top: 12, left: 8, bottom: 12, right: 8)
-        
+
         // ✅ 调整占位符位置，往右下移动
         inputPromit.transform = CGAffineTransform(translationX: 8, y: 4)
-        
+
         sendBtn.configuration?.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15)
         configVoiceBtn()
+
+        // ✅ 调整底部按钮往上移动
+        let bottomOffset: CGFloat = -4  // 往上移 4pt
+        mediaBtn.transform = CGAffineTransform(translationX: 0, y: bottomOffset)
+        assistantBtn.transform = CGAffineTransform(translationX: 0, y: bottomOffset)
+        modelButton.transform = CGAffineTransform(translationX: 0, y: bottomOffset)
+        voiceBtn.superview?.transform = CGAffineTransform(translationX: 0, y: bottomOffset)
 
         voiceBtn.superview?.layer.masksToBounds = true
         voiceBtn.superview?.layer.cornerRadius = 15
