@@ -63,10 +63,10 @@ class InputToolView: UIView {
 
     func setUp() {
         layer.masksToBounds = true
-        layer.cornerRadius = 12
+        layer.cornerRadius = 22  // ✅ 改为 22，和 Add Book 按钮一致
         // ✅ 使用液态玻璃边框代替普通边框
         let isDarkMode = traitCollection.userInterfaceStyle == .dark
-        applyGlassBorder(cornerRadius: 12, isDarkMode: isDarkMode)
+        applyGlassBorder(cornerRadius: 22, isDarkMode: isDarkMode)
         sendBtn.configuration?.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15)
         configVoiceBtn()
 
@@ -162,7 +162,7 @@ class InputToolView: UIView {
         super.layoutSubviews()
         // ✅ 更新玻璃边框
         let isDarkMode = traitCollection.userInterfaceStyle == .dark
-        applyGlassBorder(cornerRadius: 12, isDarkMode: isDarkMode)
+        applyGlassBorder(cornerRadius: 22, isDarkMode: isDarkMode)
     }
 
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
@@ -171,7 +171,7 @@ class InputToolView: UIView {
         if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
             // ✅ 主题变化时更新边框
             let isDarkMode = traitCollection.userInterfaceStyle == .dark
-            applyGlassBorder(cornerRadius: 12, isDarkMode: isDarkMode)
+            applyGlassBorder(cornerRadius: 22, isDarkMode: isDarkMode)
         }
     }
 }
