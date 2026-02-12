@@ -21,6 +21,7 @@ final class UIEmptyStateView: UIView {
     }
     private var onAddBook: (() -> Void)?
     private var cancellables = Set<AnyCancellable>()
+    private var isDefaultChatAssistant: Bool = false  // ✅ 是否为默认 Chat 助手
 
     // MARK: - UI Components
 
@@ -126,9 +127,26 @@ final class UIEmptyStateView: UIView {
 
     // MARK: - Configuration
 
-    func configure(colors: ThemeColors, onAddBook: @escaping () -> Void) {
+    func configure(colors: ThemeColors, onAddBook: @escaping () -> Void, isDefaultChatAssistant: Bool = false) {
         self.colors = colors
         self.onAddBook = onAddBook
+        self.isDefaultChatAssistant = isDefaultChatAssistant
+        
+        // ✅ 根据助手类型切换图标和显示内容
+        if isDefaultChatAssistant {
+            // Chat 助手：聊天图标，隐藏其他内容
+            iconImageView.image = UIImage(systemName: "bubble.left.and.bubble.right")
+            titleLabel.isHidden = true
+            descriptionLabel.isHidden = true
+            addBookButton.isHidden = true
+        } else {
+            // 其他助手：书籍图标，显示完整内容
+            iconImageView.image = UIImage(systemName: "books.vertical")
+            titleLabel.isHidden = false
+            descriptionLabel.isHidden = false
+            addBookButton.isHidden = false
+        }
+        
         applyColors()
     }
 

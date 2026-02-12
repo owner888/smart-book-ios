@@ -99,7 +99,7 @@ class InputToolView: UIView {
         mediaBtn.configuration?.image = UIImage(systemName: "link")
         let imageConfig = UIImage.SymbolConfiguration(pointSize: 20, weight: .regular, scale: .small)
         mediaBtn.configuration?.preferredSymbolConfigurationForImage = imageConfig
-        
+
         // 模型按钮（保持原有的容器圆角处理）
         let modelBgView = modelButton.superview
         modelBgView?.layer.masksToBounds = true
@@ -141,7 +141,6 @@ class InputToolView: UIView {
             return outgoing
         }
         voiceBtn.configuration = config
-
     }
 
     func updateUI() {

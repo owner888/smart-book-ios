@@ -54,6 +54,16 @@ class MessageChatView: UIView {
         didSet {
             if let newValue = assistant {
                 inputBar.assistant = newValue
+                
+                // ✅ 助手切换时更新空状态视图
+                let isChat = newValue == .chat
+                emptyStateView?.configure(
+                    colors: colors,
+                    onAddBook: {
+                        // TODO: 处理添加书籍
+                    },
+                    isDefaultChatAssistant: isChat
+                )
             }
         }
     }
@@ -251,13 +261,19 @@ class MessageChatView: UIView {
     private func createEmptyStateView() {
         if emptyStateView == nil {
             let view = UIEmptyStateView(frame: CGRect.zero)
-            view.colors = colors
             view.translatesAutoresizingMaskIntoConstraints = false
             emptyBgView.addSubview(view)
             NSLayoutConstraint.activate([
                 view.centerXAnchor.constraint(equalTo: emptyBgView.centerXAnchor),
                 view.centerYAnchor.constraint(equalTo: emptyBgView.centerYAnchor)
             ])
+            
+            // ✅ 配置空状态视图，传递助手类型
+            let isChat = assistant == .chat
+            view.configure(colors: colors, onAddBook: {
+                // TODO: 处理添加书籍
+            }, isDefaultChatAssistant: isChat)
+            
             emptyStateView = view
         }
     }
