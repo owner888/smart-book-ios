@@ -409,10 +409,18 @@ struct ChatView: View {
                             onSended()
                         }
                     }*/
-                }.onAppear {
+                }
+                .onAppear {
                     updateAIFunction(from: modelService.currentModel.id)
                     updateAssistantFromService()
-                }.modifier(
+                }
+                .onChange(of: mediaItems.count) { _, newCount in
+                    // ✅ 同步 mediaItems 到 viewModel（通过 count 触发）
+                    print("🔄 mediaItems count changed: \(newCount)")
+                    viewModel.mediaItems = mediaItems
+                    print("✅ Synced to viewModel.mediaItems: \(viewModel.mediaItems.count)")
+                }
+                .modifier(
                     MenuSheet(
                         viewModel: viewModel,
                         showVIPSheet: $showVIPSheet,

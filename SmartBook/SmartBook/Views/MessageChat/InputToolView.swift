@@ -40,6 +40,18 @@ class InputToolView: UIView {
     var showPopover: ((MessagePopoverAction, UIView) -> Void)?
 
     private var cancellables = Set<AnyCancellable>()
+    
+    // ✅ 媒体预览容器
+    private lazy var mediaPreviewContainer: UIStackView = {
+        let stack = UIStackView()
+        stack.axis = .horizontal
+        stack.spacing = 8
+        stack.alignment = .center
+        stack.distribution = .fill  // ✅ 改为 fill，避免约束冲突
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        stack.isHidden = true  // 默认隐藏
+        return stack
+    }()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -62,8 +74,8 @@ class InputToolView: UIView {
     }
 
     func setUp() {
-        layer.masksToBounds = true
-        layer.cornerRadius = 22  // ✅ 改为 22，和 Add Book 按钮一致
+        layer.masksToBounds = false  // ✅ 改为 false，让媒体预览可见
+        layer.cornerRadius = 22
         // ✅ 使用液态玻璃边框代替普通边框
         let isDarkMode = traitCollection.userInterfaceStyle == .dark
         applyGlassBorder(cornerRadius: 22, isDarkMode: isDarkMode)
@@ -73,6 +85,15 @@ class InputToolView: UIView {
 
         // ✅ 调整占位符位置，往右下移动
         inputPromit.transform = CGAffineTransform(translationX: 8, y: 4)
+        
+        // ✅ 添加媒体预览容器到 textView 内部顶部
+        textView.addSubview(mediaPreviewContainer)
+        NSLayoutConstraint.activate([
+            mediaPreviewContainer.leadingAnchor.constraint(equalTo: textView.leadingAnchor, constant: 8),
+            mediaPreviewContainer.trailingAnchor.constraint(equalTo: textView.trailingAnchor, constant: -8),
+            mediaPreviewContainer.topAnchor.constraint(equalTo: textView.topAnchor, constant: 8),
+            mediaPreviewContainer.heightAnchor.constraint(equalToConstant: 60)
+        ])
 
         sendBtn.configuration?.preferredSymbolConfigurationForImage = UIImage.SymbolConfiguration(pointSize: 15)
         configVoiceBtn()
@@ -115,6 +136,61 @@ class InputToolView: UIView {
                 updateUI()
             }
         }.store(in: &cancellables)
+        
+        // ✅ 监听 mediaItems 变化
+        model.$mediaItems.receive(on: DispatchQueue.main).sink { [weak self] items in
+            guard let self = self else { return }
+            self.displayMediaItems(items)
+        }.store(in: &cancellables)
+    }
+    
+    // ✅ 显示媒体预览
+    private func displayMediaItems(_ items: [MediaItem]) {
+        // 清空旧的预览
+        mediaPreviewContainer.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        
+        if items.isEmpty {
+            mediaPreviewContainer.isHidden = true
+            mediaPreviewContainer.backgroundColor = .clear
+            return
+        }
+        
+        // ✅ 调试：添加背景色看是否显示
+        mediaPreviewContainer.backgroundColor = .red.withAlphaComponent(0.3)
+        
+        // 显示媒体预览
+        for (index, item) in items.enumerated() {
+            let imageView = UIImageView()
+            imageView.contentMode = .scaleAspectFill
+            imageView.clipsToBounds = true
+            imageView.layer.cornerRadius = 8
+            imageView.backgroundColor = .blue  // 调试背景
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            
+            switch item.type {
+            case .image(let uiImage):
+                imageView.image = uiImage
+                print("🖼️ 设置图片：\(uiImage.size)")
+            case .document(let url):
+                imageView.image = UIImage(systemName: "doc.fill")
+                imageView.tintColor = .gray
+            }
+            
+            // ✅ 降低优先级，避免约束冲突
+            let widthConstraint = imageView.widthAnchor.constraint(equalToConstant: 60)
+            widthConstraint.priority = .defaultHigh
+            NSLayoutConstraint.activate([
+                widthConstraint,
+                imageView.heightAnchor.constraint(equalToConstant: 60)
+            ])
+            
+            mediaPreviewContainer.addArrangedSubview(imageView)
+        }
+        
+        mediaPreviewContainer.isHidden = false
+        print("📷 显示 \(items.count) 个媒体预览")
+        print("📐 容器 frame: \(mediaPreviewContainer.frame)")
+        print("📐 容器 isHidden: \(mediaPreviewContainer.isHidden)")
     }
 
     func configVoiceBtn() {
