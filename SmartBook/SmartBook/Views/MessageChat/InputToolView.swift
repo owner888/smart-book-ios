@@ -23,6 +23,13 @@ class InputToolView: UIView {
 
     private var isRecording = false
     private var isConnecting = false
+    
+    // ✅ 语音识别服务（UIKit 方式）
+    private lazy var speechService = SpeechService()
+    private lazy var asrStreamService = ASRStreamService()
+    private var asrProvider: String {
+        UserDefaults.standard.string(forKey: AppConfig.Keys.asrProvider) ?? AppConfig.DefaultValues.asrProvider
+    }
 
     var viewModel: ChatViewModel?
     var aiFunction = MenuConfig.AIModelFunctionType.auto {
@@ -125,6 +132,19 @@ class InputToolView: UIView {
         let modelBgView = modelButton.superview
         modelBgView?.layer.masksToBounds = true
         modelBgView?.layer.cornerRadius = 12
+        
+        // ✅ 调试日志：检查 voiceBtn 是否正确连接
+        Logger.info("🔧 InputToolView setUp 完成")
+        Logger.info("🔧 voiceBtn: \(voiceBtn != nil ? "已连接" : "未连接")")
+        Logger.info("🔧 ASR Provider: \(asrProvider)")
+        
+        // ✅ 直接用代码添加点击事件，不依赖 XIB 连接
+        if let voiceBtn = voiceBtn {
+            voiceBtn.addTarget(self, action: #selector(toggleVoiceRecording(_:)), for: .touchUpInside)
+            Logger.info("✅ 已通过代码添加 Speaking 按钮点击事件")
+        } else {
+            Logger.error("❌ voiceBtn 为 nil，无法添加点击事件")
+        }
     }
 
     func bind(to model: ChatViewModel) {
@@ -263,6 +283,136 @@ class InputToolView: UIView {
 
     @IBAction func sendMessage() {
         send?()
+    }
+    
+    // MARK: - Speaking Button Action
+    
+    @IBAction func toggleVoiceRecording(_ sender: UIButton) {
+        Logger.info("🔘 Speaking 按钮被点击！isRecording: \(isRecording)")
+        
+        if isRecording {
+            Logger.info("🛑 准备停止录音...")
+            stopRecording()
+        } else {
+            Logger.info("🎤 准备开始录音...")
+            startRecording()
+        }
+    }
+    
+    // MARK: - Voice Recognition
+    
+    private func startRecording() {
+        // 根据配置选择语音识别服务
+        switch asrProvider {
+        case "native":
+            isRecording = true
+            configVoiceBtn()
+            
+            // 使用 iOS 原生语音识别
+            Task { @MainActor in
+                speechService.startRecording(
+                    onInterim: { [weak self] text in
+                        self?.textView.text = text
+                        self?.viewModel?.inputText = text
+                        self?.updateUI()
+                    },
+                    onFinal: { [weak self] text in
+                        self?.textView.text = text
+                        self?.viewModel?.inputText = text
+                        self?.isRecording = false
+                        self?.configVoiceBtn()
+                        self?.updateUI()
+                    }
+                )
+            }
+            Logger.info("🎤 使用 iOS 原生语音识别")
+            
+        default:
+            // 使用 Deepgram 流式识别
+            Task {
+                // 显示连接中状态
+                await MainActor.run {
+                    isConnecting = true
+                    configVoiceBtn()
+                }
+                
+                // 如果未连接，先连接
+                if !asrStreamService.isConnected {
+                    await asrStreamService.connect()
+                }
+                
+                // 开始录音和流式识别
+                await asrStreamService.startRecording(
+                    onDeepgramReady: { [weak self] in
+                        Task { @MainActor in
+                            self?.isConnecting = false
+                            self?.isRecording = true
+                            self?.configVoiceBtn()
+                            Logger.info("✅ Deepgram 就绪，开始录音")
+                        }
+                    },
+                    onTranscriptUpdate: { [weak self] text, isFinal in
+                        Task { @MainActor in
+                            self?.textView.text = text
+                            self?.viewModel?.inputText = text
+                            self?.updateUI()
+                            
+                            // 最终结果时自动停止并发送
+                            if isFinal {
+                                self?.isRecording = false
+                                await self?.asrStreamService.stopRecording()
+                                
+                                // 严格检查：文本必须有实际内容才自动发送
+                                let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                                if trimmedText.count >= 2 {
+                                    Logger.info("✅ 语音识别完成，自动发送: \(trimmedText)")
+                                    
+                                    // 延迟一点，确保清理完成
+                                    try? await Task.sleep(nanoseconds: 100_000_000)
+                                    
+                                    // 语音模式发送，启用 TTS
+                                    await self?.viewModel?.sendMessage(trimmedText, enableTTS: true)
+                                    
+                                    // 清空输入框
+                                    await MainActor.run {
+                                        self?.textView.text = ""
+                                        self?.viewModel?.inputText = ""
+                                        self?.configVoiceBtn()
+                                        self?.updateUI()
+                                    }
+                                } else {
+                                    Logger.warning("⚠️ 识别文本太短或为空，不自动发送: '\(trimmedText)'")
+                                    await MainActor.run {
+                                        self?.configVoiceBtn()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+            Logger.info("🎙️ 使用 Deepgram 流式识别（等待就绪 + 实时断句 + 自动发送）")
+        }
+    }
+    
+    private func stopRecording() {
+        isRecording = false
+        configVoiceBtn()
+        
+        // 停止对应的语音识别服务
+        switch asrProvider {
+        case "native":
+            Task { @MainActor in
+                speechService.stopRecording()
+            }
+        default:
+            Task {
+                // 只停止录音，保持 WebSocket 连接
+                await asrStreamService.stopRecording()
+            }
+        }
+        
+        Logger.info("🛑 停止录音（连接保持）")
     }
 
     // MARK: - Lifecycle
