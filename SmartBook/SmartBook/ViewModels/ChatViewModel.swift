@@ -14,7 +14,7 @@ class ChatViewModel: ObservableObject {
     @Published var scrollBottom = 0.0
     @Published var inputText = ""
     var scrollProxy: ScrollViewProxy?
-    var answerMessageId = UUID()
+    var answerMessageId: UUID?
     var reducedScrollBottom = false
     var keyboardChanging = false
     var safeAreaBottom = 0.0
@@ -149,6 +149,8 @@ class ChatViewModel: ObservableObject {
             Logger.warning("⚠️ 消息太短且无媒体，拒绝发送")
             return
         }
+        
+        answerMessageId = nil
 
         // 用户消息内容（不包含媒体描述，像 Grok 一样）
         let finalContent = trimmedText
@@ -292,6 +294,7 @@ class ChatViewModel: ObservableObject {
                 case .error(let error):
                     if messageIndex < self.messages.count {
                         self.cancelDisplay()
+                        
                         self.messages[messageIndex] = ChatMessage(
                             id: self.messages[messageIndex].id,
                             role: .assistant,

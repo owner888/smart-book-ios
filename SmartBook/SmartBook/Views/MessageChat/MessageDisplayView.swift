@@ -126,7 +126,7 @@ class MessageDisplayView: UIView {
             let newSize = textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.greatestFiniteMagnitude))
             userTextViewWidth?.constant = newSize.width
             userTextHeight?.constant = newSize.height
-            //onChangedSized?(message, newSize.height + 24)
+            onChangedSized?(message,newSize.height + 24)
         } else {
             guard let textView = textView else {
                 return

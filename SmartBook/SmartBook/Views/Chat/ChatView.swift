@@ -131,7 +131,9 @@ struct ChatView: View {
                 } content: {
                     chatContent
                 }
-                .environmentObject(sideObser)
+                .environmentObject(sideObser).onChange(of: sideObser.isMainPage) { _, newValue in
+                    NotificationCenter.default.post(name: NSNotification.Name("MainChangePage"), object: newValue)
+                }
             }
         }
         .fullScreenCover(isPresented: $showBookPicker) {
@@ -588,9 +590,8 @@ struct ChatView: View {
                 0
             )
             adaptationBottom = viewModel.scrollBottom
-            if let answerHeight = messageHeights[
-                viewModel.answerMessageId
-            ] {
+            if  let messageId = viewModel.answerMessageId,
+                let answerHeight = messageHeights[messageId] {
                 answerInitialHeight = answerHeight
                 viewModel.scrollBottom -= answerHeight
             }

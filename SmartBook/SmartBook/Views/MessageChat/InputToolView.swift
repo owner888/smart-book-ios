@@ -23,6 +23,7 @@ class InputToolView: UIView {
 
     private var isRecording = false
     private var isConnecting = false
+    private var isEditing = false
     
     // ✅ 语音识别服务（UIKit 方式）
     private lazy var speechService = SpeechService()
@@ -109,7 +110,7 @@ class InputToolView: UIView {
         let bottomOffset: CGFloat = -4  // 往上移 4pt
         mediaBtn.transform = CGAffineTransform(translationX: 0, y: bottomOffset)
         assistantBtn.transform = CGAffineTransform(translationX: 0, y: bottomOffset)
-        modelButton.transform = CGAffineTransform(translationX: 0, y: bottomOffset)
+//        modelButton.transform = CGAffineTransform(translationX: 0, y: 4)
         voiceBtn.superview?.transform = CGAffineTransform(translationX: 0, y: bottomOffset)
 
         voiceBtn.superview?.layer.masksToBounds = true
@@ -135,6 +136,18 @@ class InputToolView: UIView {
         
         // ✅ 直接用代码添加点击事件，不依赖 XIB 连接
         voiceBtn?.addTarget(self, action: #selector(toggleVoiceRecording(_:)), for: .touchUpInside)
+        
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("MainChangePage"), object: nil, queue: OperationQueue.main) { [weak self] notification in
+            guard let self = self else {return}
+            if (notification.object as? Bool) == true {
+                if self.isEditing {
+                    self.textView.becomeFirstResponder()
+                }
+            } else {
+                self.isEditing = self.textView.isFirstResponder
+                self.textView.resignFirstResponder()
+            }
+        }
     }
 
     func bind(to model: ChatViewModel) {

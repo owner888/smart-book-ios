@@ -40,6 +40,7 @@ struct ExpandSideView<Side: View, Content: View>: View {
                                 scrollOffset / sideWidth
                             ).ignoresSafeArea()
                         }.id(0)
+                        
                         ZStack {
                             content.frame(
                                 width: proxy.size.width,
@@ -61,6 +62,8 @@ struct ExpandSideView<Side: View, Content: View>: View {
                     geo.contentOffset.x
                 }, action: { _, newValue in
                     scrollOffset = newValue
+                    obser.isMainPage = scrollOffset >= sideWidth
+                    
                 }).introspect(.scrollView, on: .iOS(.v18,.v26)) { scrollView in
                     scrollView.bounces = false
                 }.onAppear(perform: {
@@ -72,6 +75,7 @@ struct ExpandSideView<Side: View, Content: View>: View {
 }
 
 class ExpandSideObservable: ObservableObject {
+    @Published var isMainPage = false
     @Published var currentPage: Int? = nil
     func jumpToPage(_ page: Int, animate: Bool = true) {
         if animate {
@@ -98,8 +102,6 @@ extension CGPoint {
     }
 }
 
-
-
 struct ScrollBouncerDisabler: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView {
         let view = UIView()
@@ -117,3 +119,4 @@ struct ScrollBouncerDisabler: UIViewRepresentable {
     }
     func updateUIView(_ uiView: UIView, context: Context) {}
 }
+

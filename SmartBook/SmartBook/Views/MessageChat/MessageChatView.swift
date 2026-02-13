@@ -35,12 +35,14 @@ class MessageChatView: UIView {
     private var currentIdCancelables = Set<AnyCancellable>()
     private var messages = [ChatMessage]()
     private var messageHeights = [UUID: CGFloat]()
-    private var answerInitialHeight = 0.0
+
     private var adaptationBottom: CGFloat?
     private var originBottom: CGFloat?
     private let themeManager = ThemeManager.shared
     private var keyboardIsChanging = false
     private var emptyStateView: UIEmptyStateView?
+    private var safeAreaBottom: CGFloat = 0.0
+    private var reducedQuestionHeight = false
     
     var aiFunction: MenuConfig.AIModelFunctionType? {
         didSet {
@@ -102,6 +104,8 @@ class MessageChatView: UIView {
     }
 
     func setUpUI() {
+        let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+        safeAreaBottom = scene?.windows.first?.safeAreaInsets.bottom ?? 0
         self.clipsToBounds = true
         tableView.register(
             UINib(nibName: "CommonChatCell", bundle: nil),
@@ -113,10 +117,11 @@ class MessageChatView: UIView {
         tableView.delegate = self
 
         // 启用自动高度
-        tableView.estimatedRowHeight = 30
+        tableView.estimatedRowHeight = 20
         tableView.rowHeight = UITableView.automaticDimension
         tableView.reloadData()
         tableView.clipsToBounds = false
+        
         
         inputBar.send = {[weak self] in
             self?.topView?.isHidden = true
@@ -144,12 +149,7 @@ class MessageChatView: UIView {
         )
         keyboardConstraint.isActive = true
 
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(onKeyboardFrameChange),
-            name: UIResponder.keyboardWillChangeFrameNotification,
-            object: nil
-        )
+
 
         NotificationCenter.default.addObserver(
             forName: UIResponder.keyboardWillShowNotification,
@@ -166,23 +166,22 @@ class MessageChatView: UIView {
             let keyboardHeight = keyboardFrame.cgRectValue.height
             self.originBottom = viewModel.scrollBottom
             if viewModel.scrollBottom > keyboardHeight {
-                viewModel.scrollBottom -= keyboardHeight
-                self.tableView.reloadData()
+                viewModel.scrollBottom -= (keyboardHeight - self.safeAreaBottom)
+                self.reloadBottom()
             } else if viewModel.scrollBottom > 30 {
                 viewModel.scrollBottom = 30
-                self.tableView.reloadData()
+                self.reloadBottom()
+                self.onKeyboardFrameChange(notification)
+            } else {
+                self.onKeyboardFrameChange(notification)
             }
         }
         
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: OperationQueue.main) { notification in
             if let bottom = self.originBottom {
                 self.viewModel?.scrollBottom = bottom
-                self.tableView.reloadData()
-                if bottom > 5 && self.bottomBtn.isHidden {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
-                        self.scrollToBottom(animated: true)
-                    })
-                }
+                self.reloadBottom()
+                self.onKeyboardFrameChange(notification)
             }
             self.originBottom = nil
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
@@ -232,7 +231,8 @@ class MessageChatView: UIView {
         )
     }
 
-    @objc func onKeyboardFrameChange(notification: Notification) {
+    func onKeyboardFrameChange(_ notification: Notification) {
+    
         if bottomBtn.isHidden {
             guard let userInfo = notification.userInfo,
                 let duration = userInfo[
@@ -255,7 +255,6 @@ class MessageChatView: UIView {
                 completion: nil
             )
         }
-
     }
     
     private func createEmptyStateView() {
@@ -283,18 +282,19 @@ class MessageChatView: UIView {
     }
 
     private func scrollToBottom(animated: Bool) {
-        let total = tableView.numberOfRows(inSection: 0)
-        let index = IndexPath(row: messages.count, section: 0)
-        if index.row < total {
-            self.tableView.scrollToRow(
-                at: index,
-                at: .bottom,
-                animated: animated
-            )
+        if !messages.isEmpty {
+            let total = tableView.numberOfRows(inSection: 0)
+            let index = IndexPath(row: messages.count - 1, section: 0)
+            if index.row < total {
+                self.tableView.scrollToRow(
+                    at: index,
+                    at: .bottom,
+                    animated: animated
+                )
+            }
         }
     }
-    
-    
+
 
     private func messageChangedSize(_ height: CGFloat, id: UUID) {
         messageHeights[id] = height
@@ -302,17 +302,34 @@ class MessageChatView: UIView {
 //        if let qMess = messageHeights[viewModel.currentMessageId!] {
 //            print("==问题高度: \(qMess)")
 //        }
-//        if let answer = messageHeights[viewModel.answerMessageId] {
+//        if let messageId = viewModel.answerMessageId,
+//            let answer = messageHeights[messageId] {
 //            print("==回答高度: \(answer)")
 //        }
         if id == viewModel.answerMessageId,
-            let bottom = adaptationBottom,
             viewModel.isLoading
         {
-            let offset = max(bottom - height, 0)
-            if abs(viewModel.scrollBottom - offset) > 10 || (viewModel.scrollBottom > 0 && offset == 0) {
-                viewModel.scrollBottom = offset
-                reloadBottom()
+            var bottom: CGFloat?
+            if let adaptatio = adaptationBottom {
+                bottom = adaptatio
+            } else {
+                //如果没有获取到显示问题后的高度后,需要再获取一次.
+                if let questionId = viewModel.currentMessageId,
+                   let questionHeight = messageHeights[questionId] {
+                    bottom = max(
+                        self.tableView.frame.height - questionHeight - 28.0,
+                        0
+                    )
+                    adaptationBottom = bottom
+                }
+            }
+            //根据回答内容的高度逐步越少底部空余高度
+            if let bottom = bottom {
+                let offset = max(bottom - height, 0)
+                if abs(viewModel.scrollBottom - offset) > 10 || (viewModel.scrollBottom > 0 && offset == 0) {
+                    viewModel.scrollBottom = offset
+                    reloadBottom()
+                }
             }
             
             DispatchQueue.main.async { [weak self] in
@@ -323,7 +340,7 @@ class MessageChatView: UIView {
 
     private func onSended() {
         adaptationBottom = nil
-        answerInitialHeight = 0
+        reducedQuestionHeight = false
         guard let viewModel = viewModel else {
             return
         }
@@ -347,43 +364,24 @@ class MessageChatView: UIView {
         )
     }
 
+    //滚到问题消息到顶部
     private func scrollToMessageTop(_ messageId: UUID) {
-        guard let viewModel = viewModel else {
+        guard let viewModel = viewModel,
+              let answerMessageId = viewModel.answerMessageId
+        else {
             return
-        }
-        if let answerHeight = messageHeights[
-            viewModel.answerMessageId
-        ] {
-            answerInitialHeight = answerHeight
         }
         if let height = messageHeights[messageId] {
             let bottom = max(
-                self.tableView.frame.height - height - 24.0,
+                self.tableView.frame.height - height - 28.0,
                 0
             )
             viewModel.scrollBottom = bottom
             adaptationBottom = bottom
-            if let answerHeight = messageHeights[
-                viewModel.answerMessageId
-            ] {
+            if let answerHeight = messageHeights[answerMessageId] {
+                reducedQuestionHeight = true
                 viewModel.scrollBottom -= answerHeight
             }
-            reloadBottom()
-            DispatchQueue.main.asyncAfter(
-                deadline: .now() + 0.2,
-                execute: { [weak self] in
-                    self?.scrollToAnswerMessage()
-                }
-            )
-
-        } else if let answerHeight = messageHeights[
-            viewModel.answerMessageId
-        ],
-            adaptationBottom == nil
-        {
-            answerInitialHeight = answerHeight
-            viewModel.scrollBottom =
-                self.tableView.frame.height - answerInitialHeight - 12
             reloadBottom()
             DispatchQueue.main.asyncAfter(
                 deadline: .now() + 0.2,
@@ -400,41 +398,34 @@ class MessageChatView: UIView {
             $0.id == viewModel?.answerMessageId
         }) {
             let indexPath = IndexPath(row: index, section: 0)
-            self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
+            self.tableView.scrollToRow(at: indexPath, at: .top, animated: false)
         }
 
     }
 
     private func reloadBottom() {
-        
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            let indexPath = IndexPath(row: self.messages.count, section: 1)
-            if self.tableView.cellForRow(at: indexPath) != nil {
-                self.tableView.reloadRows(at: [indexPath], with: .automatic)
-            } else {
-                self.tableView.reloadData()
-            }
+        if let space = viewModel?.scrollBottom {
+            tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: space, right: 0)
         }
     }
     
     func detectScrolledToBottom() {
         if !keyboardIsChanging {
             tableView.layoutIfNeeded()
+            let inset = tableView.contentInset.bottom
             let offset = tableView.contentOffset.y + tableView.frame.size.height
             let contentHeight = tableView.contentSize.height
 
-            let effectiveContentHeight = contentHeight > 0 ? contentHeight : tableView.frame.size.height
+            let effectiveContentHeight = contentHeight > 0 ? contentHeight + inset : tableView.frame.size.height
 
             let isAtBottom = offset > effectiveContentHeight - 20
             bottomBtn.isHidden = isAtBottom
-
-//            print("== table view offset: \(offset), contentSize: \(contentHeight), frame: \(tableView.frame.size.height), isAtBottom: \(isAtBottom)")
+            
+//            print("== table view offset: \(offset), contentSize: \(effectiveContentHeight), frame: \(tableView.frame.size.height), isAtBottom: \(isAtBottom)")
         }
-        
     }
-
 }
+
 extension MessageChatView: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
         if scrollView == self.tableView {
@@ -447,27 +438,12 @@ extension MessageChatView: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int)
         -> Int
     {
-        return messages.count + 1
+        return messages.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
         -> UITableViewCell
     {
-        // 最后一行可能是加载更多或其他占位cell
-        if indexPath.row == messages.count {
-            let cell =
-                tableView.dequeueReusableCell(withIdentifier: "foot")
-                as? FootAdapterCell
-                ?? FootAdapterCell.init(
-                    style: .default,
-                    reuseIdentifier: "foot"
-                )
-            cell.contentView.backgroundColor = UIColor.clear
-            cell.backgroundColor = UIColor.clear
-            cell.selectionStyle = .none
-            return cell
-        }
-
         if let cell = tableView.dequeueReusableCell(
             withIdentifier: "commonChat"
         ) as? CommonChatCell {
@@ -491,10 +467,6 @@ extension MessageChatView: UITableViewDataSource, UITableViewDelegate {
         _ tableView: UITableView,
         heightForRowAt indexPath: IndexPath
     ) -> CGFloat {
-        if indexPath.row == messages.count {
-            return viewModel?.scrollBottom ?? 0
-        }
-        // 使用自动高度
         return UITableView.automaticDimension
     }
 
