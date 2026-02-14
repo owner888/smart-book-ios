@@ -42,7 +42,7 @@ class MessageChatView: UIView {
     private var keyboardIsChanging = false
     private var emptyStateView: UIEmptyStateView?
     private var safeAreaBottom: CGFloat = 0.0
-    private var reducedQuestionHeight = false
+    private var scrollingTop = false
     
     var aiFunction: MenuConfig.AIModelFunctionType? {
         didSet {
@@ -175,6 +175,9 @@ class MessageChatView: UIView {
             } else {
                 self.onKeyboardFrameChange(notification)
             }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
+                self.keyboardIsChanging = false
+            })
         }
         
         NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: OperationQueue.main) { notification in
@@ -184,6 +187,7 @@ class MessageChatView: UIView {
                 self.onKeyboardFrameChange(notification)
             }
             self.originBottom = nil
+            self.keyboardIsChanging = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
                 self.keyboardIsChanging = false
             })
@@ -340,7 +344,6 @@ class MessageChatView: UIView {
 
     private func onSended() {
         adaptationBottom = nil
-        reducedQuestionHeight = false
         guard let viewModel = viewModel else {
             return
         }
@@ -379,26 +382,28 @@ class MessageChatView: UIView {
             viewModel.scrollBottom = bottom
             adaptationBottom = bottom
             if let answerHeight = messageHeights[answerMessageId] {
-                reducedQuestionHeight = true
                 viewModel.scrollBottom -= answerHeight
             }
             reloadBottom()
             DispatchQueue.main.asyncAfter(
-                deadline: .now() + 0.2,
+                deadline: .now() + 0.1,
                 execute: { [weak self] in
                     self?.scrollToAnswerMessage()
                 }
             )
         }
-
     }
 
     private func scrollToAnswerMessage() {
         if let index = messages.firstIndex(where: {
             $0.id == viewModel?.answerMessageId
         }) {
+            scrollingTop = true
             let indexPath = IndexPath(row: index, section: 0)
-            self.tableView.scrollToRow(at: indexPath, at: .top, animated: false)
+            self.tableView.scrollToRow(at: indexPath, at: .top, animated: true)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5, execute: {[weak self] in
+                self?.scrollingTop = false
+            })
         }
 
     }
@@ -410,7 +415,7 @@ class MessageChatView: UIView {
     }
     
     func detectScrolledToBottom() {
-        if !keyboardIsChanging {
+        if !keyboardIsChanging && !scrollingTop{
             tableView.layoutIfNeeded()
             let inset = tableView.contentInset.bottom
             let offset = tableView.contentOffset.y + tableView.frame.size.height

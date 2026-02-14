@@ -267,6 +267,7 @@ class MenuIconView: UIView {
     }
     
     private func updateSize() {
+        self.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             widthAnchor.constraint(equalToConstant: size),
             heightAnchor.constraint(equalToConstant: size),
@@ -280,8 +281,8 @@ class MenuIconView: UIView {
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: topAnchor),
             imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            imageView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            imageView.widthAnchor.constraint(equalTo: widthAnchor,multiplier: 1),
+            imageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 1)
         ])
         updateImage()
     }

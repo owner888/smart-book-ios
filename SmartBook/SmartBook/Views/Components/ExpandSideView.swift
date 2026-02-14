@@ -16,6 +16,8 @@ struct ExpandSideView<Side: View, Content: View>: View {
 
     @State private var scrollOffset: CGFloat = 0
     @State private var sideWidth: CGFloat = 1
+    @State private var expandScrollView: UIScrollView? = nil
+    @State private var disabledScroll = false
     @EnvironmentObject private var obser: ExpandSideObservable
     @Environment(\.colorScheme) private var colorScheme
 
@@ -58,17 +60,23 @@ struct ExpandSideView<Side: View, Content: View>: View {
                 }
                 .scrollTargetBehavior(.paging)
                 .scrollPosition(id: $obser.currentPage)
+                .scrollDisabled(disabledScroll)
                 .onScrollGeometryChange(for: CGFloat.self, of: { geo in
                     geo.contentOffset.x
                 }, action: { _, newValue in
                     scrollOffset = newValue
-                    obser.isMainPage = scrollOffset >= sideWidth
-                    
-                }).introspect(.scrollView, on: .iOS(.v18,.v26)) { scrollView in
-                    scrollView.bounces = false
-                }.onAppear(perform: {
-                    obser.jumpToPage(1, animate: false)
+                    obser.isMainPage = scrollOffset > sideWidth - 30
                 })
+                .introspect(.scrollView, on: .iOS(.v18,.v26)) { scrollView in
+                    scrollView.bounces = false
+                }
+                .onAppear(perform: {
+                    obser.jumpToPage(1, animate: false)
+                }).onReceive(NotificationCenter.default.publisher(for: .disableExpandScroll)) { notificaion in
+                    if let disable = notificaion.object as? Bool {
+                        disabledScroll = disable
+                    }
+                }
             })
         }
     }
@@ -77,6 +85,7 @@ struct ExpandSideView<Side: View, Content: View>: View {
 class ExpandSideObservable: ObservableObject {
     @Published var isMainPage = false
     @Published var currentPage: Int? = nil
+    
     func jumpToPage(_ page: Int, animate: Bool = true) {
         if animate {
             withAnimation(.spring(duration: 0.25)) {
@@ -88,12 +97,9 @@ class ExpandSideObservable: ObservableObject {
     }
 }
 
-struct ScrollOffsetPreferenceKey: PreferenceKey {
-    typealias Value = CGFloat
-    static var defaultValue = CGFloat.zero
-    static func reduce(value: inout Value, nextValue: () -> Value) {
-        value += nextValue()
-    }
+// MARK: - 滚动控制通知
+extension Notification.Name {
+    static let disableExpandScroll = Notification.Name("disableExpandScroll")
 }
 
 extension CGPoint {
