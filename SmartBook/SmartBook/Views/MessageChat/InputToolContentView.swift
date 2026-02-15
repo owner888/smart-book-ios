@@ -205,6 +205,14 @@ struct InputToolContentView: View {
             }
         }.padding(.horizontal, 12)
             .padding(.vertical, 6)
+            .background {
+                if #available(iOS 26, *) {
+                    Color.white.opacity(0.001).glassEffect(.regular, in: .rect(cornerRadius: 22))
+                } else {
+                    GaussianBlurView().opacity(0.5).clipShape(RoundedRectangle(cornerRadius: 22))
+                }
+            }
+            .padding(.vertical, 6)
             .animation(.spring(duration: 0.3), value: hasInput)
             .onChange(of: asrStreamService.statusMessage) { _ in
                 // ASR 状态消息变化时通知高度更新

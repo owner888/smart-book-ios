@@ -53,12 +53,10 @@ class InputToolView: UIView {
     // MARK: - Setup
     
     func setUp() {
+        // SwiftUI 内容已有边框和背景，UIKit 容器不需要边框
         layer.masksToBounds = false
-        layer.cornerRadius = 22
-        
-        // ✅ 使用液态玻璃边框
-        let isDarkMode = traitCollection.userInterfaceStyle == .dark
-        applyGlassBorder(cornerRadius: 22, isDarkMode: isDarkMode)
+        layer.cornerRadius = 0
+        backgroundColor = .clear
         
         // 添加锚点视图用于 popover 定位
         anchorView.backgroundColor = .clear
@@ -236,22 +234,6 @@ class InputToolView: UIView {
     
     override func layoutSubviews() {
         super.layoutSubviews()
-        // ✅ 更新玻璃边框
-        let isDarkMode = traitCollection.userInterfaceStyle == .dark
-        applyGlassBorder(cornerRadius: 22, isDarkMode: isDarkMode)
-    }
-    
-    override func traitCollectionDidChange(
-        _ previousTraitCollection: UITraitCollection?
-    ) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        
-        if traitCollection.hasDifferentColorAppearance(
-            comparedTo: previousTraitCollection
-        ) {
-            // ✅ 主题变化时更新边框
-            let isDarkMode = traitCollection.userInterfaceStyle == .dark
-            applyGlassBorder(cornerRadius: 22, isDarkMode: isDarkMode)
-        }
+        // SwiftUI 内容自己处理边框，UIKit 容器不需要
     }
 }
