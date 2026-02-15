@@ -102,7 +102,7 @@ struct InputToolContentView: View {
             }
 
             // 底部按钮栏
-            HStack(spacing: 8) {
+            HStack(alignment: .center, spacing: 8) {
                 Button {
                     openMedia(mediaBtnFrame)
                 } label: {
@@ -111,7 +111,6 @@ struct InputToolContentView: View {
                     }
                 }.glassEffect(size: CGSize(width: 32, height: 32))
                     .getFrame($mediaBtnFrame)
-                    .padding(.leading, -6)
 
                 Button {
                     openAssistant(assistantBtnFrame)
@@ -163,8 +162,6 @@ struct InputToolContentView: View {
                             .background(colorScheme == .dark ? Color.apprBlack : Color.apprWhite)
                             .clipShape(Circle())
                     }
-                    .padding(.trailing, -6)
-                    .padding(.bottom, -6)
                     .transition(.scale.combined(with: .opacity))
                 } else {
                     // 语音输入按钮
@@ -193,13 +190,14 @@ struct InputToolContentView: View {
                                 Text(isRecording ? L("chat.voice.stop") : L("chat.voice.start")).font(.caption2)
                                     .foregroundStyle(.apprWhite)
                             }
-                        }.padding(.horizontal, 10).padding(.vertical, 6)
-                    }.background {
-                        Color.apprBlack.clipShape(RoundedRectangle(cornerRadius: 12))
+                        }.padding(.horizontal, 10)
+                    }
+                    .frame(height: 28)
+                    .background {
+                        Color.apprBlack.clipShape(RoundedRectangle(cornerRadius: 16))
                     }
                     .disabled(isConnecting)
-                    .padding(.trailing, -6)
-                    .padding(.bottom, -6)
+                    .offset(y: 2)
                     .transition(.scale.combined(with: .opacity))
                 }
             }
