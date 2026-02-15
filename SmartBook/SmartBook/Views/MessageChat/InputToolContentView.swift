@@ -20,6 +20,7 @@ struct InputToolContentView: View {
     var openModel: (CGRect) -> Void
     var openAssistant: (CGRect) -> Void
     var onSend: (() -> Void)?
+    var onHeightChanged: (() -> Void)?  // 高度变化回调
 
     @Environment(\.colorScheme) private var colorScheme
     @AppStorage(AppConfig.Keys.asrProvider) private var asrProvider = AppConfig.DefaultValues.asrProvider
@@ -205,6 +206,22 @@ struct InputToolContentView: View {
         }.padding(.horizontal, 12)
             .padding(.vertical, 6)
             .animation(.spring(duration: 0.3), value: hasInput)
+            .onChange(of: asrStreamService.statusMessage) { _ in
+                // ASR 状态消息变化时通知高度更新
+                onHeightChanged?()
+            }
+            .onChange(of: isRecording) { _ in
+                // 录音状态变化时通知高度更新
+                onHeightChanged?()
+            }
+            .onChange(of: isConnecting) { _ in
+                // 连接状态变化时通知高度更新
+                onHeightChanged?()
+            }
+            .onChange(of: viewModel.mediaItems.count) { _ in
+                // 媒体项数量变化时通知高度更新
+                onHeightChanged?()
+            }
             .simultaneousGesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { _ in }

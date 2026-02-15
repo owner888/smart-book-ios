@@ -142,6 +142,14 @@ class InputToolView: UIView {
                 },
                 onSend: { [weak self] in
                     self?.sendMessage()
+                },
+                onHeightChanged: { [weak self] in
+                    // 高度变化时更新布局
+                    self?.invalidateIntrinsicContentSize()
+                    self?.superview?.setNeedsLayout()
+                    UIView.animate(withDuration: 0.3) {
+                        self?.superview?.layoutIfNeeded()
+                    }
                 }
             )
         )
@@ -176,7 +184,6 @@ class InputToolView: UIView {
             [weak self] _ in
             guard let self = self else { return }
             self.updateSwiftUIView()
-            self.layoutIfNeeded()
         }.store(in: &cancellables)
     }
     
