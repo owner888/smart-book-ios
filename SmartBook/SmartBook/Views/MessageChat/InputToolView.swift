@@ -217,10 +217,14 @@ class InputToolView: UIView {
         }
         
         let targetSize = CGSize(width: bounds.width > 0 ? bounds.width : UIScreen.main.bounds.width,
-                               height: UIView.layoutFittingCompressedSize.height)
-        let size = hostingView.systemLayoutSizeFitting(targetSize)
+                               height: UIView.layoutFittingExpandedSize.height)
+        let size = hostingView.systemLayoutSizeFitting(
+            targetSize,
+            withHorizontalFittingPriority: .required,
+            verticalFittingPriority: .fittingSizeLevel
+        )
         
-        return CGSize(width: UIView.noIntrinsicMetric, height: size.height)
+        return CGSize(width: UIView.noIntrinsicMetric, height: max(size.height, 100))
     }
     
     override func layoutSubviews() {

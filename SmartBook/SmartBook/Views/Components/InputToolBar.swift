@@ -283,7 +283,7 @@ struct InputToolBar: View {
 
                 // 开始录音和流式识别
                 // 等待 Deepgram 就绪后才更新按钮状态
-                await asrStreamService.startRecording(
+                asrStreamService.startRecording(
                     onDeepgramReady: { @MainActor in
                         // Deepgram 连接成功，开始接收音频
                         isConnecting = false  // 取消连接中状态
@@ -298,7 +298,7 @@ struct InputToolBar: View {
                             // 只停止录音，保持连接
                             Task { @MainActor in
                                 isRecording = false
-                                await asrStreamService?.stopRecording()
+                                asrStreamService?.stopRecording()
                                 // 不断开连接，保持 WebSocket 活跃
 
                                 // 严格检查：文本必须有实际内容（至少2个字符）才自动发送
@@ -338,7 +338,7 @@ struct InputToolBar: View {
         default:
             Task {
                 // 只停止录音，保持 WebSocket 连接
-                await asrStreamService.stopRecording()
+                asrStreamService.stopRecording()
                 // 不断开连接，下次可以快速开始
             }
         }

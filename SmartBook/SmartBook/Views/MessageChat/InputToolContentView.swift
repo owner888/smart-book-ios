@@ -205,6 +205,10 @@ struct InputToolContentView: View {
         }.padding(.horizontal, 12)
             .padding(.vertical, 6)
             .animation(.spring(duration: 0.3), value: hasInput)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in }
+            )
             .onAppear {
                 // 视图加载时预连接 ASR 和 TTS（如果使用 Deepgram）
                 if asrProvider != "native" {
@@ -270,7 +274,7 @@ struct InputToolContentView: View {
                 }
 
                 // 开始录音和流式识别
-                await asrStreamService.startRecording(
+                asrStreamService.startRecording(
                     onDeepgramReady: { @MainActor in
                         isConnecting = false
                         isRecording = true
