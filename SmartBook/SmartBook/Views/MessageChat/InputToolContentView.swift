@@ -111,6 +111,7 @@ struct InputToolContentView: View {
                     }
                 }.glassEffect(size: CGSize(width: 32, height: 32))
                     .getFrame($mediaBtnFrame)
+                    .padding(.leading, -6)
 
                 Button {
                     openAssistant(assistantBtnFrame)
@@ -198,6 +199,7 @@ struct InputToolContentView: View {
                     }
                     .disabled(isConnecting)
                     .offset(y: 2)
+                    .padding(.trailing, -6)
                     .transition(.scale.combined(with: .opacity))
                 }
             }
