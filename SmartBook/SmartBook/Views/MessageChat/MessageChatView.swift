@@ -323,7 +323,7 @@ class MessageChatView: UIView {
             if let adaptatio = adaptationBottom {
                 bottom = adaptatio
             } else {
-                //如果没有获取到显示问题后的高度后,需要再获取一次.
+                // 如果没有获取到显示问题后的高度后,需要再获取一次.
                 if let questionId = viewModel.currentMessageId,
                     let questionHeight = messageHeights[questionId]
                 {
@@ -334,7 +334,7 @@ class MessageChatView: UIView {
                     adaptationBottom = bottom
                 }
             }
-            //根据回答内容的高度逐步越少底部空余高度
+            // 根据回答内容的高度逐步越少底部空余高度
             if let bottom = bottom {
                 let offset = max(bottom - height, 0)
                 if abs(viewModel.scrollBottom - offset) > 10 || (viewModel.scrollBottom > 0 && offset == 0) {
@@ -374,7 +374,7 @@ class MessageChatView: UIView {
         )
     }
 
-    //滚到问题消息到顶部
+    // 滚到问题消息到顶部
     private func scrollToMessageTop(_ messageId: UUID) {
         guard let viewModel = viewModel,
             let answerMessageId = viewModel.answerMessageId
@@ -420,7 +420,9 @@ class MessageChatView: UIView {
 
     private func reloadBottom() {
         if let space = viewModel?.scrollBottom {
-            tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: space, right: 0)
+            // 底部间距至少 60pt，避免被 TopFunctionType 按钮遮挡
+            let bottomInset = max(space, 60)
+            tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: bottomInset, right: 0)
         }
     }
 
@@ -436,7 +438,7 @@ class MessageChatView: UIView {
             let isAtBottom = offset > effectiveContentHeight - 20
             bottomBtn.isHidden = isAtBottom
 
-            //            print("== table view offset: \(offset), contentSize: \(effectiveContentHeight), frame: \(tableView.frame.size.height), isAtBottom: \(isAtBottom)")
+            // print("== table view offset: \(offset), contentSize: \(effectiveContentHeight), frame: \(tableView.frame.size.height), isAtBottom: \(isAtBottom)")
         }
     }
 }
