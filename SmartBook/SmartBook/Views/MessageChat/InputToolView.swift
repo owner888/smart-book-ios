@@ -172,17 +172,10 @@ class InputToolView: UIView {
         // 重新设置 SwiftUI 视图
         setupSwiftUIView()
         
-        model.$inputText.receive(on: DispatchQueue.main).sink {
-            [weak self] _ in
-            guard let self = self else { return }
-            self.updateSwiftUIView()
-        }.store(in: &cancellables)
-        
-        model.$mediaItems.receive(on: DispatchQueue.main).sink {
-            [weak self] _ in
-            guard let self = self else { return }
-            self.updateSwiftUIView()
-        }.store(in: &cancellables)
+        // ✅ 不再订阅 $inputText 和 $mediaItems 来触发 updateSwiftUIView()
+        // InputToolContentView 内部通过 @ObservedObject viewModel 自动监听这些 @Published 属性
+        // 之前每次输入字符都会重建整棵 SwiftUI 视图树，造成不必要的性能开销
+        // aiFunction / assistant 等结构性变化通过 didSet → updateSwiftUIView() 处理
     }
     
     // MARK: - Actions
