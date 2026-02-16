@@ -345,10 +345,13 @@ class MessageDisplayView: UIView {
             textView.layoutIfNeeded()
             textView.invalidateIntrinsicContentSize()
             // 计算 attributedText 高度
-            
-            let fixedWidth = self.frame.size.width - 30
+            // ✅ 使用屏幕宽度作为后备，避免 frame 为 0 时一字一行
+            let availableWidth = self.frame.size.width > 0 ? self.frame.size.width : UIScreen.main.bounds.width
+            let maxBubbleWidth = availableWidth * 0.75  // 气泡最大宽度为屏幕 75%
+            let fixedWidth = maxBubbleWidth - 24  // 减去左右 padding 12*2
             let newSize = textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.greatestFiniteMagnitude))
-            userTextViewWidth?.constant = newSize.width
+            // ✅ 取实际文本宽度和最大宽度的较小值，但不小于 40
+            userTextViewWidth?.constant = max(40, min(newSize.width, fixedWidth))
             userTextHeight?.constant = newSize.height
             
             // 高度需要包含媒体容器的高度
