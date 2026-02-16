@@ -3,6 +3,7 @@
 //  SmartBook
 //
 //  Created by Andrew on 2026/2/7.
+//  Refactored: XIB → pure code
 //
 
 import Combine
@@ -21,16 +22,20 @@ enum MessagePopoverAction {
     case chooseModel
 }
 
+// ✅ 纯代码实现，不再依赖 MessageChatView.xib
 class MessageChatView: UIView {
     var viewModel: ChatViewModel?
     var action: ((MessageChatAction) -> Void)?
-    @IBOutlet weak private var bottomConstraint: NSLayoutConstraint!
-    @IBOutlet weak private var inputBar: InputToolView!
-    @IBOutlet weak private var tableView: UITableView!
-    @IBOutlet weak private var bottomBtn: UIButton!
-    @IBOutlet weak private var topView: MessageInputTopView?
-    @IBOutlet weak private var mainView: UIView!
-    @IBOutlet weak private var emptyBgView: UIView!
+    
+    // MARK: - 纯代码属性（替代 @IBOutlet）
+    private var bottomConstraint: NSLayoutConstraint!
+    private var inputBar: InputToolView!
+    private var tableView: UITableView!
+    private var bottomBtn: UIButton!
+    private var topView: MessageInputTopView?
+    private var mainView: UIView!
+    private var emptyBgView: UIView!
+    
     private var cancellables = Set<AnyCancellable>()
     private var currentIdCancelables = Set<AnyCancellable>()
     private var messages = [ChatMessage]()
@@ -79,37 +84,125 @@ class MessageChatView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        loadXib()
+        buildUI()
+        setUpUI()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        loadXib()
+        buildUI()
+        setUpUI()
     }
 
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
 
-    private func loadXib() {
-        let bundle = Bundle(for: type(of: self))
-        let nib = UINib(nibName: "MessageChatView", bundle: bundle)
-        if let view = nib.instantiate(withOwner: self).first as? UIView {
-            view.frame = self.bounds
-            view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            addSubview(view)
-        }
-        setUpUI()
+    // MARK: - 纯代码构建 UI（替代 XIB）
+    
+    private func buildUI() {
+        backgroundColor = .clear
+        
+        // === mainView ===
+        mainView = UIView()
+        mainView.backgroundColor = .clear
+        mainView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(mainView)
+        
+        // === emptyBgView ===
+        emptyBgView = UIView()
+        emptyBgView.backgroundColor = .clear
+        emptyBgView.translatesAutoresizingMaskIntoConstraints = false
+        mainView.addSubview(emptyBgView)
+        
+        // === tableView ===
+        tableView = UITableView(frame: .zero, style: .plain)
+        tableView.backgroundColor = .clear
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+        mainView.addSubview(tableView)
+        
+        // === topView (MessageInputTopView) ===
+        topView = MessageInputTopView()
+        topView!.backgroundColor = .clear
+        topView!.translatesAutoresizingMaskIntoConstraints = false
+        mainView.addSubview(topView!)
+        
+        // === bottomBtn (滚动到底部按钮) ===
+        bottomBtn = UIButton(type: .system)
+        bottomBtn.isHidden = true
+        bottomBtn.translatesAutoresizingMaskIntoConstraints = false
+        bottomBtn.backgroundColor = UIColor(named: "ApprBlackColor") ?? .black
+        bottomBtn.tintColor = UIColor(named: "ApprWhiteColor") ?? .white
+        var btnConfig = UIButton.Configuration.plain()
+        btnConfig.image = UIImage(systemName: "chevron.down")
+        bottomBtn.configuration = btnConfig
+        bottomBtn.layer.cornerRadius = 16
+        bottomBtn.clipsToBounds = true
+        bottomBtn.addTarget(self, action: #selector(scrollToBottomAction), for: .touchUpInside)
+        mainView.addSubview(bottomBtn)
+        
+        // === inputBar (InputToolView) ===
+        inputBar = InputToolView()
+        inputBar.backgroundColor = .clear
+        inputBar.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(inputBar)
+        
+        // === 约束 ===
+        // bottomConstraint: inputBar.bottom = self.bottom（稍后被 keyboardLayoutGuide 替代）
+        bottomConstraint = inputBar.bottomAnchor.constraint(equalTo: bottomAnchor)
+        
+        NSLayoutConstraint.activate([
+            // mainView: safeArea 约束
+            mainView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            mainView.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor),
+            mainView.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor),
+            mainView.bottomAnchor.constraint(equalTo: inputBar.topAnchor),
+            
+            // emptyBgView: top/leading/trailing 跟随 mainView
+            emptyBgView.topAnchor.constraint(equalTo: mainView.topAnchor),
+            emptyBgView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor),
+            emptyBgView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor),
+            
+            // tableView: mainView 内部，左右各 15pt padding
+            tableView.topAnchor.constraint(equalTo: mainView.topAnchor),
+            tableView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 15),
+            tableView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -15),
+            tableView.bottomAnchor.constraint(equalTo: mainView.bottomAnchor),
+            
+            // topView: 底部对齐 mainView，高度 50，左右 12pt
+            topView!.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 12),
+            topView!.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -12),
+            topView!.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
+            topView!.heightAnchor.constraint(equalToConstant: 50),
+            
+            // emptyBgView 底部到 topView 上方 50pt
+            emptyBgView.bottomAnchor.constraint(equalTo: topView!.topAnchor, constant: -50),
+            
+            // bottomBtn: 右下角
+            bottomBtn.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -20),
+            bottomBtn.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
+            bottomBtn.widthAnchor.constraint(equalToConstant: 32),
+            bottomBtn.heightAnchor.constraint(equalToConstant: 32),
+            
+            // inputBar: 左右各 15pt（safeArea），低优先级高度
+            inputBar.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 15),
+            inputBar.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -15),
+            bottomConstraint,
+        ])
+        
+        // inputBar 高度低优先级约束
+        let heightConstraint = inputBar.heightAnchor.constraint(equalToConstant: 80)
+        heightConstraint.priority = .defaultLow
+        heightConstraint.isActive = true
     }
 
     func setUpUI() {
         let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
         safeAreaBottom = scene?.windows.first?.safeAreaInsets.bottom ?? 0
         self.clipsToBounds = true
-        tableView.register(
-            UINib(nibName: "CommonChatCell", bundle: nil),
-            forCellReuseIdentifier: "commonChat"
-        )
+        
+        // ✅ 使用 class 注册（不再使用 XIB nib）
+        tableView.register(CommonChatCell.self, forCellReuseIdentifier: "commonChat")
         tableView.register(FootAdapterCell.self, forCellReuseIdentifier: "foot")
         tableView.separatorStyle = .none
         tableView.dataSource = self
@@ -140,6 +233,7 @@ class MessageChatView: UIView {
             self.tableView.reloadData()
         }
 
+        // 键盘跟随
         bottomConstraint.isActive = false
         let keyboardConstraint = inputBar.bottomAnchor.constraint(
             equalTo: self.keyboardLayoutGuide.topAnchor,
@@ -195,14 +289,9 @@ class MessageChatView: UIView {
             }
         }
 
-        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
-            self.tableView.reloadData()
-        }
-
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapEvent))
         mainView.addGestureRecognizer(tapGesture)
         createEmptyStateView()
-
     }
 
     func bind(to viewModel: ChatViewModel) {
@@ -211,15 +300,15 @@ class MessageChatView: UIView {
         viewModel.$messages.receive(on: DispatchQueue.main).sink {
             [weak self] newMessages in
             guard let self = self else { return }
-
+            
             let oldMessages = self.messages
             self.messages = newMessages
-
+            
             if !newMessages.isEmpty {
                 self.emptyStateView?.removeFromSuperview()
                 self.emptyStateView = nil
             }
-
+            
             // ✅ 智能更新：根据变化类型选择最小更新策略
             self.smartReloadTable(oldMessages: oldMessages, newMessages: newMessages)
 
@@ -229,9 +318,8 @@ class MessageChatView: UIView {
             guard let self = self else { return }
             self.onSended()
         }.store(in: &currentIdCancelables)
-
     }
-
+    
     /// 智能表格更新：避免流式更新时全量 reloadData
     private func smartReloadTable(oldMessages: [ChatMessage], newMessages: [ChatMessage]) {
         // 空 → 有消息：全量刷新
@@ -239,13 +327,13 @@ class MessageChatView: UIView {
             tableView.reloadData()
             return
         }
-
+        
         // 有消息 → 空：全量刷新（清空对话）
         if !oldMessages.isEmpty && newMessages.isEmpty {
             tableView.reloadData()
             return
         }
-
+        
         // 新增了消息（发送用户消息 或 创建 AI 占位消息）
         if newMessages.count > oldMessages.count {
             let newIndexPaths = (oldMessages.count..<newMessages.count).map {
@@ -254,20 +342,20 @@ class MessageChatView: UIView {
             tableView.insertRows(at: newIndexPaths, with: .none)
             return
         }
-
+        
         // 消息数量减少（删除消息）：全量刷新
         if newMessages.count < oldMessages.count {
             tableView.reloadData()
             return
         }
-
+        
         // 消息数量相同 → 内容更新（流式更新 AI 回复）
         // 只 reload 最后一条消息（正在流式更新的那条）
         if newMessages.count == oldMessages.count && !newMessages.isEmpty {
             let lastIndex = newMessages.count - 1
             let lastOld = oldMessages[lastIndex]
             let lastNew = newMessages[lastIndex]
-
+            
             // 只有内容或状态变化时才 reload
             if lastOld.content != lastNew.content
                 || lastOld.isStreaming != lastNew.isStreaming
@@ -292,7 +380,6 @@ class MessageChatView: UIView {
     }
 
     func onKeyboardFrameChange(_ notification: Notification) {
-
         if bottomBtn.isHidden {
             guard let userInfo = notification.userInfo,
                 let duration = userInfo[
@@ -341,7 +428,7 @@ class MessageChatView: UIView {
         }
     }
 
-    @IBAction func scrollToBottomAction() {
+    @objc func scrollToBottomAction() {
         scrollToBottom(animated: true)
     }
 
@@ -362,13 +449,6 @@ class MessageChatView: UIView {
     private func messageChangedSize(_ height: CGFloat, id: UUID) {
         messageHeights[id] = height
         guard let viewModel = viewModel else { return }
-        //        if let qMess = messageHeights[viewModel.currentMessageId!] {
-        //            print("==问题高度: \(qMess)")
-        //        }
-        //        if let messageId = viewModel.answerMessageId,
-        //            let answer = messageHeights[messageId] {
-        //            print("==回答高度: \(answer)")
-        //        }
         if id == viewModel.answerMessageId,
             viewModel.isLoading
         {
@@ -376,7 +456,6 @@ class MessageChatView: UIView {
             if let adaptatio = adaptationBottom {
                 bottom = adaptatio
             } else {
-                //如果没有获取到显示问题后的高度后,需要再获取一次.
                 if let questionId = viewModel.currentMessageId,
                     let questionHeight = messageHeights[questionId]
                 {
@@ -387,7 +466,6 @@ class MessageChatView: UIView {
                     adaptationBottom = bottom
                 }
             }
-            //根据回答内容的高度逐步越少底部空余高度
             if let bottom = bottom {
                 let offset = max(bottom - height, 0)
                 if abs(viewModel.scrollBottom - offset) > 10 || (viewModel.scrollBottom > 0 && offset == 0) {
@@ -427,7 +505,6 @@ class MessageChatView: UIView {
         )
     }
 
-    //滚到问题消息到顶部
     private func scrollToMessageTop(_ messageId: UUID) {
         guard let viewModel = viewModel,
             let answerMessageId = viewModel.answerMessageId
@@ -468,7 +545,6 @@ class MessageChatView: UIView {
                 }
             )
         }
-
     }
 
     private func reloadBottom() {
@@ -488,8 +564,6 @@ class MessageChatView: UIView {
 
             let isAtBottom = offset > effectiveContentHeight - 20
             bottomBtn.isHidden = isAtBottom
-
-            //            print("== table view offset: \(offset), contentSize: \(effectiveContentHeight), frame: \(tableView.frame.size.height), isAtBottom: \(isAtBottom)")
         }
     }
 }
@@ -525,7 +599,6 @@ extension MessageChatView: UITableViewDataSource, UITableViewDelegate {
                 assistant: nil,
                 colors: colors
             )
-
             return cell
         }
         return UITableViewCell()

@@ -8,81 +8,174 @@
 import SwiftUI
 import UIKit
 
+// ✅ 纯代码实现，不再依赖 MessageDisplayView.xib
 class MessageDisplayView: UIView {
     
     var message: ChatMessage?
-    var assistant: Assistant?  // 可选，简单模式时为nil
+    var assistant: Assistant?
     var colors: ThemeColors = .dark
-    var onChangedSized:((ChatMessage?,CGFloat) -> Void)?
+    var onChangedSized: ((ChatMessage?, CGFloat) -> Void)?
     
-    
-    @IBOutlet weak private var headerView: UIMessageAssistantHeaderView?
-    @IBOutlet weak private var promptView: UIMessageSystemPromptView?
-    @IBOutlet weak private var thinkingView: UIMessageThinkingView?
-    @IBOutlet weak private var userTextHeight: NSLayoutConstraint?
-    @IBOutlet weak private var userTextViewWidth: NSLayoutConstraint?
-    @IBOutlet weak private var userMessageView: UIView?
-    @IBOutlet weak private var userTextView: CustomTextView?
-    @IBOutlet weak private var textViewHeight: NSLayoutConstraint?
-    @IBOutlet weak private var textView:CustomTextView?
-    @IBOutlet weak private var messageView: UIView?
-    @IBOutlet weak private var stackView: UIStackView?
-    @IBOutlet weak private var mainStackView: UIStackView?
-    
-    // ✅ 用户消息中的媒体图片容器（代码动态创建，无需修改 XIB）
+    // MARK: - 纯代码属性（替代 @IBOutlet）
+    private var thinkingView: UIMessageThinkingView!
+    private var userTextHeight: NSLayoutConstraint!
+    private var userTextViewWidth: NSLayoutConstraint!
+    private var userMessageView: UIView!
+    private var userTextView: CustomTextView!
+    private var textViewHeight: NSLayoutConstraint!
+    private var textView: CustomTextView!
+    private var messageView: UIView!
+    private var stackView: UIStackView!
+    private var mainStackView: UIStackView!
     private var mediaContainerView: UIStackView?
     
     override init(frame: CGRect) {
         super.init(frame: frame)
-        loadXib()
         setUp()
     }
     
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        loadXib()
         setUp()
     }
     
-    func loadXib() {
-        let nib = UINib(nibName: "MessageDisplayView", bundle: nil)
-        if let view = nib.instantiate(withOwner:self).first as? UIView {
-            view.frame = self.bounds
-            view.autoresizingMask = [.flexibleWidth,.flexibleHeight]
-            self.addSubview(view)
-        }
-    }
+    // MARK: - Setup（纯代码构建，替代 XIB）
     
-    func setUp() {
-        configureTextView(textView)
-        configureTextView(userTextView)
-        setupMediaContainer()
-    }
-    
-    // MARK: - Media Container Setup
-    
-    /// 创建媒体图片容器并插入到 mainStackView 中（thinkingView 和 userMessageView 之间）
-    private func setupMediaContainer() {
-        guard let mainStack = mainStackView else { return }
+    private func setUp() {
+        backgroundColor = .clear
         
-        let container = UIStackView()
-        container.axis = .horizontal
-        container.spacing = 10
-        container.alignment = .center
-        container.distribution = .fill
-        container.translatesAutoresizingMaskIntoConstraints = false
-        container.isHidden = true  // 默认隐藏
+        // === 外层 stackView ===
+        stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.distribution = .equalSpacing
+        stackView.alignment = .trailing  // 默认右对齐（用户消息）
+        stackView.spacing = 4
+        stackView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(stackView)
         
-        // 插入到 thinkingView(index 0) 之后、userMessageView(index 1) 之前
-        // 插入后：thinkingView(0) → mediaContainer(1) → userMessageView(2) → messageView(3)
-        mainStack.insertArrangedSubview(container, at: 1)
+        // === 内层 mainStackView ===
+        mainStackView = UIStackView()
+        mainStackView.axis = .vertical
+        mainStackView.distribution = .equalSpacing
+        mainStackView.alignment = .trailing
+        mainStackView.spacing = 12
+        mainStackView.translatesAutoresizingMaskIntoConstraints = false
+        stackView.addArrangedSubview(mainStackView)
         
-        // 约束：容器宽度跟随 mainStackView
+        // === thinkingView ===
+        thinkingView = UIMessageThinkingView()
+        thinkingView.isHidden = true
+        thinkingView.translatesAutoresizingMaskIntoConstraints = false
+        mainStackView.addArrangedSubview(thinkingView)
+        
+        // === mediaContainerView（图片容器）===
+        let mediaContainer = UIStackView()
+        mediaContainer.axis = .horizontal
+        mediaContainer.spacing = 10
+        mediaContainer.alignment = .center
+        mediaContainer.distribution = .fill
+        mediaContainer.translatesAutoresizingMaskIntoConstraints = false
+        mediaContainer.isHidden = true
+        mainStackView.addArrangedSubview(mediaContainer)
+        mediaContainerView = mediaContainer
+        
+        // === userMessageView（用户消息气泡）===
+        userMessageView = UIView()
+        userMessageView.backgroundColor = .clear
+        userMessageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let userBubbleBg = UIView()
+        userBubbleBg.translatesAutoresizingMaskIntoConstraints = false
+        userBubbleBg.backgroundColor = .clear
+        userMessageView.addSubview(userBubbleBg)
+        
+        userTextView = CustomTextView()
+        userTextView.translatesAutoresizingMaskIntoConstraints = false
+        userBubbleBg.addSubview(userTextView)
+        
+        // userTextView 约束（padding 12）
+        userTextViewWidth = userTextView.widthAnchor.constraint(equalToConstant: 300)
+        userTextHeight = userTextView.heightAnchor.constraint(equalToConstant: 0)
+        
         NSLayoutConstraint.activate([
-            container.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor),
+            userTextView.topAnchor.constraint(equalTo: userBubbleBg.topAnchor, constant: 12),
+            userTextView.leadingAnchor.constraint(equalTo: userBubbleBg.leadingAnchor, constant: 12),
+            userTextView.trailingAnchor.constraint(equalTo: userBubbleBg.trailingAnchor, constant: -12),
+            userTextView.bottomAnchor.constraint(equalTo: userBubbleBg.bottomAnchor, constant: -12),
+            userTextViewWidth,
+            userTextHeight,
+            
+            userBubbleBg.topAnchor.constraint(equalTo: userMessageView.topAnchor),
+            userBubbleBg.trailingAnchor.constraint(equalTo: userMessageView.trailingAnchor),
+            userBubbleBg.bottomAnchor.constraint(equalTo: userMessageView.bottomAnchor),
         ])
         
-        mediaContainerView = container
+        mainStackView.addArrangedSubview(userMessageView)
+        
+        // === messageView（AI 消息）===
+        messageView = UIView()
+        messageView.backgroundColor = .clear
+        messageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let aiBubbleBg = UIView()
+        aiBubbleBg.translatesAutoresizingMaskIntoConstraints = false
+        aiBubbleBg.backgroundColor = .clear
+        messageView.addSubview(aiBubbleBg)
+        
+        textView = CustomTextView()
+        textView.translatesAutoresizingMaskIntoConstraints = false
+        aiBubbleBg.addSubview(textView)
+        
+        textViewHeight = textView.heightAnchor.constraint(equalToConstant: 0)
+        
+        NSLayoutConstraint.activate([
+            textView.topAnchor.constraint(equalTo: aiBubbleBg.topAnchor),
+            textView.leadingAnchor.constraint(equalTo: aiBubbleBg.leadingAnchor, constant: 6),
+            textView.trailingAnchor.constraint(equalTo: aiBubbleBg.trailingAnchor, constant: -6),
+            textView.bottomAnchor.constraint(equalTo: aiBubbleBg.bottomAnchor),
+            textViewHeight,
+            
+            aiBubbleBg.topAnchor.constraint(equalTo: messageView.topAnchor),
+            aiBubbleBg.leadingAnchor.constraint(equalTo: messageView.leadingAnchor),
+            aiBubbleBg.trailingAnchor.constraint(equalTo: messageView.trailingAnchor),
+            aiBubbleBg.bottomAnchor.constraint(equalTo: messageView.bottomAnchor),
+        ])
+        
+        mainStackView.addArrangedSubview(messageView)
+        
+        // === 外层约束 ===
+        NSLayoutConstraint.activate([
+            stackView.topAnchor.constraint(equalTo: topAnchor),
+            stackView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            stackView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            {
+                let c = stackView.bottomAnchor.constraint(equalTo: bottomAnchor)
+                c.priority = .defaultHigh
+                return c
+            }(),
+            
+            mainStackView.leadingAnchor.constraint(equalTo: stackView.leadingAnchor),
+            mainStackView.trailingAnchor.constraint(equalTo: stackView.trailingAnchor),
+            
+            // thinkingView 全宽
+            thinkingView.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
+            thinkingView.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
+            
+            // mediaContainer 右对齐
+            mediaContainer.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
+            
+            // userMessageView 全宽（内部右对齐）
+            userMessageView.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
+            userMessageView.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
+            
+            // messageView 全宽
+            messageView.leadingAnchor.constraint(equalTo: mainStackView.leadingAnchor),
+            messageView.trailingAnchor.constraint(equalTo: mainStackView.trailingAnchor),
+        ])
+        
+        // 配置 textView 属性
+        configureTextView(textView)
+        configureTextView(userTextView)
     }
     
     /// 显示用户消息中的媒体项（图片/文档），参考 SwiftUI MediaItemThumbnail 样式
@@ -366,44 +459,79 @@ final class UIMessageAssistantHeaderView: UIView {
 }
 
 final class UIMessageThinkingView: UIView {
-    @IBOutlet weak private var label: UILabel?
+    
+    // ✅ 纯代码实现，不再依赖 UIMessageThinkingView.xib
+    private let iconView: UIImageView = {
+        let config = UIImage.SymbolConfiguration(pointSize: 16)
+        let iv = UIImageView(image: UIImage(systemName: "brain.head.profile", withConfiguration: config))
+        iv.tintColor = .systemPurple
+        iv.translatesAutoresizingMaskIntoConstraints = false
+        return iv
+    }()
+    
+    private let label: UILabel = {
+        let l = UILabel()
+        l.font = .systemFont(ofSize: 16)
+        l.numberOfLines = 0
+        l.translatesAutoresizingMaskIntoConstraints = false
+        return l
+    }()
+    
+    private let chevronButton: UIButton = {
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "chevron.right")
+        let btn = UIButton(configuration: config)
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        return btn
+    }()
 
     var thinking: String = "" {
         didSet {
-            label?.text = thinking
+            label.text = thinking
         }
     }
 
-
-    // MARK: - UI Components
     override init(frame: CGRect) {
         super.init(frame: frame)
-        loadXib()
         setUp()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        loadXib()
         setUp()
     }
-
-    func loadXib() {
-        let nib = UINib(nibName: "UIMessageThinkingView", bundle: nil)
-        if let view = nib.instantiate(withOwner: self).first as? UIView {
-            view.frame = self.bounds
-            view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            self.addSubview(view)
-        }
-    }
     
-    func setUp() {
-        self.layer.masksToBounds = true
-        self.layer.cornerRadius = 6
-        self.layer.borderWidth = 1
-        self.layer.borderColor = UIColor.systemPurple.withAlphaComponent(0.8).cgColor
+    private func setUp() {
+        layer.masksToBounds = true
+        layer.cornerRadius = 6
+        layer.borderWidth = 1
+        layer.borderColor = UIColor.systemPurple.withAlphaComponent(0.8).cgColor
+        backgroundColor = UIColor.systemPurple.withAlphaComponent(0.04)
+        
+        addSubview(iconView)
+        addSubview(label)
+        addSubview(chevronButton)
+        
+        NSLayoutConstraint.activate([
+            // 图标
+            iconView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 6),
+            iconView.centerYAnchor.constraint(equalTo: label.centerYAnchor),
+            iconView.widthAnchor.constraint(equalToConstant: 24),
+            iconView.heightAnchor.constraint(equalToConstant: 22),
+            
+            // 标签
+            label.topAnchor.constraint(equalTo: topAnchor, constant: 10),
+            label.leadingAnchor.constraint(equalTo: iconView.trailingAnchor, constant: 10),
+            label.trailingAnchor.constraint(equalTo: chevronButton.leadingAnchor, constant: -20),
+            label.bottomAnchor.constraint(lessThanOrEqualTo: bottomAnchor, constant: -10),
+            
+            // 展开按钮
+            chevronButton.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -5),
+            chevronButton.centerYAnchor.constraint(equalTo: iconView.centerYAnchor),
+            chevronButton.widthAnchor.constraint(equalToConstant: 35),
+            chevronButton.heightAnchor.constraint(equalToConstant: 35),
+        ])
     }
-    
 }
 
 final class UIMessageContentView: UIView {

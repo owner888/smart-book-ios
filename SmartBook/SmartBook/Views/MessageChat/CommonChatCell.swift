@@ -3,41 +3,49 @@
 //  SmartBook
 //
 //  Created by Andrew on 2026/2/9.
+//  Refactored: XIB → pure code
 //
 
 import UIKit
 
-class CommonChatCell: ChatCell {
-
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        // Initialization code
-    }
-
-    override func setSelected(_ selected: Bool, animated: Bool) {
-        super.setSelected(selected, animated: animated)
-
-        // Configure the view for the selected state
-    }
-}
-
-class ChatCell: UITableViewCell {
-    @IBOutlet weak  var messageView: MessageDisplayView!
+// ✅ 纯代码实现，不再依赖 CommonChatCell.xib
+class CommonChatCell: UITableViewCell {
     
-    var onChangedSized:((ChatMessage?,CGFloat) -> Void)? {
+    let messageView = MessageDisplayView(frame: .zero)
+    
+    var onChangedSized: ((ChatMessage?, CGFloat) -> Void)? {
         didSet {
             messageView.onChangedSized = onChangedSized
         }
     }
     
-    func configure(_ message: ChatMessage, assistant: Assistant?, colors: ThemeColors) {
-        messageView.config(message, assistant: assistant, colors: colors)
+    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
+        super.init(style: style, reuseIdentifier: reuseIdentifier)
+        setUp()
     }
     
-    override func awakeFromNib() {
-        super.awakeFromNib()
-        backgroundColor = UIColor.clear
-        contentView.backgroundColor = UIColor.clear
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setUp()
+    }
+    
+    private func setUp() {
+        backgroundColor = .clear
+        contentView.backgroundColor = .clear
         selectionStyle = .none
+        
+        messageView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(messageView)
+        
+        NSLayoutConstraint.activate([
+            messageView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            messageView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            messageView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            messageView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+        ])
+    }
+    
+    func configure(_ message: ChatMessage, assistant: Assistant?, colors: ThemeColors) {
+        messageView.config(message, assistant: assistant, colors: colors)
     }
 }
