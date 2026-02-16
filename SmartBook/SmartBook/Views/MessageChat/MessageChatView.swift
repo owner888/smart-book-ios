@@ -210,6 +210,8 @@ class MessageChatView: UIView {
 
         // 启用自动高度
         tableView.estimatedRowHeight = 20
+        tableView.contentInset.bottom = 60  // ✅ 底部留出 60pt 空间
+        tableView.scrollIndicatorInsets.bottom = 60
         tableView.rowHeight = UITableView.automaticDimension
         tableView.reloadData()
         tableView.clipsToBounds = false
@@ -360,6 +362,7 @@ class MessageChatView: UIView {
             if lastOld.content != lastNew.content
                 || lastOld.isStreaming != lastNew.isStreaming
                 || lastOld.thinking != lastNew.thinking
+                || lastOld.tools?.count != lastNew.tools?.count
             {
                 tableView.reloadRows(
                     at: [IndexPath(row: lastIndex, section: 0)],
@@ -549,7 +552,9 @@ class MessageChatView: UIView {
 
     private func reloadBottom() {
         if let space = viewModel?.scrollBottom {
-            tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: space, right: 0)
+            // ✅ 保持至少 60pt 底部间距
+            let bottomInset = max(space, 60)
+            tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: bottomInset, right: 0)
         }
     }
 
