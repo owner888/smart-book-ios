@@ -351,22 +351,33 @@ class MessageChatView: UIView {
         }
         
         // 消息数量相同 → 内容更新（流式更新 AI 回复）
-        // 只 reload 最后一条消息（正在流式更新的那条）
         if newMessages.count == oldMessages.count && !newMessages.isEmpty {
             let lastIndex = newMessages.count - 1
             let lastOld = oldMessages[lastIndex]
             let lastNew = newMessages[lastIndex]
             
-            // 只有内容或状态变化时才 reload
+            // 只有内容或状态变化时才更新
             if lastOld.content != lastNew.content
                 || lastOld.isStreaming != lastNew.isStreaming
                 || lastOld.thinking != lastNew.thinking
                 || lastOld.tools?.count != lastNew.tools?.count
             {
-                tableView.reloadRows(
-                    at: [IndexPath(row: lastIndex, section: 0)],
-                    with: .none
-                )
+                let indexPath = IndexPath(row: lastIndex, section: 0)
+                
+                // ✅ 流式更新时：直接更新可见 cell 内容，避免 reloadRows 导致闪屏
+                if lastNew.isStreaming,
+                   let cell = tableView.cellForRow(at: indexPath) as? CommonChatCell
+                {
+                    cell.configure(lastNew, assistant: nil, colors: colors)
+                    // 通知 tableView 重新计算高度（不重建 cell）
+                    UIView.performWithoutAnimation {
+                        tableView.beginUpdates()
+                        tableView.endUpdates()
+                    }
+                } else {
+                    // 非流式（如 isStreaming → false）：用 reloadRows 完整刷新
+                    tableView.reloadRows(at: [indexPath], with: .none)
+                }
                 return
             }
         }
