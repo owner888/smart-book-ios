@@ -155,7 +155,8 @@ class MessageChatView: UIView {
             forName: UIResponder.keyboardWillShowNotification,
             object: nil,
             queue: OperationQueue.main
-        ) { notification in
+        ) { [weak self] notification in
+            guard let self = self else { return }
             guard let userInfo = notification.userInfo,
                 let keyboardFrame = userInfo[
                     UIResponder.keyboardFrameEndUserInfoKey
@@ -175,12 +176,17 @@ class MessageChatView: UIView {
             } else {
                 self.onKeyboardFrameChange(notification)
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
-                self.keyboardIsChanging = false
-            })
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.keyboardIsChanging = false
+            }
         }
         
-        NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: OperationQueue.main) { notification in
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: OperationQueue.main
+        ) { [weak self] notification in
+            guard let self = self else { return }
             if let bottom = self.originBottom {
                 self.viewModel?.scrollBottom = bottom
                 self.reloadBottom()
@@ -188,9 +194,9 @@ class MessageChatView: UIView {
             }
             self.originBottom = nil
             self.keyboardIsChanging = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3, execute: {
-                self.keyboardIsChanging = false
-            })
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.keyboardIsChanging = false
+            }
         }
         
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
