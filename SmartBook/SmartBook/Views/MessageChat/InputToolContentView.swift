@@ -14,6 +14,7 @@ struct InputToolContentView: View {
     @Binding var aiFunction: MenuConfig.AIModelFunctionType
     @Binding var assistant: MenuConfig.AssistantType
     @Binding var inputText: String
+    @FocusState private var focused: Bool
     
     // Callbacks
     var openMedia: (CGRect) -> Void
@@ -30,6 +31,7 @@ struct InputToolContentView: View {
     @State private var mediaBtnFrame = CGRect.zero
     @State private var modelBtnFrame = CGRect.zero
     @State private var assistantBtnFrame = CGRect.zero
+    @State private var isEditing = false
 
     // 语音识别服务
     @StateObject private var speechService = SpeechService()
@@ -96,7 +98,7 @@ struct InputToolContentView: View {
                 TextEditor(text: $inputText).frame(
                     minHeight: 30,
                     maxHeight: 200
-                )
+                ).focused($focused)
                 .fixedSize(horizontal: false, vertical: true)
                 .scrollContentBackground(.hidden)
             }
@@ -255,6 +257,15 @@ struct InputToolContentView: View {
 
                         Logger.info("✅ ASR 和 TTS 都已就绪，随时可用")
                     }
+                }
+            }.onReceive(NotificationCenter.default.publisher(for: Notification.Name("MainChangePage"))) { notification in
+                if (notification.object as? Bool) == true {
+                    if isEditing {
+                        focused = true
+                    }
+                } else {
+                    isEditing = focused
+                    focused = false
                 }
             }
     }
