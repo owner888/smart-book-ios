@@ -57,6 +57,11 @@ class ChatViewModel: ObservableObject {
         }
     }
 
+    deinit {
+        cancelDisplay()
+        Logger.info("♻️ ChatViewModel 已释放")
+    }
+
     // ✅ 依赖注入，方便测试和管理
     init(
         streamingService: StreamingChatService = StreamingChatService(),
@@ -71,6 +76,9 @@ class ChatViewModel: ObservableObject {
             ?? DIContainer.shared.makeTTSCoordinatorService(provider: AppConfig.DefaultValues.ttsProvider)
         self.mediaService = mediaService ?? MediaProcessingService()
 
+        // ✅ 确保 ViewModel 释放时清理 Timer
+        Logger.info("🏗️ ChatViewModel 已创建")
+        
         // 设置 TTS 播放完成回调（合并所有必要逻辑）
         Logger.info("🔧 ChatViewModel.init: 正在设置播放完成回调")
         self.ttsStreamService.setOnPlaybackComplete { [weak self] in
@@ -406,7 +414,8 @@ class ChatViewModel: ObservableObject {
             wordTimer = Timer.scheduledTimer(
                 withTimeInterval: 0.12,
                 repeats: true,
-                block: { _ in
+                block: { [weak self] _ in
+                    guard let self = self else { return }
                     if self.contentIndex < self.answerContents.count {
                         let content = self.answerContents[self.contentIndex]
                         let words = content.map { String($0) }
@@ -433,15 +442,17 @@ class ChatViewModel: ObservableObject {
                             self.contentIndex += 1
                         }
                     } else {
-                        self.messages[self.currentMessageIndex] = ChatMessage(
-                            id: self.messages[self.currentMessageIndex].id,
-                            role: .assistant,
-                            content: self.streamingContent,
-                            thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking,  // 保留思考内容
-                            sources: self.streamingSources,  // 保留检索来源
-                            tools: self.streamingTools,  // ✅ 保留工具调用
-                            isStreaming: false
-                        )
+                        if self.currentMessageIndex < self.messages.count {
+                            self.messages[self.currentMessageIndex] = ChatMessage(
+                                id: self.messages[self.currentMessageIndex].id,
+                                role: .assistant,
+                                content: self.streamingContent,
+                                thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking,  // 保留思考内容
+                                sources: self.streamingSources,  // 保留检索来源
+                                tools: self.streamingTools,  // ✅ 保留工具调用
+                                isStreaming: false
+                            )
+                        }
                         self.isLoading = false
                         self.cancelDisplay()
                     }
