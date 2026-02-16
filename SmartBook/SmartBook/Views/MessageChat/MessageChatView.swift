@@ -209,14 +209,19 @@ class MessageChatView: UIView {
         self.viewModel = viewModel
         inputBar.bind(to: viewModel)
         viewModel.$messages.receive(on: DispatchQueue.main).sink {
-            [weak self] messages in
+            [weak self] newMessages in
             guard let self = self else { return }
-            self.messages = messages
-            if !messages.isEmpty {
+
+            let oldMessages = self.messages
+            self.messages = newMessages
+
+            if !newMessages.isEmpty {
                 self.emptyStateView?.removeFromSuperview()
                 self.emptyStateView = nil
             }
-            self.tableView.reloadData()
+
+            // ✅ 智能更新：根据变化类型选择最小更新策略
+            self.smartReloadTable(oldMessages: oldMessages, newMessages: newMessages)
 
         }.store(in: &cancellables)
         viewModel.$currentMessageId.receive(on: DispatchQueue.main).sink {
@@ -225,6 +230,56 @@ class MessageChatView: UIView {
             self.onSended()
         }.store(in: &currentIdCancelables)
 
+    }
+
+    /// 智能表格更新：避免流式更新时全量 reloadData
+    private func smartReloadTable(oldMessages: [ChatMessage], newMessages: [ChatMessage]) {
+        // 空 → 有消息：全量刷新
+        if oldMessages.isEmpty && !newMessages.isEmpty {
+            tableView.reloadData()
+            return
+        }
+
+        // 有消息 → 空：全量刷新（清空对话）
+        if !oldMessages.isEmpty && newMessages.isEmpty {
+            tableView.reloadData()
+            return
+        }
+
+        // 新增了消息（发送用户消息 或 创建 AI 占位消息）
+        if newMessages.count > oldMessages.count {
+            let newIndexPaths = (oldMessages.count..<newMessages.count).map {
+                IndexPath(row: $0, section: 0)
+            }
+            tableView.insertRows(at: newIndexPaths, with: .none)
+            return
+        }
+
+        // 消息数量减少（删除消息）：全量刷新
+        if newMessages.count < oldMessages.count {
+            tableView.reloadData()
+            return
+        }
+
+        // 消息数量相同 → 内容更新（流式更新 AI 回复）
+        // 只 reload 最后一条消息（正在流式更新的那条）
+        if newMessages.count == oldMessages.count && !newMessages.isEmpty {
+            let lastIndex = newMessages.count - 1
+            let lastOld = oldMessages[lastIndex]
+            let lastNew = newMessages[lastIndex]
+
+            // 只有内容或状态变化时才 reload
+            if lastOld.content != lastNew.content
+                || lastOld.isStreaming != lastNew.isStreaming
+                || lastOld.thinking != lastNew.thinking
+            {
+                tableView.reloadRows(
+                    at: [IndexPath(row: lastIndex, section: 0)],
+                    with: .none
+                )
+                return
+            }
+        }
     }
 
     @objc func tapEvent() {
