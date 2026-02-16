@@ -217,7 +217,6 @@ class MessageChatView: UIView {
         tableView.clipsToBounds = false
 
         inputBar.send = { [weak self] in
-            self?.topView?.isHidden = true
             self?.action?(.sendMessage)
         }
         inputBar.showPopover = { [weak self] (type, view) in
