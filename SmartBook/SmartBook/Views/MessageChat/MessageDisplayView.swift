@@ -29,6 +29,9 @@ class MessageDisplayView: UIView {
     @IBOutlet weak private var stackView: UIStackView?
     @IBOutlet weak private var mainStackView: UIStackView?
     
+    // ✅ 用户消息中的媒体图片容器（代码动态创建，无需修改 XIB）
+    private var mediaContainerView: UIStackView?
+    
     override init(frame: CGRect) {
         super.init(frame: frame)
         loadXib()
@@ -53,6 +56,128 @@ class MessageDisplayView: UIView {
     func setUp() {
         configureTextView(textView)
         configureTextView(userTextView)
+        setupMediaContainer()
+    }
+    
+    // MARK: - Media Container Setup
+    
+    /// 创建媒体图片容器并插入到 mainStackView 中（thinkingView 和 userMessageView 之间）
+    private func setupMediaContainer() {
+        guard let mainStack = mainStackView else { return }
+        
+        let container = UIStackView()
+        container.axis = .horizontal
+        container.spacing = 10
+        container.alignment = .center
+        container.distribution = .fill
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.isHidden = true  // 默认隐藏
+        
+        // 插入到 thinkingView(index 0) 之后、userMessageView(index 1) 之前
+        // 插入后：thinkingView(0) → mediaContainer(1) → userMessageView(2) → messageView(3)
+        mainStack.insertArrangedSubview(container, at: 1)
+        
+        // 约束：容器宽度跟随 mainStackView
+        NSLayoutConstraint.activate([
+            container.trailingAnchor.constraint(equalTo: mainStack.trailingAnchor),
+        ])
+        
+        mediaContainerView = container
+    }
+    
+    /// 显示用户消息中的媒体项（图片/文档），参考 SwiftUI MediaItemThumbnail 样式
+    private func displayMediaItems(_ items: [MediaItem]?) {
+        guard let container = mediaContainerView else { return }
+        
+        // 清除旧内容
+        container.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        
+        guard let items = items, !items.isEmpty else {
+            container.isHidden = true
+            return
+        }
+        
+        // 右对齐：先加一个弹性 Spacer
+        let spacer = UIView()
+        spacer.translatesAutoresizingMaskIntoConstraints = false
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        container.addArrangedSubview(spacer)
+        
+        for item in items {
+            switch item.type {
+            case .image(let image):
+                let imageView = createMediaImageView(image: image)
+                container.addArrangedSubview(imageView)
+                
+            case .document(let url):
+                let docView = createDocumentView(url: url)
+                container.addArrangedSubview(docView)
+            }
+        }
+        
+        container.isHidden = false
+    }
+    
+    /// 创建图片缩略图（110x110，圆角12，scaledToFill），与 SwiftUI MediaItemThumbnail 一致
+    private func createMediaImageView(image: UIImage) -> UIView {
+        let imageView = UIImageView(image: image)
+        imageView.contentMode = .scaleAspectFill
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 12
+        imageView.layer.borderWidth = 1
+        imageView.layer.borderColor = UIColor(colors.secondaryText).withAlphaComponent(0.2).cgColor
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+        
+        NSLayoutConstraint.activate([
+            imageView.widthAnchor.constraint(equalToConstant: 110),
+            imageView.heightAnchor.constraint(equalToConstant: 110),
+        ])
+        
+        return imageView
+    }
+    
+    /// 创建文档缩略图（110x110，圆角12，图标+文件名），与 SwiftUI MediaItemThumbnail 一致
+    private func createDocumentView(url: URL) -> UIView {
+        let container = UIView()
+        container.translatesAutoresizingMaskIntoConstraints = false
+        container.layer.cornerRadius = 12
+        container.layer.borderWidth = 1
+        container.layer.borderColor = UIColor(colors.secondaryText).withAlphaComponent(0.2).cgColor
+        container.clipsToBounds = true
+        
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.spacing = 4
+        stack.alignment = .center
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        
+        let iconConfig = UIImage.SymbolConfiguration(textStyle: .title2)
+        let iconView = UIImageView(image: UIImage(systemName: "doc.fill", withConfiguration: iconConfig))
+        iconView.tintColor = UIColor(colors.secondaryText)
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        
+        let nameLabel = UILabel()
+        nameLabel.text = url.lastPathComponent
+        nameLabel.font = .systemFont(ofSize: 10)
+        nameLabel.textColor = UIColor(colors.secondaryText)
+        nameLabel.numberOfLines = 2
+        nameLabel.textAlignment = .center
+        nameLabel.translatesAutoresizingMaskIntoConstraints = false
+        
+        stack.addArrangedSubview(iconView)
+        stack.addArrangedSubview(nameLabel)
+        container.addSubview(stack)
+        
+        NSLayoutConstraint.activate([
+            container.widthAnchor.constraint(equalToConstant: 110),
+            container.heightAnchor.constraint(equalToConstant: 110),
+            stack.centerXAnchor.constraint(equalTo: container.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            nameLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 100),
+        ])
+        
+        return container
     }
     
 
@@ -102,6 +227,7 @@ class MessageDisplayView: UIView {
         onChangedSized?(message,self.frame.height)
     }
     
+    /// 根据消息内容和角色显示文本和媒体，调整布局和样式
     private func displayMessageContent(_ message: ChatMessage) {
         if message.role == .user {
             guard let textView = userTextView else {
@@ -111,6 +237,10 @@ class MessageDisplayView: UIView {
             mainStackView?.alignment = .trailing
             messageView?.isHidden = true
             userMessageView?.isHidden  = false
+            
+            // ✅ 显示用户消息附带的媒体（图片/文档）
+            displayMediaItems(message.mediaItems)
+            
             textView.font = UIFont.preferredFont(forTextStyle: .callout)
             textView.textColor = UIColor(colors.primaryText)
             textView.text = message.content
@@ -126,7 +256,10 @@ class MessageDisplayView: UIView {
             let newSize = textView.sizeThatFits(CGSize(width: fixedWidth, height: CGFloat.greatestFiniteMagnitude))
             userTextViewWidth?.constant = newSize.width
             userTextHeight?.constant = newSize.height
-            onChangedSized?(message,newSize.height + 24)
+            
+            // 高度需要包含媒体容器的高度
+            let mediaHeight: CGFloat = (mediaContainerView?.isHidden == false) ? 122 : 0  // 110 + spacing
+            onChangedSized?(message, newSize.height + 24 + mediaHeight)
         } else {
             guard let textView = textView else {
                 return
@@ -135,6 +268,9 @@ class MessageDisplayView: UIView {
             mainStackView?.alignment = .leading
             userMessageView?.isHidden = true
             messageView?.isHidden = false
+            
+            // AI 消息不显示媒体容器
+            displayMediaItems(nil)
             
             let content = MessageDisplayContent(
                 message: message,
