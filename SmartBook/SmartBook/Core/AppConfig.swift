@@ -6,25 +6,68 @@ import Foundation
 /// 应用配置管理器
 enum AppConfig {
     
-    // MARK: - API 配置
+    // MARK: - 基础配置（从 Info.plist / Secrets.xcconfig 读取）
     
-    /// API 基础 URL
-    /// 从 UserDefaults 读取，如果不存在则返回默认配置值
-    /// 优先级：UserDefaults > Info.plist (Secrets.xcconfig) > 硬编码默认值
-    static var apiBaseURL: String {
-        UserDefaults.standard.string(forKey: Keys.apiBaseURL) ?? defaultAPIBaseURL
+    /// 是否启用 SSL（true = https/wss，false = http/ws）
+    static var apiSSL: Bool {
+        let value = Bundle.main.infoDictionary?["API_SSL"] as? String ?? "false"
+        return value.lowercased() == "true"
     }
     
-    /// 默认 API URL（从 Info.plist 读取或使用硬编码默认值）
-    /// 用于 @AppStorage 的初始值和回退值
-    static var defaultAPIBaseURL: String {
-        Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? DefaultValues.apiBaseURL
+    /// HTTP 协议前缀
+    static var httpScheme: String { apiSSL ? "https" : "http" }
+    
+    /// WebSocket 协议前缀
+    static var wsScheme: String { apiSSL ? "wss" : "ws" }
+    
+    /// API 域名（如 frp.agcplayer.com、localhost）
+    static var apiDomain: String {
+        Bundle.main.infoDictionary?["API_DOMAIN"] as? String ?? DefaultValues.apiDomain
+    }
+    
+    /// HTTP 端口
+    static var apiHttpPort: String {
+        Bundle.main.infoDictionary?["API_HTTP_PORT"] as? String ?? DefaultValues.apiHttpPort
+    }
+    
+    /// WebSocket ASR 端口
+    static var apiWsAsrPort: String {
+        Bundle.main.infoDictionary?["API_WS_ASR_PORT"] as? String ?? DefaultValues.apiWsAsrPort
+    }
+    
+    /// WebSocket TTS 端口
+    static var apiWsTtsPort: String {
+        Bundle.main.infoDictionary?["API_WS_TTS_PORT"] as? String ?? DefaultValues.apiWsTtsPort
     }
     
     /// API Key
     /// 从 Info.plist 读取（Secrets.xcconfig）
     static var apiKey: String {
         Bundle.main.infoDictionary?["API_KEY"] as? String ?? ""
+    }
+    
+    // MARK: - 派生 URL（自动拼接协议和端口）
+    
+    /// API 基础 URL（HTTP）
+    /// 优先级：UserDefaults（设置页面修改）> Info.plist (Secrets.xcconfig) > 硬编码默认值
+    static var apiBaseURL: String {
+        UserDefaults.standard.string(forKey: Keys.apiBaseURL) ?? defaultAPIBaseURL
+    }
+    
+    /// 默认 API URL（从 Info.plist 的 domain + port 拼接）
+    /// 用于 @AppStorage 的初始值和回退值
+    static var defaultAPIBaseURL: String {
+        "\(httpScheme)://\(apiDomain):\(apiHttpPort)"
+    }
+    
+    /// WebSocket ASR URL（语音识别）
+    static var wsASRBaseURL: String {
+        "\(wsScheme)://\(apiDomain):\(apiWsAsrPort)"
+    }
+    
+    /// WebSocket TTS URL（语音合成）
+    static var wsTTSBaseURL: String {
+        "\(wsScheme)://\(apiDomain):\(apiWsTtsPort)"
     }
     
     // MARK: - UserDefaults Keys
@@ -44,7 +87,11 @@ enum AppConfig {
     // MARK: - 默认值
     
     enum DefaultValues {
-        static let apiBaseURL = "http://localhost:9527"
+        static let apiDomain = "localhost"
+        static let apiHttpPort = "9527"
+        static let apiWsAsrPort = "9525"
+        static let apiWsTtsPort = "9524"
+        static let apiBaseURL = "http://\(apiDomain):\(apiHttpPort)"  // 默认不使用 SSL
         static let autoTTS = true
         static let ttsRate = 1.0
         static let asrProvider = "deepgram" // native, google, deepgram

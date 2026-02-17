@@ -8,10 +8,22 @@ enum DebugConfig {
         print("=== 配置调试信息 ===")
         
         // 1. 检查 Bundle.main.infoDictionary 中的值
-        if let apiBaseURL = Bundle.main.infoDictionary?["API_BASE_URL"] as? String {
-            print("✅ Info.plist 中的 API_BASE_URL: \(apiBaseURL)")
+        if let domain = Bundle.main.infoDictionary?["API_DOMAIN"] as? String {
+            print("✅ Info.plist 中的 API_DOMAIN: \(domain)")
         } else {
-            print("❌ Info.plist 中没有找到 API_BASE_URL")
+            print("❌ Info.plist 中没有找到 API_DOMAIN")
+        }
+        
+        if let httpPort = Bundle.main.infoDictionary?["API_HTTP_PORT"] as? String {
+            print("✅ Info.plist 中的 API_HTTP_PORT: \(httpPort)")
+        }
+        
+        if let wsAsrPort = Bundle.main.infoDictionary?["API_WS_ASR_PORT"] as? String {
+            print("✅ Info.plist 中的 API_WS_ASR_PORT: \(wsAsrPort)")
+        }
+        
+        if let wsTtsPort = Bundle.main.infoDictionary?["API_WS_TTS_PORT"] as? String {
+            print("✅ Info.plist 中的 API_WS_TTS_PORT: \(wsTtsPort)")
         }
         
         // 2. 检查 UserDefaults 中的值
@@ -22,16 +34,11 @@ enum DebugConfig {
         }
         
         // 3. 检查 AppConfig 返回的最终值
+        print("🎯 AppConfig.apiDomain: \(AppConfig.apiDomain)")
         print("🎯 AppConfig.apiBaseURL: \(AppConfig.apiBaseURL)")
         print("🎯 AppConfig.defaultAPIBaseURL: \(AppConfig.defaultAPIBaseURL)")
-        
-        // 4. 打印所有 Info.plist 内容
-        // print("\n=== 完整 Info.plist 内容 ===")
-        // if let dict = Bundle.main.infoDictionary {
-        //     for (key, value) in dict.sorted(by: { $0.key < $1.key }) {
-        //         print("\(key): \(value)")
-        //     }
-        // }
+        print("🎯 AppConfig.wsASRBaseURL: \(AppConfig.wsASRBaseURL)")
+        print("🎯 AppConfig.wsTTSBaseURL: \(AppConfig.wsTTSBaseURL)")
         
         print("\n===================")
     }
