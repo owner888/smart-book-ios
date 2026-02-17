@@ -48,6 +48,15 @@ enum AppConfig {
     
     // MARK: - 派生 URL（自动拼接协议和端口）
     
+    /// 构建 URL，省略默认端口（http:80, https:443, ws:80, wss:443）
+    private static func buildURL(scheme: String, domain: String, port: String) -> String {
+        let defaultPorts = ["http": "80", "https": "443", "ws": "80", "wss": "443"]
+        if port.isEmpty || defaultPorts[scheme] == port {
+            return "\(scheme)://\(domain)"
+        }
+        return "\(scheme)://\(domain):\(port)"
+    }
+    
     /// API 基础 URL（HTTP）
     /// 优先级：UserDefaults（设置页面修改）> Info.plist (Secrets.xcconfig) > 硬编码默认值
     static var apiBaseURL: String {
@@ -57,17 +66,17 @@ enum AppConfig {
     /// 默认 API URL（从 Info.plist 的 domain + port 拼接）
     /// 用于 @AppStorage 的初始值和回退值
     static var defaultAPIBaseURL: String {
-        "\(httpScheme)://\(apiDomain):\(apiHttpPort)"
+        buildURL(scheme: httpScheme, domain: apiDomain, port: apiHttpPort)
     }
     
     /// WebSocket ASR URL（语音识别）
     static var wsASRBaseURL: String {
-        "\(wsScheme)://\(apiDomain):\(apiWsAsrPort)"
+        buildURL(scheme: wsScheme, domain: apiDomain, port: apiWsAsrPort)
     }
     
     /// WebSocket TTS URL（语音合成）
     static var wsTTSBaseURL: String {
-        "\(wsScheme)://\(apiDomain):\(apiWsTtsPort)"
+        buildURL(scheme: wsScheme, domain: apiDomain, port: apiWsTtsPort)
     }
     
     // MARK: - UserDefaults Keys
