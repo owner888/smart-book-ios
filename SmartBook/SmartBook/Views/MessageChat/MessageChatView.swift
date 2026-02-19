@@ -24,11 +24,11 @@ enum MessagePopoverAction {
     case chooseModel
 }
 
-// ✅ 纯代码实现，不再依赖 MessageChatView.xib
+// 纯代码实现，不再依赖 MessageChatView.xib
 class MessageChatView: UIView {
     var viewModel: ChatViewModel?
     var action: ((MessageChatAction) -> Void)?
-    
+
     // MARK: - 纯代码属性（替代 @IBOutlet）
     private var bottomConstraint: NSLayoutConstraint!
     private var inputBar: InputToolView!
@@ -37,7 +37,7 @@ class MessageChatView: UIView {
     private var topView: MessageInputTopView?
     private var mainView: UIView!
     private var emptyBgView: UIView!
-    
+
     private var cancellables = Set<AnyCancellable>()
     private var currentIdCancelables = Set<AnyCancellable>()
     private var messages = [ChatMessage]()
@@ -98,7 +98,7 @@ class MessageChatView: UIView {
             if let newValue = assistant {
                 inputBar.assistant = newValue
 
-                // ✅ 助手切换时更新空状态视图（参考 SwiftUI: isDefaultChatAssistant）
+                // 助手切换时更新空状态视图（参考 SwiftUI: isDefaultChatAssistant）
                 updateEmptyStateView()
             }
         }
@@ -128,34 +128,35 @@ class MessageChatView: UIView {
     }
 
     // MARK: - 纯代码构建 UI（替代 XIB）
-    
+
     private func buildUI() {
         backgroundColor = .clear
-        
+
         // === mainView ===
         mainView = UIView()
         mainView.backgroundColor = .clear
         mainView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(mainView)
-        
+
         // === emptyBgView ===
         emptyBgView = UIView()
         emptyBgView.backgroundColor = .clear
         emptyBgView.translatesAutoresizingMaskIntoConstraints = false
         mainView.addSubview(emptyBgView)
-        
+
         // === tableView ===
         tableView = UITableView(frame: .zero, style: .plain)
         tableView.backgroundColor = .clear
         tableView.translatesAutoresizingMaskIntoConstraints = false
+
         mainView.addSubview(tableView)
-        
+
         // === topView (MessageInputTopView) ===
         topView = MessageInputTopView()
         topView!.backgroundColor = .clear
         topView!.translatesAutoresizingMaskIntoConstraints = false
         mainView.addSubview(topView!)
-        
+
         // === bottomBtn (滚动到底部按钮) ===
         bottomBtn = UIButton(type: .system)
         bottomBtn.isHidden = true
@@ -169,60 +170,60 @@ class MessageChatView: UIView {
         bottomBtn.clipsToBounds = true
         bottomBtn.addTarget(self, action: #selector(scrollToBottomAction), for: .touchUpInside)
         mainView.addSubview(bottomBtn)
-        
+
         // === inputBar (InputToolView) ===
         inputBar = InputToolView()
         inputBar.backgroundColor = .clear
         inputBar.translatesAutoresizingMaskIntoConstraints = false
         addSubview(inputBar)
-        
+
         // === 约束 ===
         // bottomConstraint: inputBar.bottom = self.bottom（稍后被 keyboardLayoutGuide 替代）
         bottomConstraint = inputBar.bottomAnchor.constraint(equalTo: bottomAnchor)
-        
+
         // 存储可变的 top 约束（bookContextBar 出现时需要调整）
         tableViewTopConstraint = tableView.topAnchor.constraint(equalTo: mainView.topAnchor)
         emptyBgViewTopConstraint = emptyBgView.topAnchor.constraint(equalTo: mainView.topAnchor)
-        
+
         NSLayoutConstraint.activate([
             // mainView: safeArea 约束
             mainView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
             mainView.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor),
             mainView.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor),
             mainView.bottomAnchor.constraint(equalTo: inputBar.topAnchor),
-            
+
             // emptyBgView: top/leading/trailing 跟随 mainView
             emptyBgViewTopConstraint,
             emptyBgView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor),
             emptyBgView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor),
-            
+
             // tableView: mainView 内部，左右各 15pt padding
             tableViewTopConstraint,
             tableView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 15),
             tableView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -15),
             tableView.bottomAnchor.constraint(equalTo: mainView.bottomAnchor),
-            
+
             // topView: 底部对齐 mainView，高度 50，左右 12pt
             topView!.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 12),
             topView!.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -12),
             topView!.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
             topView!.heightAnchor.constraint(equalToConstant: 50),
-            
+
             // emptyBgView 底部到 topView 上方 50pt
             emptyBgView.bottomAnchor.constraint(equalTo: topView!.topAnchor, constant: -50),
-            
+
             // bottomBtn: 右下角
             bottomBtn.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -20),
             bottomBtn.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
             bottomBtn.widthAnchor.constraint(equalToConstant: 32),
             bottomBtn.heightAnchor.constraint(equalToConstant: 32),
-            
+
             // inputBar: 左右各 15pt（safeArea），低优先级高度
             inputBar.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 15),
             inputBar.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -15),
             bottomConstraint,
         ])
-        
+
         // inputBar 高度低优先级约束
         let heightConstraint = inputBar.heightAnchor.constraint(equalToConstant: 80)
         heightConstraint.priority = .defaultLow
@@ -233,8 +234,8 @@ class MessageChatView: UIView {
         let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
         safeAreaBottom = scene?.windows.first?.safeAreaInsets.bottom ?? 0
         self.clipsToBounds = true
-        
-        // ✅ 使用 class 注册（不再使用 XIB nib）
+
+        // 使用 class 注册（不再使用 XIB nib）
         tableView.register(CommonChatCell.self, forCellReuseIdentifier: "commonChat")
         tableView.register(FootAdapterCell.self, forCellReuseIdentifier: "foot")
         tableView.separatorStyle = .none
@@ -243,7 +244,7 @@ class MessageChatView: UIView {
 
         // 启用自动高度
         tableView.estimatedRowHeight = 20
-        tableView.contentInset.bottom = 60  // ✅ 底部留出 60pt 空间
+        tableView.contentInset.bottom = 60  // 底部留出 60pt 空间
         tableView.scrollIndicatorInsets.bottom = 60
         tableView.rowHeight = UITableView.automaticDimension
         tableView.reloadData()
@@ -324,27 +325,32 @@ class MessageChatView: UIView {
         }
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapEvent))
-        tapGesture.cancelsTouchesInView = false  // ✅ 不拦截子视图（UIButton）的点击
+        tapGesture.cancelsTouchesInView = false  // 不拦截子视图（UIButton）的点击
         mainView.addGestureRecognizer(tapGesture)
         createEmptyStateView()
     }
 
+    // MARK: - 数据绑定
     func bind(to viewModel: ChatViewModel) {
         self.viewModel = viewModel
         inputBar.bind(to: viewModel)
         viewModel.$messages.receive(on: DispatchQueue.main).sink {
             [weak self] newMessages in
             guard let self = self else { return }
-            
+            if !newMessages.isEmpty {
+                self.topView?.isHidden = true
+            }
             let oldMessages = self.messages
             self.messages = newMessages
-            
+            // 空状态管理：根据消息数量显示/隐藏 emptyBgView 和 emptyStateView
+            self.emptyBgView.isHidden = !newMessages.isEmpty
+
             if !newMessages.isEmpty {
                 self.emptyStateView?.removeFromSuperview()
                 self.emptyStateView = nil
             }
-            
-            // ✅ 智能更新：根据变化类型选择最小更新策略
+
+            // 智能更新：根据变化类型选择最小更新策略
             self.smartReloadTable(oldMessages: oldMessages, newMessages: newMessages)
 
         }.store(in: &cancellables)
@@ -354,7 +360,7 @@ class MessageChatView: UIView {
             self.onSended()
         }.store(in: &currentIdCancelables)
     }
-    
+
     /// 智能表格更新：避免流式更新时全量 reloadData
     private func smartReloadTable(oldMessages: [ChatMessage], newMessages: [ChatMessage]) {
         // 空 → 有消息：全量刷新
@@ -362,13 +368,13 @@ class MessageChatView: UIView {
             tableView.reloadData()
             return
         }
-        
+
         // 有消息 → 空：全量刷新（清空对话）
         if !oldMessages.isEmpty && newMessages.isEmpty {
             tableView.reloadData()
             return
         }
-        
+
         // 新增了消息（发送用户消息 或 创建 AI 占位消息）
         if newMessages.count > oldMessages.count {
             let newIndexPaths = (oldMessages.count..<newMessages.count).map {
@@ -377,19 +383,19 @@ class MessageChatView: UIView {
             tableView.insertRows(at: newIndexPaths, with: .none)
             return
         }
-        
+
         // 消息数量减少（删除消息）：全量刷新
         if newMessages.count < oldMessages.count {
             tableView.reloadData()
             return
         }
-        
+
         // 消息数量相同 → 内容更新（流式更新 AI 回复）
         if newMessages.count == oldMessages.count && !newMessages.isEmpty {
             let lastIndex = newMessages.count - 1
             let lastOld = oldMessages[lastIndex]
             let lastNew = newMessages[lastIndex]
-            
+
             // 只有内容或状态变化时才更新
             if lastOld.content != lastNew.content
                 || lastOld.isStreaming != lastNew.isStreaming
@@ -397,10 +403,10 @@ class MessageChatView: UIView {
                 || lastOld.tools?.count != lastNew.tools?.count
             {
                 let indexPath = IndexPath(row: lastIndex, section: 0)
-                
-                // ✅ 流式更新时：直接更新可见 cell 内容，避免 reloadRows 导致闪屏
+
+                // 流式更新时：直接更新可见 cell 内容，避免 reloadRows 导致闪屏
                 if lastNew.isStreaming,
-                   let cell = tableView.cellForRow(at: indexPath) as? CommonChatCell
+                    let cell = tableView.cellForRow(at: indexPath) as? CommonChatCell
                 {
                     cell.configure(lastNew, assistant: nil, colors: colors)
                     // 通知 tableView 重新计算高度（不重建 cell）
@@ -451,7 +457,7 @@ class MessageChatView: UIView {
         }
     }
 
-    /// 
+    /// 创建空状态视图（首次加载或消息清空时调用）
     private func createEmptyStateView() {
         if emptyStateView == nil {
             let view = UIEmptyStateView(frame: CGRect.zero)
@@ -475,18 +481,18 @@ class MessageChatView: UIView {
             )
 
             emptyStateView = view
-            
-            // ✅ 空状态时：将 emptyBgView 提到 tableView 前面，确保按钮可点击
+
+            // 空状态时：将 emptyBgView 提到 tableView 前面，确保按钮可点击
             mainView.bringSubviewToFront(emptyBgView)
         }
     }
-    
+
     // MARK: - 顶部栏管理（BookContextBar + AssistantPromptBar）
-    
+
     /// headerStack 底部约束到 tableView/emptyBgView 的 top
     private var tableViewToHeaderConstraint: NSLayoutConstraint?
     private var emptyBgToHeaderConstraint: NSLayoutConstraint?
-    
+
     private func updateHeaderBars() {
         // 移除旧约束和 headerStack
         tableViewToHeaderConstraint?.isActive = false
@@ -496,9 +502,9 @@ class MessageChatView: UIView {
         headerStack?.removeFromSuperview()
         bookContextBar = nil
         assistantPromptBar = nil
-        
+
         var headerViews = [UIView]()
-        
+
         // 1. BookContextBar（选中书籍时显示）
         if let book = selectedBook {
             let bar = UIBookContextBar()
@@ -507,7 +513,7 @@ class MessageChatView: UIView {
             }
             bookContextBar = bar
             headerViews.append(bar)
-            
+
             // 2. AssistantPromptBar（有系统提示词时显示，仅在选中书籍时）
             if let assistant = currentAssistant, !assistant.systemPrompt.isEmpty {
                 let promptBar = UIAssistantPromptBar()
@@ -517,7 +523,7 @@ class MessageChatView: UIView {
                 headerViews.append(promptBar)
             }
         }
-        
+
         if headerViews.isEmpty {
             headerStack = nil
             // 恢复原始 top 约束
@@ -530,28 +536,28 @@ class MessageChatView: UIView {
             stack.spacing = 0
             stack.translatesAutoresizingMaskIntoConstraints = false
             mainView.addSubview(stack)
-            
+
             NSLayoutConstraint.activate([
                 stack.topAnchor.constraint(equalTo: mainView.topAnchor),
                 stack.leadingAnchor.constraint(equalTo: mainView.leadingAnchor),
                 stack.trailingAnchor.constraint(equalTo: mainView.trailingAnchor),
             ])
             headerStack = stack
-            
+
             // 禁用原始的 top 约束，改用 headerStack.bottom 驱动
             tableViewTopConstraint.isActive = false
             emptyBgViewTopConstraint.isActive = false
-            
+
             // tableView.top = headerStack.bottom（自动跟随 headerStack 高度变化）
             let tvConstraint = tableView.topAnchor.constraint(equalTo: stack.bottomAnchor)
             tvConstraint.isActive = true
             tableViewToHeaderConstraint = tvConstraint
-            
+
             let emptyConstraint = emptyBgView.topAnchor.constraint(equalTo: stack.bottomAnchor)
             emptyConstraint.isActive = true
             emptyBgToHeaderConstraint = emptyConstraint
         }
-        
+
         UIView.animate(withDuration: 0.25) {
             self.mainView.layoutIfNeeded()
         }
@@ -560,7 +566,7 @@ class MessageChatView: UIView {
     /// 更新空状态视图（助手切换或书籍状态变化时调用）
     private func updateEmptyStateView() {
         guard let emptyStateView = emptyStateView else { return }
-        
+
         let isChat = assistant == .chat
         let currentHasBooks = hasBooks
         emptyStateView.configure(
@@ -695,7 +701,7 @@ class MessageChatView: UIView {
 
     private func reloadBottom() {
         if let space = viewModel?.scrollBottom {
-            // ✅ 保持至少 60pt 底部间距
+            // 保持至少 60pt 底部间距
             let bottomInset = max(space, 60)
             tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: bottomInset, right: 0)
         }
@@ -712,6 +718,7 @@ class MessageChatView: UIView {
 
             let isAtBottom = offset > effectiveContentHeight - 20
             bottomBtn.isHidden = isAtBottom
+            print("== scroll offset: \(offset), content height: \(effectiveContentHeight)")
         }
     }
 }
