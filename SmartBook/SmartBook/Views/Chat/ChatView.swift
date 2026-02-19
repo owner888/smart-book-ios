@@ -240,7 +240,8 @@ struct ChatView: View {
                         viewModel: viewModel,
                         aiFunction: $aiFunction,
                         assistant: $assistant,
-                        hasBooks: !bookState.books.isEmpty
+                        hasBooks: !bookState.books.isEmpty,
+                        selectedBook: bookState.selectedBook
                     ) { action in
                         switch action {
                         case .sendMessage:
@@ -252,6 +253,10 @@ struct ChatView: View {
                                 showBookPicker = true
                             } else {
                                 showBookImporter = true
+                            }
+                        case .deselectBook:
+                            withAnimation {
+                                bookState.selectedBook = nil
                             }
                         case .popover(let type, let frame):
                             let edge = buttonRelatively(frame, proxy: proxy)

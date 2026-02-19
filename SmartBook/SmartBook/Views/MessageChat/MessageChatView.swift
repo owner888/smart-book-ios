@@ -15,6 +15,7 @@ enum MessageChatAction {
     case topFunction(_ event: MenuConfig.TopFunctionType)
     case popover(_ action: MessagePopoverAction, frame: CGRect)
     case addBook(hasBooks: Bool)  // true = 已有书籍，选择书籍；false = 无书籍，导入书籍
+    case deselectBook  // 取消选择书籍
 }
 
 enum MessagePopoverAction {
@@ -47,8 +48,18 @@ class MessageChatView: UIView {
     private let themeManager = ThemeManager.shared
     private var keyboardIsChanging = false
     private var emptyStateView: UIEmptyStateView?
+    private var bookContextBar: UIBookContextBar?
+    private var tableViewTopConstraint: NSLayoutConstraint!
+    private var emptyBgViewTopConstraint: NSLayoutConstraint!
     private var safeAreaBottom: CGFloat = 0.0
     private var scrollingTop = false
+
+    /// 当前选中的书籍
+    var selectedBook: Book? {
+        didSet {
+            updateBookContextBar()
+        }
+    }
 
     /// 是否已有书籍（参考 SwiftUI: bookState.books.isEmpty）
     var hasBooks: Bool = false {
@@ -154,6 +165,10 @@ class MessageChatView: UIView {
         // bottomConstraint: inputBar.bottom = self.bottom（稍后被 keyboardLayoutGuide 替代）
         bottomConstraint = inputBar.bottomAnchor.constraint(equalTo: bottomAnchor)
         
+        // 存储可变的 top 约束（bookContextBar 出现时需要调整）
+        tableViewTopConstraint = tableView.topAnchor.constraint(equalTo: mainView.topAnchor)
+        emptyBgViewTopConstraint = emptyBgView.topAnchor.constraint(equalTo: mainView.topAnchor)
+        
         NSLayoutConstraint.activate([
             // mainView: safeArea 约束
             mainView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
@@ -162,12 +177,12 @@ class MessageChatView: UIView {
             mainView.bottomAnchor.constraint(equalTo: inputBar.topAnchor),
             
             // emptyBgView: top/leading/trailing 跟随 mainView
-            emptyBgView.topAnchor.constraint(equalTo: mainView.topAnchor),
+            emptyBgViewTopConstraint,
             emptyBgView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor),
             emptyBgView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor),
             
             // tableView: mainView 内部，左右各 15pt padding
-            tableView.topAnchor.constraint(equalTo: mainView.topAnchor),
+            tableViewTopConstraint,
             tableView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 15),
             tableView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -15),
             tableView.bottomAnchor.constraint(equalTo: mainView.bottomAnchor),
@@ -421,6 +436,7 @@ class MessageChatView: UIView {
         }
     }
 
+    /// 
     private func createEmptyStateView() {
         if emptyStateView == nil {
             let view = UIEmptyStateView(frame: CGRect.zero)
@@ -450,6 +466,41 @@ class MessageChatView: UIView {
         }
     }
     
+    // MARK: - BookContextBar（选中书籍后顶部显示）
+    
+    private func updateBookContextBar() {
+        if let book = selectedBook {
+            // 显示 bookContextBar
+            if bookContextBar == nil {
+                let bar = UIBookContextBar()
+                mainView.addSubview(bar)
+                NSLayoutConstraint.activate([
+                    bar.topAnchor.constraint(equalTo: mainView.topAnchor),
+                    bar.leadingAnchor.constraint(equalTo: mainView.leadingAnchor),
+                    bar.trailingAnchor.constraint(equalTo: mainView.trailingAnchor),
+                ])
+                bookContextBar = bar
+            }
+            bookContextBar?.configure(book: book) { [weak self] in
+                self?.action?(.deselectBook)
+            }
+            
+            // 调整 tableView 和 emptyBgView 的 top 约束，为 bookContextBar 留出空间
+            tableViewTopConstraint.constant = 40  // bookContextBar 高度
+            emptyBgViewTopConstraint.constant = 40
+        } else {
+            // 隐藏 bookContextBar
+            bookContextBar?.removeFromSuperview()
+            bookContextBar = nil
+            tableViewTopConstraint.constant = 0
+            emptyBgViewTopConstraint.constant = 0
+        }
+        
+        UIView.animate(withDuration: 0.25) {
+            self.mainView.layoutIfNeeded()
+        }
+    }
+
     /// 更新空状态视图（助手切换或书籍状态变化时调用）
     private func updateEmptyStateView() {
         guard let emptyStateView = emptyStateView else { return }
