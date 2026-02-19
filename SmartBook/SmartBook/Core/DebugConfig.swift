@@ -8,22 +8,18 @@ enum DebugConfig {
         print("=== 配置调试信息 ===")
         
         // 1. 检查 Bundle.main.infoDictionary 中的值
-        if let domain = Bundle.main.infoDictionary?["API_DOMAIN"] as? String {
-            print("✅ Info.plist 中的 API_DOMAIN: \(domain)")
+        if let baseURL = Bundle.main.infoDictionary?["API_BASE_URL"] as? String {
+            print("✅ Info.plist 中的 API_BASE_URL: \(baseURL)")
         } else {
-            print("❌ Info.plist 中没有找到 API_DOMAIN")
+            print("❌ Info.plist 中没有找到 API_BASE_URL")
         }
         
-        if let httpPort = Bundle.main.infoDictionary?["API_HTTP_PORT"] as? String {
-            print("✅ Info.plist 中的 API_HTTP_PORT: \(httpPort)")
+        if let asrURL = Bundle.main.infoDictionary?["API_ASR_URL"] as? String {
+            print("✅ Info.plist 中的 API_ASR_URL: \(asrURL)")
         }
         
-        if let wsAsrPort = Bundle.main.infoDictionary?["API_WS_ASR_PORT"] as? String {
-            print("✅ Info.plist 中的 API_WS_ASR_PORT: \(wsAsrPort)")
-        }
-        
-        if let wsTtsPort = Bundle.main.infoDictionary?["API_WS_TTS_PORT"] as? String {
-            print("✅ Info.plist 中的 API_WS_TTS_PORT: \(wsTtsPort)")
+        if let ttsURL = Bundle.main.infoDictionary?["API_TTS_URL"] as? String {
+            print("✅ Info.plist 中的 API_TTS_URL: \(ttsURL)")
         }
         
         // 2. 检查 UserDefaults 中的值
@@ -34,11 +30,10 @@ enum DebugConfig {
         }
         
         // 3. 检查 AppConfig 返回的最终值
-        print("🎯 AppConfig.apiDomain: \(AppConfig.apiDomain)")
         print("🎯 AppConfig.apiBaseURL: \(AppConfig.apiBaseURL)")
         print("🎯 AppConfig.defaultAPIBaseURL: \(AppConfig.defaultAPIBaseURL)")
-        print("🎯 AppConfig.wsASRBaseURL: \(AppConfig.wsASRBaseURL)")
-        print("🎯 AppConfig.wsTTSBaseURL: \(AppConfig.wsTTSBaseURL)")
+        print("🎯 AppConfig.apiASRURL: \(AppConfig.apiASRURL)")
+        print("🎯 AppConfig.apiTTSURL: \(AppConfig.apiTTSURL)")
         
         print("\n===================")
     }

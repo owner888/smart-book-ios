@@ -6,77 +6,34 @@ import Foundation
 /// 应用配置管理器
 enum AppConfig {
     
-    // MARK: - 基础配置（从 Info.plist / Secrets.xcconfig 读取）
+    // MARK: - API 配置（从 Info.plist / Secrets.xcconfig 读取）
     
-    /// 是否启用 SSL（true = https/wss，false = http/ws）
-    static var apiSSL: Bool {
-        let value = Bundle.main.infoDictionary?["API_SSL"] as? String ?? "false"
-        return value.lowercased() == "true"
+    /// API 基础 URL（HTTP/HTTPS）
+    /// 优先级：UserDefaults（设置页面修改）> Info.plist (Secrets.xcconfig) > 硬编码默认值
+    static var apiBaseURL: String {
+        UserDefaults.standard.string(forKey: Keys.apiBaseURL) ?? defaultAPIBaseURL
     }
     
-    /// HTTP 协议前缀
-    static var httpScheme: String { apiSSL ? "https" : "http" }
-    
-    /// WebSocket 协议前缀
-    static var wsScheme: String { apiSSL ? "wss" : "ws" }
-    
-    /// API 域名（如 frp.agcplayer.com、localhost）
-    static var apiDomain: String {
-        Bundle.main.infoDictionary?["API_DOMAIN"] as? String ?? DefaultValues.apiDomain
+    /// 默认 API URL（从 Info.plist 读取或使用硬编码默认值）
+    /// 用于 @AppStorage 的初始值和回退值
+    static var defaultAPIBaseURL: String {
+        Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? DefaultValues.apiBaseURL
     }
     
-    /// HTTP 端口
-    static var apiHttpPort: String {
-        Bundle.main.infoDictionary?["API_HTTP_PORT"] as? String ?? DefaultValues.apiHttpPort
+    /// WebSocket ASR URL（语音识别）
+    static var apiASRURL: String {
+        Bundle.main.infoDictionary?["API_ASR_URL"] as? String ?? DefaultValues.apiASRURL
     }
     
-    /// WebSocket ASR 端口
-    static var apiWsAsrPort: String {
-        Bundle.main.infoDictionary?["API_WS_ASR_PORT"] as? String ?? DefaultValues.apiWsAsrPort
-    }
-    
-    /// WebSocket TTS 端口
-    static var apiWsTtsPort: String {
-        Bundle.main.infoDictionary?["API_WS_TTS_PORT"] as? String ?? DefaultValues.apiWsTtsPort
+    /// WebSocket TTS URL（语音合成）
+    static var apiTTSURL: String {
+        Bundle.main.infoDictionary?["API_TTS_URL"] as? String ?? DefaultValues.apiTTSURL
     }
     
     /// API Key
     /// 从 Info.plist 读取（Secrets.xcconfig）
     static var apiKey: String {
         Bundle.main.infoDictionary?["API_KEY"] as? String ?? ""
-    }
-    
-    // MARK: - 派生 URL（自动拼接协议和端口）
-    
-    /// 构建 URL，省略默认端口（http:80, https:443, ws:80, wss:443）
-    private static func buildURL(scheme: String, domain: String, port: String) -> String {
-        let defaultPorts = ["http": "80", "https": "443", "ws": "80", "wss": "443"]
-        if port.isEmpty || defaultPorts[scheme] == port {
-            return "\(scheme)://\(domain)"
-        }
-        return "\(scheme)://\(domain):\(port)"
-    }
-    
-    /// API 基础 URL（HTTP）
-    /// 优先级：UserDefaults（设置页面修改）> Info.plist (Secrets.xcconfig) > 硬编码默认值
-    static var apiBaseURL: String {
-        UserDefaults.standard.string(forKey: Keys.apiBaseURL) ?? defaultAPIBaseURL
-    }
-    
-    /// 默认 API URL（从 Info.plist 的 domain + port 拼接）
-    /// 用于 @AppStorage 的初始值和回退值
-    static var defaultAPIBaseURL: String {
-        buildURL(scheme: httpScheme, domain: apiDomain, port: apiHttpPort)
-    }
-    
-    /// WebSocket ASR URL（语音识别）
-    static var wsASRBaseURL: String {
-        buildURL(scheme: wsScheme, domain: apiDomain, port: apiWsAsrPort)
-    }
-    
-    /// WebSocket TTS URL（语音合成）
-    static var wsTTSBaseURL: String {
-        buildURL(scheme: wsScheme, domain: apiDomain, port: apiWsTtsPort)
     }
     
     // MARK: - UserDefaults Keys
@@ -96,11 +53,9 @@ enum AppConfig {
     // MARK: - 默认值
     
     enum DefaultValues {
-        static let apiDomain = "localhost"
-        static let apiHttpPort = "9527"
-        static let apiWsAsrPort = "9525"
-        static let apiWsTtsPort = "9524"
-        static let apiBaseURL = "http://\(apiDomain):\(apiHttpPort)"  // 默认不使用 SSL
+        static let apiBaseURL = "http://localhost:9527"
+        static let apiASRURL = "ws://localhost:9525"
+        static let apiTTSURL = "ws://localhost:9524"
         static let autoTTS = true
         static let ttsRate = 1.0
         static let asrProvider = "deepgram" // native, google, deepgram

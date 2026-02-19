@@ -43,7 +43,7 @@ class ASRStreamService: NSObject, ObservableObject {
     @MainActor
     func connect(language: String = "zh-CN", model: String = "nova-2") async {
         // 使用 AppConfig 统一管理的 WebSocket URL
-        let wsURL = AppConfig.wsASRBaseURL
+        let wsURL = AppConfig.apiASRURL
 
         Logger.info("WebSocket URL: \(wsURL)")
 

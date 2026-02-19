@@ -2,16 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>API_SSL</key>
-	<string>$(API_SSL)</string>
-	<key>API_DOMAIN</key>
-	<string>$(API_DOMAIN)</string>
-	<key>API_HTTP_PORT</key>
-	<string>$(API_HTTP_PORT)</string>
-	<key>API_WS_ASR_PORT</key>
-	<string>$(API_WS_ASR_PORT)</string>
-	<key>API_WS_TTS_PORT</key>
-	<string>$(API_WS_TTS_PORT)</string>
+	<key>API_BASE_URL</key>
+	<string>$(API_BASE_URL)</string>
+	<key>API_ASR_URL</key>
+	<string>$(API_ASR_URL)</string>
+	<key>API_TTS_URL</key>
+	<string>$(API_TTS_URL)</string>
 	<key>API_KEY</key>
 	<string>$(API_KEY)</string>
 	<key>NSAppTransportSecurity</key>
