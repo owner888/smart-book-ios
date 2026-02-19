@@ -1,7 +1,7 @@
 // MessageBubbleComponents.swift - 消息气泡子组件集合
 
-import SwiftUI
 import MarkdownUI
+import SwiftUI
 
 // MARK: - 富文本透明度扩展
 extension NSMutableAttributedString {
@@ -17,7 +17,7 @@ extension NSMutableAttributedString {
                 addAttribute(.foregroundColor, value: UIColor.white.withAlphaComponent(opacity), range: range)
             }
         }
-        
+
     }
 
     /// 为整个字符串添加透明度
@@ -46,13 +46,19 @@ extension NSMutableAttributedString {
             let lowercasedKeyword = keyword.lowercased()
             var searchRange = NSRange(location: 0, length: lowercasedString.count)
 
-            while let range = lowercasedString.range(of: lowercasedKeyword, options: [], range: Range(searchRange, in: lowercasedString)) {
+            while let range = lowercasedString.range(
+                of: lowercasedKeyword,
+                options: [],
+                range: Range(searchRange, in: lowercasedString)
+            ) {
                 let nsRange = NSRange(range, in: lowercasedString)
                 addOpacity(highlightOpacity, range: nsRange)
 
                 // 更新搜索范围
-                searchRange = NSRange(location: nsRange.location + nsRange.length,
-                                    length: lowercasedString.count - (nsRange.location + nsRange.length))
+                searchRange = NSRange(
+                    location: nsRange.location + nsRange.length,
+                    length: lowercasedString.count - (nsRange.location + nsRange.length)
+                )
             }
         }
     }
@@ -60,7 +66,7 @@ extension NSMutableAttributedString {
     /// 根据文字长度自动调整透明度（长文本变淡）
     func addLengthBasedOpacity(minOpacity: CGFloat = 0.4, maxOpacity: CGFloat = 1.0) {
         let textLength = string.count
-        let opacity = max(minOpacity, maxOpacity - CGFloat(textLength) * 0.02) // 每增加50个字符透明度降低0.02
+        let opacity = max(minOpacity, maxOpacity - CGFloat(textLength) * 0.02)  // 每增加50个字符透明度降低0.02
         addOpacity(opacity)
     }
 }
@@ -70,7 +76,7 @@ struct MessageThinkingView: View {
     let thinking: String
     var colors: ThemeColors
     @Binding var isExpanded: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // 头部：整栏可点击
@@ -78,11 +84,11 @@ struct MessageThinkingView: View {
                 Image(systemName: "brain.head.profile")
                     .foregroundColor(.purple)
                 Text("Thinking...")
-                    .font(.caption) // 12号
+                    .font(.caption)  // 12号
                     .fontWeight(.medium)
                 Spacer()
                 Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                    .font(.caption) // 12号
+                    .font(.caption)  // 12号
             }
             .foregroundColor(colors.primaryText)
             .padding(8)
@@ -92,11 +98,12 @@ struct MessageThinkingView: View {
                     isExpanded.toggle()
                 }
             }
-            
+
             // 展开的内容
             if isExpanded {
-                Text(thinking)
-                    .font(.caption) // 12号
+                // 去掉首尾多余换行（Gemini thinking 文本末尾通常带 \n\n）
+                Text(thinking.trimmingCharacters(in: .whitespacesAndNewlines))
+                    .font(.caption)  // 12号
                     .foregroundColor(colors.secondaryText)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -123,7 +130,7 @@ struct MessageThinkingView: View {
 struct MessageContentView: View {
     let message: ChatMessage
     var colors: ThemeColors
-    
+
     var body: some View {
         if message.role == .user {
             Text(message.content)
@@ -141,11 +148,12 @@ struct MessageContentView: View {
             .frame(maxWidth: .infinity, alignment: .leading)  // 占满宽度，左对齐
         }
     }
-    
 
-    
     /// 计算AttributedString的精确高度
-    private func calculateTextHeight(for attributedString: NSAttributedString, width: CGFloat = .greatestFiniteMagnitude) -> CGFloat {
+    private func calculateTextHeight(
+        for attributedString: NSAttributedString,
+        width: CGFloat = .greatestFiniteMagnitude
+    ) -> CGFloat {
         let boundingRect = attributedString.boundingRect(
             with: CGSize(width: width, height: .greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin, .usesFontLeading],
@@ -159,7 +167,7 @@ struct MessageContentView: View {
 public class MessageDisplayContent {
     let message: ChatMessage
     let colors: ThemeColors
-    
+
     init(message: ChatMessage, colors: ThemeColors) {
         self.message = message
         self.colors = colors
@@ -174,14 +182,14 @@ public class MessageDisplayContent {
 
         // 正则表达式模式
         let patterns: [(String, String, NSRegularExpression.Options?)] = [
-            ("codeBlock", #"```([\s\S]*?)```"#, nil),           // 代码块
-            ("inlineCode", #"`([^`]+)`"#, nil),                // 行内代码
-            ("bold", #"\*\*([^*]+)\*\*"#, nil),               // 粗体
-            ("italic", #"\*([^*]+)\*"#, nil),                 // 斜体
-            ("strikethrough", #"~~([^~]+)~~"#, nil),          // 删除线
-            ("link", #"\\[([^\]]+)\\]\\(([^)]+)\\)"#, nil),   // 链接
-            ("header", #"^(#{1,6})\s+(.+)$"#, .anchorsMatchLines), // 标题
-            ("blockquote", #"^>\s+(.+)$"#, .anchorsMatchLines)     // 引用
+            ("codeBlock", #"```([\s\S]*?)```"#, nil),  // 代码块
+            ("inlineCode", #"`([^`]+)`"#, nil),  // 行内代码
+            ("bold", #"\*\*([^*]+)\*\*"#, nil),  // 粗体
+            ("italic", #"\*([^*]+)\*"#, nil),  // 斜体
+            ("strikethrough", #"~~([^~]+)~~"#, nil),  // 删除线
+            ("link", #"\\[([^\]]+)\\]\\(([^)]+)\\)"#, nil),  // 链接
+            ("header", #"^(#{1,6})\s+(.+)$"#, .anchorsMatchLines),  // 标题
+            ("blockquote", #"^>\s+(.+)$"#, .anchorsMatchLines),  // 引用
         ]
 
         while !remaining.isEmpty {
@@ -224,7 +232,7 @@ public class MessageDisplayContent {
                 break
             }
         }
-        
+
         // 只有在流式显示时才应用透明度效果
         if message.isStreaming {
             applyTransparencyEffects(to: attributedString, colors: colors)
@@ -232,12 +240,12 @@ public class MessageDisplayContent {
         // 注意：段落样式已经在 createAttributedString 中设置，这里不需要额外处理
         return attributedString
     }
-    
+
     /// 应用流式显示的透明度效果
     private func applyTransparencyEffects(to attributedString: NSMutableAttributedString, colors: ThemeColors) {
         let textLength = attributedString.length
         guard textLength > 0 else { return }
-        var location = max(0,textLength - 3)
+        var location = max(0, textLength - 3)
         let opacitys = [0.1, 0.3, 0.6]
         var index = 0
         while location >= 0 && index < opacitys.count {
@@ -254,120 +262,316 @@ public class MessageDisplayContent {
 
         // 创建紧凑的段落样式，移除底部空白
         let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 0 // 行间距
-        paragraphStyle.minimumLineHeight = UIFont.preferredFont(forTextStyle: .body).pointSize + 3 // 动态行高
-        paragraphStyle.maximumLineHeight = UIFont.preferredFont(forTextStyle: .body).pointSize + 3 // 动态行高
-        paragraphStyle.lineHeightMultiple = 1.0 // 行高倍数
+        paragraphStyle.lineSpacing = 0  // 行间距
+        paragraphStyle.minimumLineHeight = UIFont.preferredFont(forTextStyle: .body).pointSize + 3  // 动态行高
+        paragraphStyle.maximumLineHeight = UIFont.preferredFont(forTextStyle: .body).pointSize + 3  // 动态行高
+        paragraphStyle.lineHeightMultiple = 1.0  // 行高倍数
 
         switch type {
         case "normal":
-            attributedString.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .body), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.preferredFont(forTextStyle: .body),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor(colors.primaryText),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
 
         case "bold":
             let boldFont = UIFont.preferredFont(forTextStyle: .body)
             let boldDescriptor = boldFont.fontDescriptor.withSymbolicTraits(.traitBold) ?? boldFont.fontDescriptor
-            attributedString.addAttribute(.font, value: UIFont(descriptor: boldDescriptor, size: 0), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont(descriptor: boldDescriptor, size: 0),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor(colors.primaryText),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
 
         case "italic":
             let italicFont = UIFont.preferredFont(forTextStyle: .body)
-            let italicDescriptor = italicFont.fontDescriptor.withSymbolicTraits(.traitItalic) ?? italicFont.fontDescriptor
-            attributedString.addAttribute(.font, value: UIFont(descriptor: italicDescriptor, size: 0), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            let italicDescriptor =
+                italicFont.fontDescriptor.withSymbolicTraits(.traitItalic) ?? italicFont.fontDescriptor
+            attributedString.addAttribute(
+                .font,
+                value: UIFont(descriptor: italicDescriptor, size: 0),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor(colors.primaryText),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
 
         case "inlineCode":
-            attributedString.addAttribute(.font, value: UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize, weight: .regular), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor.green, range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.backgroundColor, value: UIColor(colors.secondaryText).withAlphaComponent(0.1), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.monospacedSystemFont(
+                    ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize,
+                    weight: .regular
+                ),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor.green,
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .backgroundColor,
+                value: UIColor(colors.secondaryText).withAlphaComponent(0.1),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
 
         case "codeBlock":
-            attributedString.addAttribute(.font, value: UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize, weight: .regular), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor.green, range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.backgroundColor, value: UIColor(colors.secondaryText).withAlphaComponent(0.1), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.monospacedSystemFont(
+                    ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize,
+                    weight: .regular
+                ),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor.green,
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .backgroundColor,
+                value: UIColor(colors.secondaryText).withAlphaComponent(0.1),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
 
         case "strikethrough":
-            attributedString.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .body), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText).withAlphaComponent(0.6), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.strikethroughStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.preferredFont(forTextStyle: .body),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor(colors.primaryText).withAlphaComponent(0.6),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .strikethroughStyle,
+                value: NSUnderlineStyle.single.rawValue,
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
 
-        case "faded": // 自定义淡化效果
-            attributedString.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .body), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText).withAlphaComponent(0.4), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+        case "faded":  // 自定义淡化效果
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.preferredFont(forTextStyle: .body),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor(colors.primaryText).withAlphaComponent(0.4),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
 
         case "link":
-            attributedString.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .body), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor.blue.withAlphaComponent(0.8), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.underlineStyle, value: NSUnderlineStyle.single.rawValue, range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.preferredFont(forTextStyle: .body),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor.blue.withAlphaComponent(0.8),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .underlineStyle,
+                value: NSUnderlineStyle.single.rawValue,
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
 
         case "header":
             let level = content.prefix(while: { $0 == "#" }).count
             let titleContent = content.trimmingCharacters(in: CharacterSet(charactersIn: "# "))
 
             let attributedString = NSMutableAttributedString(string: titleContent)
-            let textStyle: UIFont.TextStyle = switch level {
+            let textStyle: UIFont.TextStyle =
+                switch level {
                 case 1: .title1
                 case 2: .title2
                 case 3: .title3
                 default: .headline
-            }
+                }
             let headerFont = UIFont.preferredFont(forTextStyle: textStyle)
             let boldDescriptor = headerFont.fontDescriptor.withSymbolicTraits(.traitBold) ?? headerFont.fontDescriptor
-            attributedString.addAttribute(.font, value: UIFont(descriptor: boldDescriptor, size: 0), range: NSRange(location: 0, length: titleContent.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText), range: NSRange(location: 0, length: titleContent.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: titleContent.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont(descriptor: boldDescriptor, size: 0),
+                range: NSRange(location: 0, length: titleContent.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor(colors.primaryText),
+                range: NSRange(location: 0, length: titleContent.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: titleContent.count)
+            )
             return attributedString
 
         case "blockquote":
-            attributedString.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .body), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText).withAlphaComponent(0.8), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.preferredFont(forTextStyle: .body),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor(colors.primaryText).withAlphaComponent(0.8),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
 
         default:
-            attributedString.addAttribute(.font, value: UIFont.preferredFont(forTextStyle: .body), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor(colors.primaryText), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.preferredFont(forTextStyle: .body),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor(colors.primaryText),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
         }
 
         return attributedString
     }
 
     /// 创建带匹配的AttributedString
-    private func createAttributedString(for type: String, match: NSTextCheckingResult, in text: String) -> NSAttributedString {
+    private func createAttributedString(for type: String, match: NSTextCheckingResult, in text: String)
+        -> NSAttributedString
+    {
         let nsString = text as NSString
 
         // 创建紧凑的段落样式
         let paragraphStyle = NSMutableParagraphStyle()
         paragraphStyle.lineSpacing = 0
-        paragraphStyle.minimumLineHeight = UIFont.preferredFont(forTextStyle: .subheadline).pointSize + 2 // 动态行高
-        paragraphStyle.maximumLineHeight = UIFont.preferredFont(forTextStyle: .subheadline).pointSize + 2 // 动态行高
+        paragraphStyle.minimumLineHeight = UIFont.preferredFont(forTextStyle: .subheadline).pointSize + 2  // 动态行高
+        paragraphStyle.maximumLineHeight = UIFont.preferredFont(forTextStyle: .subheadline).pointSize + 2  // 动态行高
         paragraphStyle.lineHeightMultiple = 1.0
 
         switch type {
         case "codeBlock":
             let content = nsString.substring(with: match.range(at: 1))
             let attributedString = NSMutableAttributedString(string: content)
-            attributedString.addAttribute(.font, value: UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize, weight: .regular), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor.green, range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.backgroundColor, value: UIColor(colors.secondaryText).withAlphaComponent(0.1), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.monospacedSystemFont(
+                    ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize,
+                    weight: .regular
+                ),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor.green,
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .backgroundColor,
+                value: UIColor(colors.secondaryText).withAlphaComponent(0.1),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
             return attributedString
 
         case "inlineCode":
             let content = nsString.substring(with: match.range(at: 1))
             let attributedString = NSMutableAttributedString(string: content)
-            attributedString.addAttribute(.font, value: UIFont.monospacedSystemFont(ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize, weight: .regular), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.foregroundColor, value: UIColor.green, range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.backgroundColor, value: UIColor(colors.secondaryText).withAlphaComponent(0.1), range: NSRange(location: 0, length: content.count))
-            attributedString.addAttribute(.paragraphStyle, value: paragraphStyle, range: NSRange(location: 0, length: content.count))
+            attributedString.addAttribute(
+                .font,
+                value: UIFont.monospacedSystemFont(
+                    ofSize: UIFont.preferredFont(forTextStyle: .footnote).pointSize,
+                    weight: .regular
+                ),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .foregroundColor,
+                value: UIColor.green,
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .backgroundColor,
+                value: UIColor(colors.secondaryText).withAlphaComponent(0.1),
+                range: NSRange(location: 0, length: content.count)
+            )
+            attributedString.addAttribute(
+                .paragraphStyle,
+                value: paragraphStyle,
+                range: NSRange(location: 0, length: content.count)
+            )
             return attributedString
 
         case "bold":
@@ -406,7 +610,7 @@ struct MessageSourcesView: View {
     let sources: [RAGSource]
     var colors: ThemeColors
     @Binding var isExpanded: Bool  // 保留参数保持兼容
-    
+
     var body: some View {
         if let firstSource = sources.first {
             HStack(spacing: 6) {
@@ -439,9 +643,9 @@ struct MessageSourcesView: View {
 struct MessageToolsView: View {
     let tools: [ToolInfo]
     var colors: ThemeColors
-    
+
     var body: some View {
-        // ✅ 显示所有工具，不要图标，和来源一样的样式
+        // 显示所有工具，不要图标，和来源一样的样式
         ForEach(tools, id: \.name) { tool in
             Text(tool.name)
                 .font(.caption2)
@@ -465,34 +669,34 @@ struct MessageToolsView: View {
 struct MessageUsageView: View {
     let usage: UsageInfo
     var colors: ThemeColors
-    
+
     var body: some View {
         HStack(spacing: 12) {
             if let model = usage.model {
                 Label(model, systemImage: "cpu")
-                    .font(.caption2) // 11号
+                    .font(.caption2)  // 11号
             }
-            
+
             if let tokens = usage.tokens {
                 if let total = tokens.total {
                     Label(formatTokens(total), systemImage: "chart.bar")
-                        .font(.caption2) // 11号
+                        .font(.caption2)  // 11号
                 }
-                
+
                 if let input = tokens.input {
                     Label("↗\(formatTokens(input))", systemImage: "arrow.up")
-                        .font(.caption2) // 11号
+                        .font(.caption2)  // 11号
                 }
-                
+
                 if let output = tokens.output {
                     Label("↙\(formatTokens(output))", systemImage: "arrow.down")
-                        .font(.caption2) // 11号
+                        .font(.caption2)  // 11号
                 }
             }
-            
+
             if let cost = usage.cost {
                 Label(String(format: "$%.4f", cost), systemImage: "dollarsign.circle")
-                    .font(.caption2) // 11号
+                    .font(.caption2)  // 11号
             }
         }
         .foregroundColor(colors.secondaryText)
@@ -502,10 +706,10 @@ struct MessageUsageView: View {
                 .fill(colors.secondaryText.opacity(0.1))
         )
     }
-    
+
     private func formatTokens(_ num: Int) -> String {
-        if num >= 1000000 {
-            return String(format: "%.2fM", Double(num) / 1000000)
+        if num >= 1_000_000 {
+            return String(format: "%.2fM", Double(num) / 1_000_000)
         } else if num >= 1000 {
             return String(format: "%.1fK", Double(num) / 1000)
         }
@@ -519,29 +723,29 @@ struct MessageActionsView: View {
     var onSpeak: (() -> Void)?
     var onCopy: (() -> Void)?
     var onRegenerate: (() -> Void)?
-    
+
     var body: some View {
         HStack(spacing: 16) {
             if let speak = onSpeak {
                 Button(action: speak) {
                     Label("朗读", systemImage: "speaker.wave.2")
-                        .font(.caption) // 12号
+                        .font(.caption)  // 12号
                 }
                 .buttonStyle(.borderless)
             }
-            
+
             if let copy = onCopy {
                 Button(action: copy) {
                     Label("复制", systemImage: "doc.on.doc")
-                        .font(.caption) // 12号
+                        .font(.caption)  // 12号
                 }
                 .buttonStyle(.borderless)
             }
-            
+
             if let regenerate = onRegenerate {
                 Button(action: regenerate) {
                     Label("重新生成", systemImage: "arrow.clockwise")
-                        .font(.caption) // 12号
+                        .font(.caption)  // 12号
                 }
                 .buttonStyle(.borderless)
             }
@@ -554,7 +758,7 @@ struct MessageActionsView: View {
 struct MessageAssistantHeaderView: View {
     let assistant: Assistant
     var colors: ThemeColors
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Circle()
@@ -562,10 +766,10 @@ struct MessageAssistantHeaderView: View {
                 .frame(width: 24, height: 24)
                 .overlay {
                     Text(assistant.avatar)
-                        .font(.caption) // 12号
+                        .font(.caption)  // 12号
                 }
             Text(assistant.name)
-                .font(.caption) // 12号
+                .font(.caption)  // 12号
                 .foregroundColor(colors.secondaryText)
         }
     }
