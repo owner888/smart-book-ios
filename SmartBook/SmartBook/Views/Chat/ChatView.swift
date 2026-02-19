@@ -241,7 +241,8 @@ struct ChatView: View {
                         aiFunction: $aiFunction,
                         assistant: $assistant,
                         hasBooks: !bookState.books.isEmpty,
-                        selectedBook: bookState.selectedBook
+                        selectedBook: bookState.selectedBook,
+                        currentAssistant: assistantService.currentAssistant
                     ) { action in
                         switch action {
                         case .sendMessage:

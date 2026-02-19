@@ -49,6 +49,8 @@ class MessageChatView: UIView {
     private var keyboardIsChanging = false
     private var emptyStateView: UIEmptyStateView?
     private var bookContextBar: UIBookContextBar?
+    private var assistantPromptBar: UIAssistantPromptBar?
+    private var headerStack: UIStackView!
     private var tableViewTopConstraint: NSLayoutConstraint!
     private var emptyBgViewTopConstraint: NSLayoutConstraint!
     private var safeAreaBottom: CGFloat = 0.0
@@ -57,7 +59,20 @@ class MessageChatView: UIView {
     /// 当前选中的书籍
     var selectedBook: Book? {
         didSet {
-            updateBookContextBar()
+            // 仅在书籍实际变化时才重建顶部栏
+            if oldValue?.id != selectedBook?.id {
+                updateHeaderBars()
+            }
+        }
+    }
+
+    /// 当前助手（用于显示系统提示词栏）
+    var currentAssistant: Assistant? {
+        didSet {
+            // 仅在助手 ID 或系统提示词变化时才重建顶部栏
+            if oldValue?.id != currentAssistant?.id || oldValue?.systemPrompt != currentAssistant?.systemPrompt {
+                updateHeaderBars()
+            }
         }
     }
 
@@ -466,34 +481,75 @@ class MessageChatView: UIView {
         }
     }
     
-    // MARK: - BookContextBar（选中书籍后顶部显示）
+    // MARK: - 顶部栏管理（BookContextBar + AssistantPromptBar）
     
-    private func updateBookContextBar() {
+    /// headerStack 底部约束到 tableView/emptyBgView 的 top
+    private var tableViewToHeaderConstraint: NSLayoutConstraint?
+    private var emptyBgToHeaderConstraint: NSLayoutConstraint?
+    
+    private func updateHeaderBars() {
+        // 移除旧约束和 headerStack
+        tableViewToHeaderConstraint?.isActive = false
+        emptyBgToHeaderConstraint?.isActive = false
+        tableViewToHeaderConstraint = nil
+        emptyBgToHeaderConstraint = nil
+        headerStack?.removeFromSuperview()
+        bookContextBar = nil
+        assistantPromptBar = nil
+        
+        var headerViews = [UIView]()
+        
+        // 1. BookContextBar（选中书籍时显示）
         if let book = selectedBook {
-            // 显示 bookContextBar
-            if bookContextBar == nil {
-                let bar = UIBookContextBar()
-                mainView.addSubview(bar)
-                NSLayoutConstraint.activate([
-                    bar.topAnchor.constraint(equalTo: mainView.topAnchor),
-                    bar.leadingAnchor.constraint(equalTo: mainView.leadingAnchor),
-                    bar.trailingAnchor.constraint(equalTo: mainView.trailingAnchor),
-                ])
-                bookContextBar = bar
-            }
-            bookContextBar?.configure(book: book) { [weak self] in
+            let bar = UIBookContextBar()
+            bar.configure(book: book) { [weak self] in
                 self?.action?(.deselectBook)
             }
+            bookContextBar = bar
+            headerViews.append(bar)
             
-            // 调整 tableView 和 emptyBgView 的 top 约束，为 bookContextBar 留出空间
-            tableViewTopConstraint.constant = 40  // bookContextBar 高度
-            emptyBgViewTopConstraint.constant = 40
-        } else {
-            // 隐藏 bookContextBar
-            bookContextBar?.removeFromSuperview()
-            bookContextBar = nil
+            // 2. AssistantPromptBar（有系统提示词时显示，仅在选中书籍时）
+            if let assistant = currentAssistant, !assistant.systemPrompt.isEmpty {
+                let promptBar = UIAssistantPromptBar()
+                promptBar.configure(assistant: assistant)
+                // 不再需要 onHeightChanged 回调
+                assistantPromptBar = promptBar
+                headerViews.append(promptBar)
+            }
+        }
+        
+        if headerViews.isEmpty {
+            headerStack = nil
+            // 恢复原始 top 约束
             tableViewTopConstraint.constant = 0
             emptyBgViewTopConstraint.constant = 0
+        } else {
+            // 创建 headerStack
+            let stack = UIStackView(arrangedSubviews: headerViews)
+            stack.axis = .vertical
+            stack.spacing = 0
+            stack.translatesAutoresizingMaskIntoConstraints = false
+            mainView.addSubview(stack)
+            
+            NSLayoutConstraint.activate([
+                stack.topAnchor.constraint(equalTo: mainView.topAnchor),
+                stack.leadingAnchor.constraint(equalTo: mainView.leadingAnchor),
+                stack.trailingAnchor.constraint(equalTo: mainView.trailingAnchor),
+            ])
+            headerStack = stack
+            
+            // 禁用原始的 top 约束，改用 headerStack.bottom 驱动
+            tableViewTopConstraint.isActive = false
+            emptyBgViewTopConstraint.isActive = false
+            
+            // tableView.top = headerStack.bottom（自动跟随 headerStack 高度变化）
+            let tvConstraint = tableView.topAnchor.constraint(equalTo: stack.bottomAnchor)
+            tvConstraint.isActive = true
+            tableViewToHeaderConstraint = tvConstraint
+            
+            let emptyConstraint = emptyBgView.topAnchor.constraint(equalTo: stack.bottomAnchor)
+            emptyConstraint.isActive = true
+            emptyBgToHeaderConstraint = emptyConstraint
         }
         
         UIView.animate(withDuration: 0.25) {
