@@ -239,13 +239,20 @@ struct ChatView: View {
                     MessageChatViewViewWrapper(
                         viewModel: viewModel,
                         aiFunction: $aiFunction,
-                        assistant: $assistant
+                        assistant: $assistant,
+                        hasBooks: !bookState.books.isEmpty
                     ) { action in
                         switch action {
                         case .sendMessage:
                             sendMessage()
                         case .topFunction(let function):
                             break
+                        case .addBook(let hasBooks):
+                            if hasBooks {
+                                showBookPicker = true
+                            } else {
+                                showBookImporter = true
+                            }
                         case .popover(let type, let frame):
                             let edge = buttonRelatively(frame, proxy: proxy)
                             switch type {

@@ -14,6 +14,7 @@ enum MessageChatAction {
     case sendMessage
     case topFunction(_ event: MenuConfig.TopFunctionType)
     case popover(_ action: MessagePopoverAction, frame: CGRect)
+    case addBook(hasBooks: Bool)  // true = 已有书籍，选择书籍；false = 无书籍，导入书籍
 }
 
 enum MessagePopoverAction {
@@ -49,6 +50,15 @@ class MessageChatView: UIView {
     private var safeAreaBottom: CGFloat = 0.0
     private var scrollingTop = false
 
+    /// 是否已有书籍（参考 SwiftUI: bookState.books.isEmpty）
+    var hasBooks: Bool = false {
+        didSet {
+            if hasBooks != oldValue {
+                updateEmptyStateView()
+            }
+        }
+    }
+
     var aiFunction: MenuConfig.AIModelFunctionType? {
         didSet {
             if let function = aiFunction {
@@ -62,15 +72,8 @@ class MessageChatView: UIView {
             if let newValue = assistant {
                 inputBar.assistant = newValue
 
-                // ✅ 助手切换时更新空状态视图
-                let isChat = newValue == .chat
-                emptyStateView?.configure(
-                    colors: colors,
-                    onAddBook: {
-                        // TODO: 处理添加书籍
-                    },
-                    isDefaultChatAssistant: isChat
-                )
+                // ✅ 助手切换时更新空状态视图（参考 SwiftUI: isDefaultChatAssistant）
+                updateEmptyStateView()
             }
         }
     }
@@ -291,6 +294,7 @@ class MessageChatView: UIView {
         }
 
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapEvent))
+        tapGesture.cancelsTouchesInView = false  // ✅ 不拦截子视图（UIButton）的点击
         mainView.addGestureRecognizer(tapGesture)
         createEmptyStateView()
     }
@@ -427,18 +431,40 @@ class MessageChatView: UIView {
                 view.centerYAnchor.constraint(equalTo: emptyBgView.centerYAnchor),
             ])
 
-            // ✅ 配置空状态视图，传递助手类型
             let isChat = assistant == .chat
+            let currentHasBooks = hasBooks
             view.configure(
                 colors: colors,
-                onAddBook: {
-                    // TODO: 处理添加书籍
+                hasBooks: currentHasBooks,
+                onAddBook: { [weak self] in
+                    guard let self = self else { return }
+                    self.action?(.addBook(hasBooks: currentHasBooks))
                 },
                 isDefaultChatAssistant: isChat
             )
 
             emptyStateView = view
+            
+            // ✅ 空状态时：将 emptyBgView 提到 tableView 前面，确保按钮可点击
+            mainView.bringSubviewToFront(emptyBgView)
         }
+    }
+    
+    /// 更新空状态视图（助手切换或书籍状态变化时调用）
+    private func updateEmptyStateView() {
+        guard let emptyStateView = emptyStateView else { return }
+        
+        let isChat = assistant == .chat
+        let currentHasBooks = hasBooks
+        emptyStateView.configure(
+            colors: colors,
+            hasBooks: currentHasBooks,
+            onAddBook: { [weak self] in
+                guard let self = self else { return }
+                self.action?(.addBook(hasBooks: currentHasBooks))
+            },
+            isDefaultChatAssistant: isChat
+        )
     }
 
     @objc func scrollToBottomAction() {
