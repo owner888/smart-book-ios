@@ -56,8 +56,6 @@ class MessageChatView: UIView {
     private var safeAreaBottom: CGFloat = 0.0
     private var scrollingTop = false
 
-<<<<<<< HEAD
-=======
     /// 当前选中的书籍
     var selectedBook: Book? {
         didSet {
@@ -87,7 +85,6 @@ class MessageChatView: UIView {
         }
     }
 
->>>>>>> UIKitScrollTo
     var aiFunction: MenuConfig.AIModelFunctionType? {
         didSet {
             if let function = aiFunction {
@@ -101,20 +98,8 @@ class MessageChatView: UIView {
             if let newValue = assistant {
                 inputBar.assistant = newValue
 
-<<<<<<< HEAD
-                // ✅ 助手切换时更新空状态视图
-                let isChat = newValue == .chat
-                emptyStateView?.configure(
-                    colors: colors,
-                    onAddBook: {
-                        // TODO: 处理添加书籍
-                    },
-                    isDefaultChatAssistant: isChat
-                )
-=======
                 // 助手切换时更新空状态视图（参考 SwiftUI: isDefaultChatAssistant）
                 updateEmptyStateView()
->>>>>>> UIKitScrollTo
             }
         }
     }
@@ -258,14 +243,9 @@ class MessageChatView: UIView {
         let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
         safeAreaBottom = scene?.windows.first?.safeAreaInsets.bottom ?? 0
         self.clipsToBounds = true
-<<<<<<< HEAD
-        // 注册 SwiftUI Cell
-        tableView.register(SwiftUIMessageCell.self, forCellReuseIdentifier: SwiftUIMessageCell.identifier)
-=======
 
         // 使用 class 注册（不再使用 XIB nib）
         tableView.register(CommonChatCell.self, forCellReuseIdentifier: "commonChat")
->>>>>>> UIKitScrollTo
         tableView.register(FootAdapterCell.self, forCellReuseIdentifier: "foot")
         tableView.separatorStyle = .none
         tableView.dataSource = self
@@ -280,10 +260,6 @@ class MessageChatView: UIView {
         tableView.clipsToBounds = false
 
         inputBar.send = { [weak self] in
-<<<<<<< HEAD
-            self?.topView?.isHidden = true
-=======
->>>>>>> UIKitScrollTo
             self?.action?(.sendMessage)
         }
         inputBar.showPopover = { [weak self] (type, view) in
@@ -338,30 +314,17 @@ class MessageChatView: UIView {
             } else {
                 self.onKeyboardFrameChange(notification)
             }
-<<<<<<< HEAD
-            DispatchQueue.main.asyncAfter(
-                deadline: .now() + 0.3,
-                execute: {
-                    self.keyboardIsChanging = false
-                }
-            )
-=======
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
                 self?.keyboardIsChanging = false
             }
->>>>>>> UIKitScrollTo
         }
 
         NotificationCenter.default.addObserver(
             forName: UIResponder.keyboardWillHideNotification,
             object: nil,
             queue: OperationQueue.main
-<<<<<<< HEAD
-        ) { notification in
-=======
         ) { [weak self] notification in
             guard let self = self else { return }
->>>>>>> UIKitScrollTo
             if let bottom = self.originBottom {
                 self.viewModel?.scrollBottom = bottom
                 self.reloadBottom()
@@ -369,24 +332,6 @@ class MessageChatView: UIView {
             }
             self.originBottom = nil
             self.keyboardIsChanging = true
-<<<<<<< HEAD
-            DispatchQueue.main.asyncAfter(
-                deadline: .now() + 0.3,
-                execute: {
-                    self.keyboardIsChanging = false
-                }
-            )
-        }
-
-        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
-            self.tableView.reloadData()
-        }
-
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapEvent))
-        mainView.addGestureRecognizer(tapGesture)
-        createEmptyStateView()
-
-=======
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
                 self?.keyboardIsChanging = false
             }
@@ -396,7 +341,6 @@ class MessageChatView: UIView {
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapEvent))
         mainView.addGestureRecognizer(tapGesture)
         createEmptyStateView()
->>>>>>> UIKitScrollTo
     }
 
     // MARK: - 数据绑定
@@ -428,11 +372,6 @@ class MessageChatView: UIView {
             guard let self = self else { return }
             self.onSended()
         }.store(in: &currentIdCancelables)
-<<<<<<< HEAD
-
-    }
-
-=======
     }
 
     /// 智能表格更新：避免流式更新时全量 reloadData
@@ -497,7 +436,6 @@ class MessageChatView: UIView {
         }
     }
 
->>>>>>> UIKitScrollTo
     @objc func tapEvent() {
         UIApplication.shared.sendAction(
             #selector(UIResponder.resignFirstResponder),
@@ -508,10 +446,6 @@ class MessageChatView: UIView {
     }
 
     func onKeyboardFrameChange(_ notification: Notification) {
-<<<<<<< HEAD
-
-=======
->>>>>>> UIKitScrollTo
         if bottomBtn.isHidden {
             guard let userInfo = notification.userInfo,
                 let duration = userInfo[
@@ -536,10 +470,7 @@ class MessageChatView: UIView {
         }
     }
 
-<<<<<<< HEAD
-=======
     /// 创建空状态视图（首次加载或消息清空时调用）
->>>>>>> UIKitScrollTo
     private func createEmptyStateView() {
         if emptyStateView == nil {
             let view = UIEmptyStateView(frame: CGRect.zero)
@@ -550,14 +481,6 @@ class MessageChatView: UIView {
                 view.centerYAnchor.constraint(equalTo: emptyBgView.centerYAnchor),
             ])
 
-<<<<<<< HEAD
-            // ✅ 配置空状态视图，传递助手类型
-            let isChat = assistant == .chat
-            view.configure(
-                colors: colors,
-                onAddBook: {
-                    // TODO: 处理添加书籍
-=======
             let isChat = assistant == .chat
             let currentHasBooks = hasBooks
             view.configure(
@@ -566,7 +489,6 @@ class MessageChatView: UIView {
                 onAddBook: { [weak self] in
                     guard let self = self else { return }
                     self.action?(.addBook(hasBooks: currentHasBooks))
->>>>>>> UIKitScrollTo
                 },
                 isDefaultChatAssistant: isChat
             )
@@ -578,9 +500,6 @@ class MessageChatView: UIView {
         }
     }
 
-<<<<<<< HEAD
-    @IBAction func scrollToBottomAction() {
-=======
     // MARK: - 顶部栏管理（BookContextBar + AssistantPromptBar）
 
     /// headerStack 底部约束到 tableView/emptyBgView 的 top
@@ -675,7 +594,6 @@ class MessageChatView: UIView {
     }
 
     @objc func scrollToBottomAction() {
->>>>>>> UIKitScrollTo
         scrollToBottom(animated: true)
     }
 
@@ -696,16 +614,6 @@ class MessageChatView: UIView {
     private func messageChangedSize(_ height: CGFloat, id: UUID) {
         messageHeights[id] = height
         guard let viewModel = viewModel else { return }
-<<<<<<< HEAD
-        //        if let qMess = messageHeights[viewModel.currentMessageId!] {
-        //            print("==问题高度: \(qMess)")
-        //        }
-        //        if let messageId = viewModel.answerMessageId,
-        //            let answer = messageHeights[messageId] {
-        //            print("==回答高度: \(answer)")
-        //        }
-=======
->>>>>>> UIKitScrollTo
         if id == viewModel.answerMessageId,
             viewModel.isLoading
         {
@@ -713,10 +621,6 @@ class MessageChatView: UIView {
             if let adaptatio = adaptationBottom {
                 bottom = adaptatio
             } else {
-<<<<<<< HEAD
-                // 如果没有获取到显示问题后的高度后,需要再获取一次.
-=======
->>>>>>> UIKitScrollTo
                 if let questionId = viewModel.currentMessageId,
                     let questionHeight = messageHeights[questionId]
                 {
@@ -727,10 +631,6 @@ class MessageChatView: UIView {
                     adaptationBottom = bottom
                 }
             }
-<<<<<<< HEAD
-            // 根据回答内容的高度逐步越少底部空余高度
-=======
->>>>>>> UIKitScrollTo
             if let bottom = bottom {
                 let offset = max(bottom - height, 0)
                 if abs(viewModel.scrollBottom - offset) > 10 || (viewModel.scrollBottom > 0 && offset == 0) {
@@ -770,10 +670,6 @@ class MessageChatView: UIView {
         )
     }
 
-<<<<<<< HEAD
-    // 滚到问题消息到顶部
-=======
->>>>>>> UIKitScrollTo
     private func scrollToMessageTop(_ messageId: UUID) {
         guard let viewModel = viewModel,
             let answerMessageId = viewModel.answerMessageId
@@ -818,11 +714,7 @@ class MessageChatView: UIView {
 
     private func reloadBottom() {
         if let space = viewModel?.scrollBottom {
-<<<<<<< HEAD
-            // 底部间距至少 60pt，避免被 TopFunctionType 按钮遮挡
-=======
             // 保持至少 60pt 底部间距
->>>>>>> UIKitScrollTo
             let bottomInset = max(space, 60)
             tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: bottomInset, right: 0)
         }
@@ -839,12 +731,7 @@ class MessageChatView: UIView {
 
             let isAtBottom = offset > effectiveContentHeight - 20
             bottomBtn.isHidden = isAtBottom
-<<<<<<< HEAD
-
-            // print("== table view offset: \(offset), contentSize: \(effectiveContentHeight), frame: \(tableView.frame.size.height), isAtBottom: \(isAtBottom)")
-=======
             print("== scroll offset: \(offset), content height: \(effectiveContentHeight)")
->>>>>>> UIKitScrollTo
         }
     }
 }
@@ -867,17 +754,17 @@ extension MessageChatView: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath)
         -> UITableViewCell
     {
-        // 使用 SwiftUI Cell
         if let cell = tableView.dequeueReusableCell(
-            withIdentifier: SwiftUIMessageCell.identifier
-        ) as? SwiftUIMessageCell {
-            cell.onHeightChanged = { [weak self] (message, height) in
+            withIdentifier: "commonChat"
+        ) as? CommonChatCell {
+            cell.onChangedSized = { [weak self] (message, height) in
                 if let id = message?.id {
                     self?.messageChangedSize(height, id: id)
                 }
             }
             cell.configure(
-                message: messages[indexPath.row],
+                messages[indexPath.row],
+                assistant: nil,
                 colors: colors
             )
             return cell
