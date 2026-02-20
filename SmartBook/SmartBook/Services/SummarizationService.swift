@@ -33,9 +33,9 @@ class SummarizationService {
 
     // MARK: - Initialization
 
-    init(threshold: Int = 3, streamingService: StreamingChatService = StreamingChatService()) {
+    init(threshold: Int = 3, streamingService: StreamingChatService? = nil) {
         self.threshold = threshold
-        self.streamingService = streamingService
+        self.streamingService = streamingService ?? StreamingChatService()
     }
 
     // MARK: - Public Methods
