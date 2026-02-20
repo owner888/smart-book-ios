@@ -1,7 +1,6 @@
 // EPUBParser.swift - EPUB 解析器（主协调器）
 
 import Foundation
-import UIKit
 
 /// EPUB 解析器 - 协调各个解析组件
 class EPUBParser {

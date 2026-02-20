@@ -45,10 +45,8 @@ class ReaderViewModel {
             return
         }
 
-        // 在后台线程解析
-        let content = await Task.detached {
-            EPUBParser.parseContent(from: filePath)
-        }.value
+        // 解析 EPUB 内容
+        let content = EPUBParser.parseContent(from: filePath)
 
         epubContent = content
         paginateEntireBook()

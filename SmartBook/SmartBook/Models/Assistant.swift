@@ -22,7 +22,7 @@ struct Assistant: Identifiable, Codable, ConfigItem {
     }
 
     var colorValue: Color {
-        Color(hex: color) ?? .green
+        Color(hex: color)
     }
 
     init(
