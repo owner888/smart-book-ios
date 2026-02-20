@@ -119,17 +119,6 @@ struct SettingsView: View {
                         .tint(colors.secondaryText)
                     }
                     
-                    // ASR 说明
-                    if asrProvider != "native" {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(asrProviderDescription)
-                                .font(.caption)
-                                .foregroundColor(colors.secondaryText)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.vertical, 4)
-                    }
-                    
                     // TTS 提供商选择
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "speaker.wave.3", color: .purple)
@@ -326,18 +315,6 @@ struct SettingsView: View {
     }
     
     // MARK: - Helper Methods
-    
-    /// ASR 提供商描述
-    private var asrProviderDescription: String {
-        switch asrProvider {
-        case "google":
-            return "使用 Google Cloud 语音识别，高精度但费用较高（$0.024/分钟）。需要后端配置 Google API Key。"
-        case "deepgram":
-            return "使用 Deepgram 语音识别，高精度且费用低（$0.0043/分钟，比 Google 节省 82%）。推荐使用！需要后端配置 Deepgram API Key。"
-        default:
-            return ""
-        }
-    }
     
     /// 重置所有设置到默认值
     private func resetAllSettings() {
