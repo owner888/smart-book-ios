@@ -168,7 +168,9 @@ class MessageChatView: UIView {
         btnConfig.cornerStyle = .capsule
         btnConfig.baseBackgroundColor = .clear
         btnConfig.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
-        bottomBtn = UIButton(configuration: btnConfig)
+        let expandedBtn = ExpandedHitButton(type: .system)
+        expandedBtn.configuration = btnConfig
+        bottomBtn = expandedBtn
         bottomBtn.isHidden = true
         bottomBtn.translatesAutoresizingMaskIntoConstraints = false
         bottomBtn.addTarget(self, action: #selector(scrollToBottomAction), for: .touchUpInside)
@@ -219,11 +221,11 @@ class MessageChatView: UIView {
             // emptyBgView 底部到 topView 上方 50pt
             emptyBgView.bottomAnchor.constraint(equalTo: topView!.topAnchor, constant: -50),
 
-            // bottomBtn: 右下角，44x44 液态玻璃圆形按钮
+            // bottomBtn: 右下角，视觉 38x38 液态玻璃圆形按钮，触摸区域 44x44（ExpandedHitButton）
             bottomBtn.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -20),
             bottomBtn.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
-            bottomBtn.widthAnchor.constraint(equalToConstant: 44),
-            bottomBtn.heightAnchor.constraint(equalToConstant: 44),
+            bottomBtn.widthAnchor.constraint(equalToConstant: 38),
+            bottomBtn.heightAnchor.constraint(equalToConstant: 38),
 
             // inputBar: 左右各 15pt（safeArea），低优先级高度
             inputBar.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 15),
@@ -797,5 +799,15 @@ private class FootAdapterCell: UITableViewCell {
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+    }
+}
+
+/// 扩大触摸区域的按钮：视觉 38x38，触摸 44x44（Apple 推荐最小触摸目标）
+private class ExpandedHitButton: UIButton {
+    /// 触摸区域向外扩展的距离（负值 = 向外扩展）
+    var expandInsets = UIEdgeInsets(top: -3, left: -3, bottom: -3, right: -3)
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        return bounds.inset(by: expandInsets).contains(point)
     }
 }
