@@ -77,7 +77,7 @@ class StreamingChatService: NSObject {
         var enableSearch =
             UserDefaults.standard.object(forKey: AppConfig.Keys.enableGoogleSearch) as? Bool
             ?? AppConfig.DefaultValues.enableGoogleSearch
-        var enableTools =
+        let enableTools =
             UserDefaults.standard.object(forKey: AppConfig.Keys.enableMCPTools) as? Bool
             ?? AppConfig.DefaultValues.enableMCPTools
 

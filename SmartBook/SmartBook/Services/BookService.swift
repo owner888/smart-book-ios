@@ -46,7 +46,7 @@ class BookService {
         // 确保缓存已加载
         await ensureCacheLoaded()
 
-        return await cacheQueue.sync {
+        return cacheQueue.sync {
             let startIndex = page * pageSize
             let endIndex = min(startIndex + pageSize, cachedBooks.count)
 
@@ -61,7 +61,7 @@ class BookService {
     /// 获取总书籍数量
     func getTotalBooksCount() async -> Int {
         await ensureCacheLoaded()
-        return await cacheQueue.sync {
+        return cacheQueue.sync {
             cachedBooks.count
         }
     }
@@ -86,13 +86,13 @@ class BookService {
 
     /// 确保缓存已加载
     private func ensureCacheLoaded() async {
-        let needsLoad = await cacheQueue.sync {
+        let needsLoad = cacheQueue.sync {
             !isCacheValid
         }
 
         if needsLoad {
             let books = loadLocalBooks()
-            await cacheQueue.sync {
+            cacheQueue.sync {
                 cachedBooks = books
                 isCacheValid = true
             }

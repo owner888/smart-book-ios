@@ -69,8 +69,6 @@ class InputToolView: UIView {
     // MARK: - SwiftUI Integration
 
     private func setupSwiftUIView() {
-        guard let viewModel = viewModel else { return }
-
         // 创建 SwiftUI 视图（添加 fixedSize 让它自适应高度）
         let swiftUIView = createSwiftUIView()
             .fixedSize(horizontal: false, vertical: true)

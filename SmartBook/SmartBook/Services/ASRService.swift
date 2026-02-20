@@ -336,7 +336,6 @@ class ASRService: ObservableObject {
     /// 将音频缓冲区转换为 Data
     private func bufferToData(buffer: AVAudioPCMBuffer) -> Data {
         let channelData = buffer.floatChannelData![0]
-        let channelDataValue = channelData.pointee
         let channelDataValueArray = stride(from: 0, to: Int(buffer.frameLength), by: buffer.stride)
             .map { channelData[$0] }
 

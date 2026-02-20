@@ -308,7 +308,7 @@ class AudioStreamPlayer: NSObject {
             try AVAudioSession.sharedInstance().setCategory(
                 .playAndRecord,  // 支持同时录音和播放
                 mode: .default,
-                options: [.defaultToSpeaker, .allowBluetooth]
+                options: [.defaultToSpeaker, .allowBluetoothHFP]
             )
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
@@ -358,7 +358,7 @@ class AudioStreamPlayer: NSObject {
             try audioSession.setCategory(
                 .playAndRecord,
                 mode: .default,
-                options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers]
+                options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers]
             )
 
             // 强制输出到扬声器
