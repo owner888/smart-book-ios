@@ -157,30 +157,25 @@ class MessageChatView: UIView {
         topView!.translatesAutoresizingMaskIntoConstraints = false
         mainView.addSubview(topView!)
 
-        // === bottomBtn (滚动到底部按钮) ===
-        // 触摸区域 44x44（Apple 推荐最小触摸目标），视觉圆圈 32x32
-        bottomBtn = UIButton(type: .system)
+        // === bottomBtn (滚动到底部按钮，液态玻璃样式，与 Add Book 按钮一致) ===
+        var btnConfig: UIButton.Configuration
+        if #available(iOS 26.0, *) {
+            btnConfig = .glass()
+        } else {
+            btnConfig = .filled()
+        }
+        btnConfig.image = UIImage(systemName: "chevron.down")
+        btnConfig.cornerStyle = .capsule
+        btnConfig.baseBackgroundColor = .clear
+        btnConfig.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
+        bottomBtn = UIButton(configuration: btnConfig)
         bottomBtn.isHidden = true
         bottomBtn.translatesAutoresizingMaskIntoConstraints = false
-        bottomBtn.backgroundColor = .clear  // 外层透明
-        bottomBtn.tintColor = UIColor(named: "ApprWhiteColor") ?? .white
-        var btnConfig = UIButton.Configuration.plain()
-        btnConfig.image = UIImage(systemName: "chevron.down")
-        bottomBtn.configuration = btnConfig
         bottomBtn.addTarget(self, action: #selector(scrollToBottomAction), for: .touchUpInside)
-        // 添加 32x32 视觉背景圆圈（居中于 44x44 按钮内）
-        let btnBgView = UIView()
-        btnBgView.backgroundColor = UIColor(named: "ApprBlackColor") ?? .black
-        btnBgView.layer.cornerRadius = 16
-        btnBgView.isUserInteractionEnabled = false  // 不拦截触摸
-        btnBgView.translatesAutoresizingMaskIntoConstraints = false
-        bottomBtn.insertSubview(btnBgView, at: 0)
-        NSLayoutConstraint.activate([
-            btnBgView.centerXAnchor.constraint(equalTo: bottomBtn.centerXAnchor),
-            btnBgView.centerYAnchor.constraint(equalTo: bottomBtn.centerYAnchor),
-            btnBgView.widthAnchor.constraint(equalToConstant: 32),
-            btnBgView.heightAnchor.constraint(equalToConstant: 32),
-        ])
+        // iOS <26: 应用液态玻璃边框效果（与 EmptyChatPromptView 的 addBookButton 一致）
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
+        bottomBtn.configuration?.baseForegroundColor = isDarkMode ? .white : .black
+        bottomBtn.applyGlassEffect(isDarkMode: isDarkMode)
         mainView.addSubview(bottomBtn)
 
         // === inputBar (InputToolView) ===
@@ -224,9 +219,9 @@ class MessageChatView: UIView {
             // emptyBgView 底部到 topView 上方 50pt
             emptyBgView.bottomAnchor.constraint(equalTo: topView!.topAnchor, constant: -50),
 
-            // bottomBtn: 右下角（44x44 触摸区域，内含 32x32 视觉圆圈居中，补偿 6pt 偏移）
-            bottomBtn.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -14),
-            bottomBtn.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: 0),
+            // bottomBtn: 右下角，44x44 液态玻璃圆形按钮
+            bottomBtn.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -20),
+            bottomBtn.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
             bottomBtn.widthAnchor.constraint(equalToConstant: 44),
             bottomBtn.heightAnchor.constraint(equalToConstant: 44),
 
@@ -278,6 +273,10 @@ class MessageChatView: UIView {
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) {
             (self: Self, previousTraitCollection: UITraitCollection) in
             self.tableView.reloadData()
+            // ✅ 更新 bottomBtn 液态玻璃效果（暗黑/浅色模式切换）
+            let isDark = self.traitCollection.userInterfaceStyle == .dark
+            self.bottomBtn.configuration?.baseForegroundColor = isDark ? .white : .black
+            self.bottomBtn.applyGlassEffect(isDarkMode: isDark)
         }
 
         // 键盘跟随
