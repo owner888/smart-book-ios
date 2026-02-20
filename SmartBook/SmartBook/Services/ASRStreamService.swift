@@ -23,7 +23,7 @@ class ASRStreamService: NSObject, ObservableObject {
     private var lastTranscriptTime: Date?  // 最后收到识别结果的时间
     private var noAudioTimer: Timer?  // 无音频检测计时器
     private var deepgramConnectionTime: Date?  // Deepgram 连接时间
-    
+
     // ✅ 连接状态从 WebSocketClient 获取
     var isConnected: Bool {
         wsClient?.isConnected ?? false
@@ -55,7 +55,7 @@ class ASRStreamService: NSObject, ObservableObject {
 
         // ✅ 使用 WebSocketClient 统一管理连接
         wsClient = WebSocketClient(url: url)
-        
+
         wsClient?.connect(
             onConnected: {
                 Logger.info("ASR WebSocket 连接成功")
@@ -106,7 +106,7 @@ class ASRStreamService: NSObject, ObservableObject {
             switch type {
             case "connected":
                 Logger.info("WebSocket 连接成功")
-                
+
             case "connecting":
                 let message = json["message"] as? String ?? "正在连接 Deepgram..."
                 Logger.info("📡 \(message)")
@@ -116,10 +116,10 @@ class ASRStreamService: NSObject, ObservableObject {
                 Logger.info("识别已启动，Deepgram 准备就绪")
                 self.deepgramConnectionTime = Date()
                 self.statusMessage = "🎤 开始说话..."
-                
+
                 // 启动无音频检测计时器（15秒后如果没有识别结果，给出提示）
                 self.startNoAudioDetectionTimer()
-                
+
                 // 通知 Deepgram 已就绪，可以开始录音
                 self.onDeepgramReady?()
 
@@ -132,10 +132,10 @@ class ASRStreamService: NSObject, ObservableObject {
 
                 // 更新最后识别时间
                 self.lastTranscriptTime = Date()
-                
+
                 // 清除状态消息
                 self.statusMessage = nil
-                
+
                 // 重置无音频检测计时器
                 self.resetNoAudioDetectionTimer()
 
@@ -153,7 +153,7 @@ class ASRStreamService: NSObject, ObservableObject {
                 let message = json["message"] as? String
                 Logger.info("Deepgram 连接已关闭: \(message ?? "")")
                 self.isRecording = false
-                
+
                 // 如果是在录音过程中断开（非主动停止），显示警告
                 if self.isRecording {
                     self.statusMessage = "⚠️ 语音识别服务已断开，请重新开始"
@@ -161,20 +161,20 @@ class ASRStreamService: NSObject, ObservableObject {
                     // 主动停止的情况，不显示错误
                     self.statusMessage = nil
                 }
-                
+
                 self.stopNoAudioDetectionTimer()
 
             case "error":
                 let errorMsg = json["message"] as? String ?? "Unknown error"
                 let originalError = json["original_error"] as? String
-                
+
                 Logger.error("服务器错误: \(errorMsg)")
                 if let originalError = originalError {
                     Logger.error("原始错误: \(originalError)")
                 }
-                
+
                 self.error = errorMsg
-                
+
                 // 根据错误类型显示不同的状态消息
                 if errorMsg.contains("API") || errorMsg.contains("认证") {
                     self.statusMessage = "❌ API 配置错误，请联系管理员"
@@ -189,7 +189,7 @@ class ASRStreamService: NSObject, ObservableObject {
                 } else {
                     self.statusMessage = "❌ \(errorMsg)"
                 }
-                
+
                 self.stopNoAudioDetectionTimer()
 
             case "pong":
@@ -297,7 +297,7 @@ class ASRStreamService: NSObject, ObservableObject {
 
             // 计算音频音量级别
             self.calculateAudioLevel(buffer: buffer)
-            
+
             // 转换音频格式
             self.convertAndSendAudio(buffer: buffer, converter: converter, targetFormat: targetFormat)
         }
@@ -331,7 +331,7 @@ class ASRStreamService: NSObject, ObservableObject {
         audioLevel = 0.0
         isDetectingAudio = false
         statusMessage = nil
-        
+
         // 停止无音频检测计时器
         stopNoAudioDetectionTimer()
 
@@ -344,28 +344,28 @@ class ASRStreamService: NSObject, ObservableObject {
     }
 
     // MARK: - 音频音量检测
-    
+
     private func calculateAudioLevel(buffer: AVAudioPCMBuffer) {
         guard let channelData = buffer.floatChannelData?[0] else { return }
-        
+
         let frameLength = Int(buffer.frameLength)
         var sum: Float = 0.0
-        
+
         // 计算 RMS（均方根）
         for i in 0..<frameLength {
             let sample = channelData[i]
             sum += sample * sample
         }
-        
+
         let rms = sqrt(sum / Float(frameLength))
         let db = 20 * log10(rms)
-        
+
         // 归一化到 0-1 范围（-60dB 到 0dB）
         let normalizedLevel = max(0, min(1, (db + 60) / 60))
-        
+
         Task { @MainActor in
             self.audioLevel = normalizedLevel
-            
+
             // 检测是否有声音（阈值 0.1）
             let hasAudio = normalizedLevel > 0.1
             if hasAudio != self.isDetectingAudio {
@@ -376,15 +376,15 @@ class ASRStreamService: NSObject, ObservableObject {
             }
         }
     }
-    
+
     // MARK: - 无音频检测计时器
-    
+
     private func startNoAudioDetectionTimer() {
         stopNoAudioDetectionTimer()
-        
+
         noAudioTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            
+
             Task { @MainActor in
                 // 检查是否长时间没有识别结果
                 if let lastTime = self.lastTranscriptTime {
@@ -409,17 +409,17 @@ class ASRStreamService: NSObject, ObservableObject {
             }
         }
     }
-    
+
     private func resetNoAudioDetectionTimer() {
         // 重新启动计时器
         startNoAudioDetectionTimer()
     }
-    
+
     private func stopNoAudioDetectionTimer() {
         noAudioTimer?.invalidate()
         noAudioTimer = nil
     }
-    
+
     // MARK: - 音频处理
 
     private func convertAndSendAudio(

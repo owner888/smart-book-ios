@@ -7,7 +7,7 @@ struct TOCView: View {
     let currentIndex: Int
     let onSelect: (Int) -> Void
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -19,9 +19,9 @@ struct TOCView: View {
                             Text(chapter.title)
                                 .foregroundColor(index == currentIndex ? .green : .primary)
                                 .lineLimit(2)
-                            
+
                             Spacer()
-                            
+
                             if index == currentIndex {
                                 Image(systemName: "checkmark")
                                     .foregroundColor(.green)

@@ -11,7 +11,7 @@ import SwiftUI
 struct MediaItem: Identifiable {
     let id = UUID()
     let type: MediaType
-    
+
     enum MediaType {
         case image(UIImage)
         case document(URL)
@@ -22,7 +22,7 @@ struct MediaItem: Identifiable {
 struct MediaPreviewContainer: View {
     let items: [MediaItem]
     var onRemove: (MediaItem) -> Void
-    
+
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
@@ -47,7 +47,7 @@ struct MediaPreviewContainer: View {
 struct MediaPreviewView: View {
     let image: UIImage
     var onRemove: () -> Void
-    
+
     var body: some View {
         // 图片缩略图
         Image(uiImage: image)
@@ -62,9 +62,9 @@ struct MediaPreviewView: View {
                         Circle()
                             .fill(Color.black.opacity(0.7))
                             .frame(width: 24, height: 24)
-                        
+
                         Image(systemName: "xmark")
-                            .font(.caption2) // 11号 - 动态字号
+                            .font(.caption2)  // 11号 - 动态字号
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                     }
@@ -78,30 +78,30 @@ struct MediaPreviewView: View {
 struct DocumentPreviewView: View {
     let fileName: String
     var onRemove: () -> Void
-    
+
     // 获取文件扩展名
     private var fileExtension: String {
         let ext = (fileName as NSString).pathExtension.uppercased()
         return ext.isEmpty ? "FILE" : ext
     }
-    
+
     var body: some View {
         ZStack {
             // 80x80的背景方块
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(.systemGray5))
                 .frame(width: 80, height: 80)
-            
+
             // 文档图标（居中）
             Image(systemName: "doc.text.fill")
-                .font(.largeTitle) // 大图标 - 动态字号
+                .font(.largeTitle)  // 大图标 - 动态字号
                 .foregroundColor(.white.opacity(0.9))
-            
+
             // 文件类型标签（底部）
             VStack {
                 Spacer()
                 Text(fileExtension)
-                    .font(.caption2) // 11号 - 动态字号
+                    .font(.caption2)  // 11号 - 动态字号
                     .fontWeight(.medium)
                     .foregroundColor(.white)
                     .padding(.horizontal, 10)
@@ -121,9 +121,9 @@ struct DocumentPreviewView: View {
                     Circle()
                         .fill(Color.black.opacity(0.7))
                         .frame(width: 24, height: 24)
-                    
+
                     Image(systemName: "xmark")
-                        .font(.caption2) // 11号 - 动态字号
+                        .font(.caption2)  // 11号 - 动态字号
                         .fontWeight(.bold)
                         .foregroundColor(.white)
                 }
@@ -137,13 +137,13 @@ struct DocumentPreviewView: View {
 #Preview("Image Preview") {
     VStack {
         Spacer()
-        
+
         MediaPreviewView(
             image: UIImage(systemName: "photo")!,
             onRemove: {}
         )
         .padding()
-        
+
         Spacer()
     }
     .background(Color.black)
@@ -152,13 +152,13 @@ struct DocumentPreviewView: View {
 #Preview("Document Preview") {
     VStack {
         Spacer()
-        
+
         DocumentPreviewView(
             fileName: "document.pdf",
             onRemove: {}
         )
         .padding()
-        
+
         Spacer()
     }
     .background(Color.black)

@@ -1,18 +1,18 @@
 // VoiceSelectionView.swift - 语音选择视图
 
-import SwiftUI
 internal import AVFAudio
+import SwiftUI
 
 struct VoiceSelectionView: View {
     @Environment(ThemeManager.self) var themeManager
     @EnvironmentObject var ttsService: TTSService
     @Environment(\.colorScheme) var systemColorScheme
     @State private var selectedVoiceId: String = ""
-    
+
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
-    
+
     var body: some View {
         List(ttsService.availableVoices, id: \.identifier) { voice in
             HStack {
@@ -24,9 +24,9 @@ struct VoiceSelectionView: View {
                         .font(.caption)
                         .foregroundColor(colors.secondaryText)
                 }
-                
+
                 Spacer()
-                
+
                 if voice.identifier == selectedVoiceId {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(.green)

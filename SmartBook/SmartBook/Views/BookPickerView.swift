@@ -13,29 +13,29 @@ struct BookPickerView: View {
     @State private var viewMode: ViewMode = .grid
     var colors: ThemeColors
     let onSelect: (Book) -> Void
-    
+
     private var isPad: Bool {
         UIDevice.current.userInterfaceIdiom == .pad
     }
-    
+
     private var themeColors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
-    
+
     enum ViewMode {
         case grid, list
     }
-    
+
     var filteredBooks: [Book] {
         if searchText.isEmpty {
             return bookState.books
         }
         return bookState.books.filter {
-            $0.title.localizedCaseInsensitiveContains(searchText) ||
-            $0.author.localizedCaseInsensitiveContains(searchText)
+            $0.title.localizedCaseInsensitiveContains(searchText)
+                || $0.author.localizedCaseInsensitiveContains(searchText)
         }
     }
-    
+
     var body: some View {
         if isPad {
             iPadFilePickerStyle
@@ -43,7 +43,7 @@ struct BookPickerView: View {
             iPhoneListStyle
         }
     }
-    
+
     // MARK: - iPad 文件选择器风格
     private var iPadFilePickerStyle: some View {
         NavigationSplitView {
@@ -55,14 +55,14 @@ struct BookPickerView: View {
                     } label: {
                         Label("Recents", systemImage: "clock")
                     }
-                    
+
                     NavigationLink {
                         EmptyView()
                     } label: {
                         Label("Shared", systemImage: "person.2")
                     }
                 }
-                
+
                 Section("Favorites") {
                     NavigationLink {
                         EmptyView()
@@ -70,21 +70,21 @@ struct BookPickerView: View {
                         Label("Downloads", systemImage: "arrow.down.circle")
                     }
                 }
-                
+
                 Section("Locations") {
                     NavigationLink {
                         EmptyView()
                     } label: {
                         Label("iCloud Drive", systemImage: "icloud")
                     }
-                    
+
                     NavigationLink {
                         EmptyView()
                     } label: {
                         Label("On My iPad", systemImage: "ipad")
                     }
                 }
-                
+
                 Section("Tags") {
                     NavigationLink {
                         EmptyView()
@@ -107,7 +107,7 @@ struct BookPickerView: View {
                 ZStack {
                     Color(UIColor.systemGroupedBackground)
                         .ignoresSafeArea()
-                    
+
                     if bookState.isLoading {
                         VStack(spacing: 16) {
                             ProgressView()
@@ -156,9 +156,9 @@ struct BookPickerView: View {
                                             .fill(Color(UIColor.systemGray5))
                                     )
                             }
-                            
+
                             Spacer().frame(width: 12)
-                            
+
                             Button(action: {}) {
                                 Image(systemName: "ellipsis")
                                     .font(.system(size: 16, weight: .semibold))
@@ -171,7 +171,7 @@ struct BookPickerView: View {
                             }
                         }
                     }
-                    
+
                     ToolbarItem(placement: .principal) {
                         Menu {
                             Text("Books")
@@ -185,7 +185,7 @@ struct BookPickerView: View {
                             .foregroundColor(.primary)
                         }
                     }
-                    
+
                     ToolbarItem(placement: .topBarTrailing) {
                         HStack(spacing: 12) {
                             Button(action: {
@@ -196,12 +196,12 @@ struct BookPickerView: View {
                                 Image(systemName: viewMode == .grid ? "list.bullet" : "square.grid.2x2")
                                     .font(.system(size: 16))
                             }
-                            
+
                             Button(action: {}) {
                                 Image(systemName: "magnifyingglass")
                                     .font(.system(size: 16))
                             }
-                            
+
                             Button(action: {
                                 if let book = bookState.books.first(where: { $0.id == selectedBookId }) {
                                     onSelect(book)
@@ -230,12 +230,15 @@ struct BookPickerView: View {
             await loadBooks()
         }
     }
-    
+
     // MARK: - 网格视图
     private var gridView: some View {
-        LazyVGrid(columns: [
-            GridItem(.adaptive(minimum: 120, maximum: 150), spacing: 20)
-        ], spacing: 20) {
+        LazyVGrid(
+            columns: [
+                GridItem(.adaptive(minimum: 120, maximum: 150), spacing: 20)
+            ],
+            spacing: 20
+        ) {
             ForEach(filteredBooks) { book in
                 FileGridItem(
                     book: book,
@@ -255,7 +258,7 @@ struct BookPickerView: View {
         }
         .padding()
     }
-    
+
     // MARK: - 列表视图
     private var listView: some View {
         LazyVStack(spacing: 0) {
@@ -275,7 +278,7 @@ struct BookPickerView: View {
                     onSelect(book)
                     dismiss()
                 }
-                
+
                 if book.id != filteredBooks.last?.id {
                     Divider()
                         .padding(.leading, 60)
@@ -284,13 +287,13 @@ struct BookPickerView: View {
         }
         .padding(.vertical, 8)
     }
-    
+
     // MARK: - iPhone 列表风格（保持原样）
     private var iPhoneListStyle: some View {
         NavigationStack {
             ZStack {
                 themeColors.background.ignoresSafeArea()
-                
+
                 if bookState.isLoading {
                     VStack(spacing: 16) {
                         ProgressView()
@@ -313,12 +316,16 @@ struct BookPickerView: View {
                 } else {
                     List {
                         ForEach(filteredBooks) { book in
-                            BookPickerRow(book: book, colors: themeColors, isSelected: bookState.selectedBook?.id == book.id)
-                                .contentShape(Rectangle())
-                                .onTapGesture {
-                                    onSelect(book)
-                                }
-                                .listRowBackground(themeColors.cardBackground)
+                            BookPickerRow(
+                                book: book,
+                                colors: themeColors,
+                                isSelected: bookState.selectedBook?.id == book.id
+                            )
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                onSelect(book)
+                            }
+                            .listRowBackground(themeColors.cardBackground)
                         }
                     }
                     .listStyle(.insetGrouped)
@@ -348,7 +355,7 @@ struct BookPickerView: View {
             await loadBooks()
         }
     }
-    
+
     func loadBooks() async {
         await bookState.loadBooks(using: bookService)
     }
@@ -359,14 +366,14 @@ struct FileGridItem: View {
     let book: Book
     let isSelected: Bool
     var colors: ThemeColors
-    
+
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color(UIColor.secondarySystemGroupedBackground))
                     .frame(height: 140)
-                
+
                 BookCoverView(book: book, colors: colors)
                     .frame(width: 80, height: 110)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
@@ -380,7 +387,7 @@ struct FileGridItem: View {
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isSelected ? Color.blue.opacity(0.1) : Color.clear)
             )
-            
+
             Text(book.title)
                 .font(.caption)
                 .foregroundColor(.primary)
@@ -397,27 +404,27 @@ struct FileListItem: View {
     let book: Book
     let isSelected: Bool
     var colors: ThemeColors
-    
+
     var body: some View {
         HStack(spacing: 12) {
             BookCoverView(book: book, colors: colors)
                 .frame(width: 40, height: 56)
                 .clipShape(RoundedRectangle(cornerRadius: 4))
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(book.title)
                     .font(.body)
                     .foregroundColor(.primary)
                     .lineLimit(1)
-                
+
                 Text(book.author)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .lineLimit(1)
             }
-            
+
             Spacer()
-            
+
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title3)
@@ -434,26 +441,26 @@ struct BookPickerRow: View {
     let book: Book
     var colors: ThemeColors
     var isSelected: Bool = false
-    
+
     var body: some View {
         HStack(spacing: 12) {
             BookCoverView(book: book, colors: colors)
                 .frame(width: 50, height: 70)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(book.title)
                     .font(.headline)
                     .foregroundColor(colors.primaryText)
                     .lineLimit(2)
-                
+
                 Text(book.author)
                     .font(.caption)
                     .foregroundColor(colors.secondaryText)
             }
-            
+
             Spacer()
-            
+
             if isSelected {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title2)

@@ -11,19 +11,19 @@ struct BookshelfView: View {
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.horizontalSizeClass) var horizontalSizeClass
     @Environment(\.dismiss) var dismiss
-    
+
     // ViewModel - 使用 Environment 依赖注入
     @State private var viewModel: BookshelfViewModel?
-    
+
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
-    
+
     var body: some View {
         mainContent
             .onAppear(perform: setupViewModel)
     }
-    
+
     private var mainContent: some View {
         NavigationStack {
             ZStack {
@@ -41,14 +41,24 @@ struct BookshelfView: View {
                 allowsMultipleSelection: true,
                 onCompletion: handleImportResult
             )
-            .alert(L("library.delete.title"), isPresented: deleteAlertBinding, actions: deleteAlertActions, message: deleteAlertMessage)
-            .alert(L("library.import.failed"), isPresented: errorAlertBinding, actions: errorAlertActions, message: errorAlertMessage)
+            .alert(
+                L("library.delete.title"),
+                isPresented: deleteAlertBinding,
+                actions: deleteAlertActions,
+                message: deleteAlertMessage
+            )
+            .alert(
+                L("library.import.failed"),
+                isPresented: errorAlertBinding,
+                actions: errorAlertActions,
+                message: errorAlertMessage
+            )
             .fullScreenCover(item: readerCoverBinding) { book in
                 ReaderView(book: book)
             }
         }
     }
-    
+
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .navigationBarLeading) {
@@ -59,7 +69,7 @@ struct BookshelfView: View {
                     .foregroundColor(colors.primaryText)
             }
         }
-        
+
         ToolbarItem(placement: .navigationBarTrailing) {
             Button {
                 viewModel?.showImporter()
@@ -69,76 +79,76 @@ struct BookshelfView: View {
             }
         }
     }
-    
+
     private func setupViewModel() {
         if viewModel == nil {
             viewModel = BookshelfViewModel(bookService: bookService, bookState: bookState)
         }
     }
-    
+
     private func loadBooksTask() async {
         if let viewModel = viewModel {
             await viewModel.loadBooks()
         }
     }
-    
+
     private func handleImportResult(_ result: Result<[URL], Error>) {
         Task {
             await viewModel?.handleImport(result)
         }
     }
-    
+
     private var importerBinding: Binding<Bool> {
         Binding(
             get: { viewModel?.showingImporter ?? false },
             set: { viewModel?.showingImporter = $0 }
         )
     }
-    
+
     private var deleteAlertBinding: Binding<Bool> {
         Binding(
             get: { viewModel?.showingDeleteAlert ?? false },
             set: { viewModel?.showingDeleteAlert = $0 }
         )
     }
-    
+
     @ViewBuilder
     private func deleteAlertActions() -> some View {
-        Button(L("common.cancel"), role: .cancel) { }
+        Button(L("common.cancel"), role: .cancel) {}
         Button(L("common.delete"), role: .destructive) {
             if let viewModel = viewModel, let book = viewModel.bookToDelete {
                 viewModel.deleteBook(book)
             }
         }
     }
-    
+
     private func deleteAlertMessage() -> some View {
         Text(L("library.delete.message"))
     }
-    
+
     private var errorAlertBinding: Binding<Bool> {
         Binding(
             get: { viewModel?.showingError ?? false },
             set: { viewModel?.showingError = $0 }
         )
     }
-    
+
     @ViewBuilder
     private func errorAlertActions() -> some View {
-        Button(L("common.ok"), role: .cancel) { }
+        Button(L("common.ok"), role: .cancel) {}
     }
-    
+
     private func errorAlertMessage() -> some View {
         Text(viewModel?.importError ?? L("error.generic"))
     }
-    
+
     private var readerCoverBinding: Binding<Book?> {
         Binding(
             get: { viewModel?.selectedBookForReading },
             set: { viewModel?.selectedBookForReading = $0 }
         )
     }
-    
+
     @ViewBuilder
     private var contentView: some View {
         if bookState.isLoading {
@@ -149,7 +159,7 @@ struct BookshelfView: View {
             bookGridView
         }
     }
-    
+
     private var loadingView: some View {
         VStack(spacing: 16) {
             ProgressView()
@@ -159,11 +169,11 @@ struct BookshelfView: View {
                 .foregroundColor(colors.secondaryText)
         }
     }
-    
+
     private var emptyView: some View {
         VStack(spacing: 20) {
             Image(systemName: "books.vertical")
-                .font(.system(size: 60)) // 装饰性大图标
+                .font(.system(size: 60))  // 装饰性大图标
                 .foregroundColor(colors.secondaryText)
             Text(L("library.empty"))
                 .font(.headline)
@@ -171,7 +181,7 @@ struct BookshelfView: View {
             Text(L("library.empty.tip"))
                 .font(.caption)
                 .foregroundColor(colors.secondaryText.opacity(0.7))
-            
+
             Button {
                 viewModel?.showImporter()
             } label: {
@@ -185,7 +195,7 @@ struct BookshelfView: View {
             }
         }
     }
-    
+
     private var bookGridView: some View {
         ScrollView {
             HStack {
@@ -196,7 +206,7 @@ struct BookshelfView: View {
             }
             .padding(.horizontal)
             .padding(.top, 8)
-            
+
             LazyVGrid(columns: gridColumns, spacing: horizontalSizeClass == .regular ? 36 : 24) {
                 ForEach(bookState.books) { book in
                     BookCard(book: book, isUserImported: viewModel?.isUserImportedBook(book) ?? false, colors: colors)
@@ -212,7 +222,7 @@ struct BookshelfView: View {
             .padding(.vertical)
         }
     }
-    
+
     @ViewBuilder
     private func contextMenuItems(for book: Book) -> some View {
         if book.filePath != nil {
@@ -222,13 +232,13 @@ struct BookshelfView: View {
                 Label(L("reader.title"), systemImage: "book")
             }
         }
-        
+
         Button {
             bookState.selectedBook = book
         } label: {
             Label(L("chat.title"), systemImage: "bubble.left.and.bubble.right")
         }
-        
+
         if viewModel?.isUserImportedBook(book) ?? false {
             Button(role: .destructive) {
                 viewModel?.requestDelete(book)
@@ -237,7 +247,7 @@ struct BookshelfView: View {
             }
         }
     }
-    
+
     private var gridColumns: [GridItem] {
         if horizontalSizeClass == .regular {
             return Array(repeating: GridItem(.flexible(), spacing: 28), count: 6)
@@ -252,21 +262,21 @@ struct BookCard: View {
     let book: Book
     var isUserImported: Bool = false
     var colors: ThemeColors = .dark
-    
+
     private let coverAspectRatio: CGFloat = 2.0 / 3.0
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             GeometryReader { geometry in
                 let width = geometry.size.width
                 let height = width / coverAspectRatio
-                
+
                 ZStack(alignment: .topTrailing) {
                     BookCoverView(book: book, colors: colors)
                         .frame(width: width, height: height)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
                         .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
-                    
+
                     if isUserImported {
                         Text(L("library.import.success"))
                             .font(.caption2)
@@ -280,13 +290,13 @@ struct BookCard: View {
                 }
             }
             .aspectRatio(coverAspectRatio, contentMode: .fit)
-            
+
             Text(book.title)
                 .font(.subheadline)
                 .fontWeight(.medium)
                 .lineLimit(2)
                 .foregroundColor(colors.primaryText)
-            
+
             Text(book.author)
                 .font(.caption)
                 .foregroundColor(colors.secondaryText)

@@ -603,8 +603,9 @@ struct ChatView: View {
                 0
             )
             adaptationBottom = viewModel.scrollBottom
-            if  let messageId = viewModel.answerMessageId,
-                let answerHeight = messageHeights[messageId] {
+            if let messageId = viewModel.answerMessageId,
+                let answerHeight = messageHeights[messageId]
+            {
                 answerInitialHeight = answerHeight
                 viewModel.scrollBottom -= answerHeight
             }

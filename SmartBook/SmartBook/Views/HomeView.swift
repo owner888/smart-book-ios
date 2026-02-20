@@ -8,32 +8,34 @@ struct HomeView: View {
     @Environment(BookService.self) var bookService
     @Environment(CheckInService.self) var checkInService
     @Environment(\.colorScheme) var systemColorScheme
-    
+
     // ViewModel
     @State private var viewModel: HomeViewModel
-    
+
     init() {
-        _viewModel = State(wrappedValue: HomeViewModel(
-            bookService: BookService(),
-            checkInService: CheckInService()
-        ))
+        _viewModel = State(
+            wrappedValue: HomeViewModel(
+                bookService: BookService(),
+                checkInService: CheckInService()
+            )
+        )
     }
-    
+
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 colors.background.ignoresSafeArea()
-                
+
                 ScrollView {
                     VStack(spacing: 24) {
                         // 阅读时间统计
                         ReadingStatsCard(stats: viewModel.readingStats, colors: colors)
                             .padding(.horizontal)
-                        
+
                         // 继续阅读
                         if !viewModel.recentBooks.isEmpty {
                             ContinueReadingSection(
@@ -43,7 +45,7 @@ struct HomeView: View {
                                 viewModel.selectBookForReading(book)
                             }
                         }
-                        
+
                         // 收藏
                         if !viewModel.favoriteBooks.isEmpty {
                             FavoritesSection(
@@ -53,7 +55,7 @@ struct HomeView: View {
                                 viewModel.selectBookForReading(book)
                             }
                         }
-                        
+
                         // 空状态
                         if viewModel.recentBooks.isEmpty && viewModel.favoriteBooks.isEmpty {
                             EmptyHomeState(colors: colors)
@@ -82,11 +84,11 @@ struct HomeView: View {
                 ReaderView(book: book)
             }
             .alert(viewModel.checkInMessage, isPresented: $viewModel.showingCheckInAlert) {
-                Button(L("common.ok"), role: .cancel) { }
+                Button(L("common.ok"), role: .cancel) {}
             }
         }
     }
-    
+
     private func performCheckIn() {
         Task {
             await viewModel.checkIn()

@@ -14,7 +14,7 @@ class TTSStreamService: NSObject, ObservableObject {
     private var wsClient: WebSocketClient?
     private var audioPlayer: AudioStreamPlayer?
     private var audioEncoding: AudioEncoding = .mp3  // 默认使用 MP3
-    
+
     // ✅ 连接状态直接从 WebSocketClient 获取
     var isConnected: Bool {
         wsClient?.isConnected ?? false
@@ -55,7 +55,7 @@ class TTSStreamService: NSObject, ObservableObject {
 
         // ✅ 使用 WebSocketClient 统一管理连接
         wsClient = WebSocketClient(url: url)
-        
+
         wsClient?.connect(
             onConnected: {
                 Logger.info("TTS WebSocket 连接成功")

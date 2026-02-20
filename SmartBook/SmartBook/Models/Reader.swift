@@ -4,10 +4,10 @@ import SwiftUI
 
 // MARK: - 翻页动画类型
 enum PageTurnStyle: Int, Codable, CaseIterable {
-    case slide = 0      // 滑动
-    case curl = 1       // 卷页（3D翻页效果）
-    case fade = 2       // 淡入淡出
-    
+    case slide = 0  // 滑动
+    case curl = 1  // 卷页（3D翻页效果）
+    case fade = 2  // 淡入淡出
+
     var name: String {
         switch self {
         case .slide: return L("reader.pageTurnStyle.slide")
@@ -15,16 +15,16 @@ enum PageTurnStyle: Int, Codable, CaseIterable {
         case .fade: return L("reader.pageTurnStyle.fade")
         }
     }
-    
+
     var icon: String {
         switch self {
         case .slide: return "arrow.left.arrow.right"
         case .curl: return "book.pages"
         case .fade: return "sparkles"
         }
-        
+
     }
-    
+
     var description: String {
         switch self {
         case .slide: return L("reader.pageTurnStyle.slide.desc")
@@ -39,17 +39,17 @@ struct ReaderSettings: Codable {
     var fontSize: CGFloat = 18
     var fontFamily: String = "System"
     var lineSpacing: CGFloat = 8
-    var backgroundColor: String = "dark" // dark, sepia, light
+    var backgroundColor: String = "dark"  // dark, sepia, light
     var brightness: Double = 1.0
     var textAlignment: TextAlignment = .leading
     var pageTurnStyle: PageTurnStyle = .curl
-    
+
     enum CodingKeys: String, CodingKey {
         case fontSize, fontFamily, lineSpacing, backgroundColor, brightness, textAlignment, pageTurnStyle
     }
-    
+
     init() {}
-    
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         fontSize = try container.decodeIfPresent(CGFloat.self, forKey: .fontSize) ?? 18
@@ -61,7 +61,7 @@ struct ReaderSettings: Codable {
         textAlignment = TextAlignment(rawValue: alignmentRaw) ?? .leading
         pageTurnStyle = try container.decodeIfPresent(PageTurnStyle.self, forKey: .pageTurnStyle) ?? .curl
     }
-    
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(fontSize, forKey: .fontSize)
@@ -72,23 +72,24 @@ struct ReaderSettings: Codable {
         try container.encode(textAlignment.rawValue, forKey: .textAlignment)
         try container.encode(pageTurnStyle, forKey: .pageTurnStyle)
     }
-    
+
     // 保存设置
     func save() {
         if let data = try? JSONEncoder().encode(self) {
             UserDefaults.standard.set(data, forKey: "ReaderSettings")
         }
     }
-    
+
     // 加载设置
     static func load() -> ReaderSettings {
         guard let data = UserDefaults.standard.data(forKey: "ReaderSettings"),
-              let settings = try? JSONDecoder().decode(ReaderSettings.self, from: data) else {
+            let settings = try? JSONDecoder().decode(ReaderSettings.self, from: data)
+        else {
             return ReaderSettings()
         }
         return settings
     }
-    
+
     // 根据设置获取背景色
     var bgColor: Color {
         switch backgroundColor {
@@ -97,7 +98,7 @@ struct ReaderSettings: Codable {
         default: return Color(hex: "1a1a2e")
         }
     }
-    
+
     // 根据设置获取文字颜色
     var txtColor: Color {
         switch backgroundColor {
@@ -106,7 +107,7 @@ struct ReaderSettings: Codable {
         default: return Color.white
         }
     }
-    
+
     // 获取当前字体
     var font: Font {
         fontFamily == "System" ? .system(size: fontSize) : .custom(fontFamily, size: fontSize)
@@ -122,7 +123,7 @@ extension TextAlignment {
         case .trailing: return 2
         }
     }
-    
+
     init?(rawValue: Int) {
         switch rawValue {
         case 0: self = .leading
@@ -140,16 +141,17 @@ struct ReadingProgress: Codable {
     var pageIndex: Int
     var scrollOffset: CGFloat
     var lastReadDate: Date
-    
+
     static func load(for bookId: String) -> ReadingProgress? {
         let key = "ReadingProgress_\(bookId)"
         guard let data = UserDefaults.standard.data(forKey: key),
-              let progress = try? JSONDecoder().decode(ReadingProgress.self, from: data) else {
+            let progress = try? JSONDecoder().decode(ReadingProgress.self, from: data)
+        else {
             return nil
         }
         return progress
     }
-    
+
     func save() {
         let key = "ReadingProgress_\(bookId)"
         if let data = try? JSONEncoder().encode(self) {

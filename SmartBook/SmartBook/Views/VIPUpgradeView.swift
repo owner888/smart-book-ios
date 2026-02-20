@@ -10,7 +10,7 @@ import SwiftUI
 struct VIPUpgradeView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
-    
+
     var body: some View {
         NavigationView {
             VStack(spacing: 16) {
@@ -26,9 +26,9 @@ struct VIPUpgradeView: View {
                                 )
                             )
                             .frame(width: 80, height: 80)
-                        
+
                         Image(systemName: "bolt.circle.fill")
-                            .font(.system(size: 60)) // 装饰性大图标
+                            .font(.system(size: 60))  // 装饰性大图标
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [.yellow, .orange],
@@ -37,13 +37,13 @@ struct VIPUpgradeView: View {
                                 )
                             )
                     }
-                    
+
                     Text(L("vip.title"))
                         .font(.title)
                         .fontWeight(.bold)
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
-                    
+
                     Text(L("vip.subtitle"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -51,7 +51,7 @@ struct VIPUpgradeView: View {
                         .minimumScaleFactor(0.5)
                 }
                 .padding(.top, 20)
-                
+
                 // 功能列表 - 卡片样式
                 VStack(spacing: 14) {
                     FeatureRow(
@@ -60,21 +60,21 @@ struct VIPUpgradeView: View {
                         title: L("vip.feature.pro.title"),
                         description: L("vip.feature.pro.desc")
                     )
-                    
+
                     FeatureRow(
                         icon: "sparkles",
                         iconColor: .orange,
                         title: L("vip.feature.unlimited.title"),
                         description: L("vip.feature.unlimited.desc")
                     )
-                    
+
                     FeatureRow(
                         icon: "clock.arrow.circlepath",
                         iconColor: .green,
                         title: L("vip.feature.priority.title"),
                         description: L("vip.feature.priority.desc")
                     )
-                    
+
                     FeatureRow(
                         icon: "doc.text.magnifyingglass",
                         iconColor: .blue,
@@ -90,12 +90,12 @@ struct VIPUpgradeView: View {
                         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
                 )
                 .padding(.horizontal)
-                    
+
                 // 价格区域
                 VStack(spacing: 8) {
                     Text(L("vip.price"))
-                        .font(.title).fontWeight(.bold) // 大标题 - 动态字号
-                    
+                        .font(.title).fontWeight(.bold)  // 大标题 - 动态字号
+
                     Text(L("vip.trial"))
                         .font(.caption)
                         .padding(.horizontal, 12)
@@ -104,7 +104,7 @@ struct VIPUpgradeView: View {
                         .clipShape(Capsule())
                 }
                 .padding(.top, 8)
-                
+
                 // 订阅按钮
                 Button {
                     // TODO: 实现订阅逻辑
@@ -132,12 +132,12 @@ struct VIPUpgradeView: View {
                 .buttonStyle(ScaleButtonStyle())
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
-                
+
                 // 说明文本
                 Text(L("vip.cancelAnytime"))
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                
+
                 Spacer(minLength: 20)
             }
             .navigationBarTitleDisplayMode(.inline)
@@ -170,7 +170,7 @@ struct FeatureRow: View {
     var iconColor: Color = .blue
     let title: String
     let description: String
-    
+
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
@@ -181,19 +181,19 @@ struct FeatureRow: View {
                     Circle()
                         .fill(iconColor.opacity(0.15))
                 )
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.headline)
                     .fontWeight(.semibold)
-                
+
                 Text(description)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
                     .minimumScaleFactor(0.85)
             }
-            
+
             Spacer(minLength: 0)
         }
     }

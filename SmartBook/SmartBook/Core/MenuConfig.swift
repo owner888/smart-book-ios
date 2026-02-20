@@ -4,33 +4,35 @@ import Foundation
 
 class MenuConfig {
     static let medias: [MediaMenuType] = [.camera, .photo, .file, .createPhoto, .editPhoto]
-    
+
     // AI 模型配置（动态从服务器加载）
     @MainActor
     static var aiFunctions: [AIModelFunctionType] = [.heavy, .expert, .fast, .auto]
-    
+
     // 助手配置（动态从服务器加载）
     @MainActor
     static var assistants: [AssistantType] = [.chat, .ask, .continue]
-    
-    static let topFunctions: [TopFunctionType] = [.getSuper, .createVideo, .editPhoto, .voiceMode, .camera, .analysisDocument, .custom]
-    
+
+    static let topFunctions: [TopFunctionType] = [
+        .getSuper, .createVideo, .editPhoto, .voiceMode, .camera, .analysisDocument, .custom,
+    ]
+
     struct Config {
         var icon: String
         var title: String
         var summary: String? = nil
         var builtIn: Bool = true  // icon是否内置
     }
-    
+
     // MARK: - 动态加载助手
-    
+
     /// 从服务器加载助手配置
     @MainActor
     static func loadAssistants() async {
         do {
             let assistantService = AssistantService.shared
             try await assistantService.loadAssistants()
-            
+
             // 将助手转换为 AssistantType，并保持静态枚举映射
             assistants = assistantService.assistants.map { assistant in
                 // 对于已知的静态助手 ID，使用静态枚举以保持兼容性
@@ -51,7 +53,7 @@ class MenuConfig {
                     return .dynamic(dynamicAssistant)
                 }
             }
-            
+
             Logger.debug("✅ 成功加载 \(assistants.count) 个助手")
         } catch {
             Logger.error("⚠️ 加载助手失败，使用默认配置: \(error.localizedDescription)")
@@ -59,9 +61,9 @@ class MenuConfig {
             assistants = [.chat, .ask, .continue]
         }
     }
-    
+
     // MARK: - 动态加载 AI 模型
-    
+
     /// 从服务器加载 AI 模型配置
     @MainActor
     static func loadAIModels() async {
@@ -69,18 +71,18 @@ class MenuConfig {
             // 使用 ChatService 的单例 ModelService
             let modelService = ModelService.shared
             try await modelService.loadModels()
-            
+
             // 先保留固定的4个选项
             var functions: [AIModelFunctionType] = [.heavy, .expert, .fast, .auto]
-            
+
             // 固定按钮对应的模型ID
             let fixedModelIds = [
-                "gemini-2.5-pro",           // Heavy
-                "gemini-2.5-flash",         // Expert
-                "gemini-2.5-flash-lite",    // Fast
-                "gemini-2.0-flash"          // Auto
+                "gemini-2.5-pro",  // Heavy
+                "gemini-2.5-flash",  // Expert
+                "gemini-2.5-flash-lite",  // Fast
+                "gemini-2.0-flash",  // Auto
             ]
-            
+
             // 将从服务器获取的模型分为两类：
             // 1. 固定的4个模型（用于覆盖默认配置）- 不显示，只用于更新按钮信息
             // 2. 其他模型（如Gemini 3系列）- 显示为dynamic类型
@@ -102,7 +104,7 @@ class MenuConfig {
                 default:
                     icon = "cpu"
                 }
-                
+
                 let dynamicModel: DynamicAIModel = (
                     id: model.id,
                     name: model.name,
@@ -111,11 +113,11 @@ class MenuConfig {
                 )
                 return .dynamic(dynamicModel)
             }
-            
+
             // 追加动态模型（额外的模型）到固定选项后面
             functions.append(contentsOf: dynamicModels)
             aiFunctions = functions
-            
+
             print("✅ 成功加载 4个固定按钮 + \(dynamicModels.count) 个额外模型（从API: \(modelService.models.count)个）")
         } catch {
             print("⚠️ 加载 AI 模型失败，使用默认配置: \(error.localizedDescription)")
@@ -123,16 +125,16 @@ class MenuConfig {
             aiFunctions = [.heavy, .expert, .fast, .auto]
         }
     }
-    
+
     // MARK: - 媒体菜单类型
-    
+
     enum MediaMenuType {
         case camera
         case photo
         case file
         case createPhoto
         case editPhoto
-        
+
         var config: Config {
             switch self {
             case .camera:
@@ -148,12 +150,12 @@ class MenuConfig {
             }
         }
     }
-    
+
     // MARK: - AI 模型功能类型
-    
+
     // 类型别名，避免命名歧义
     typealias DynamicAIModel = (id: String, name: String, icon: String, summary: String)
-    
+
     enum AIModelFunctionType: Equatable {
         case `super`
         case heavy
@@ -161,7 +163,7 @@ class MenuConfig {
         case fast
         case auto
         case dynamic(DynamicAIModel)  // 从服务器动态加载的模型
-        
+
         var config: Config {
             switch self {
             case .super:
@@ -183,7 +185,7 @@ class MenuConfig {
                 )
             }
         }
-        
+
         // 获取模型ID（用于API调用）
         // 注意：.super不在这里，因为它只用于VIP升级UI，不会被选中
         var modelId: String {
@@ -202,15 +204,15 @@ class MenuConfig {
                 fatalError("❌ .super不应该被选中，它只用于VIP升级UI")
             }
         }
-        
+
         // Equatable conformance
         static func == (lhs: AIModelFunctionType, rhs: AIModelFunctionType) -> Bool {
             switch (lhs, rhs) {
             case (.super, .super),
-                 (.heavy, .heavy),
-                 (.expert, .expert),
-                 (.fast, .fast),
-                 (.auto, .auto):
+                (.heavy, .heavy),
+                (.expert, .expert),
+                (.fast, .fast),
+                (.auto, .auto):
                 return true
             case (.dynamic(let lModel), .dynamic(let rModel)):
                 return lModel.id == rModel.id
@@ -219,18 +221,18 @@ class MenuConfig {
             }
         }
     }
-    
+
     // MARK: - 助手类型
-    
+
     // 类型别名
     typealias DynamicAssistant = (id: String, name: String, avatar: String)
-    
+
     enum AssistantType: Equatable {
         case chat
         case ask
         case `continue`
         case dynamic(DynamicAssistant)  // 从服务器动态加载的助手
-        
+
         var config: Config {
             switch self {
             case .chat:
@@ -247,13 +249,13 @@ class MenuConfig {
                 )
             }
         }
-        
+
         // Equatable conformance
         static func == (lhs: AssistantType, rhs: AssistantType) -> Bool {
             switch (lhs, rhs) {
             case (.chat, .chat),
-                 (.ask, .ask),
-                 (.continue, .continue):
+                (.ask, .ask),
+                (.continue, .continue):
                 return true
             case (.dynamic(let lAssistant), .dynamic(let rAssistant)):
                 return lAssistant.id == rAssistant.id
@@ -262,9 +264,9 @@ class MenuConfig {
             }
         }
     }
-    
+
     // MARK: - 顶部功能类型
-    
+
     enum TopFunctionType {
         case getSuper
         case createVideo
@@ -273,7 +275,7 @@ class MenuConfig {
         case camera
         case analysisDocument
         case custom
-        
+
         var config: Config {
             switch self {
             case .getSuper:

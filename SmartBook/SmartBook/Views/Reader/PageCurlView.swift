@@ -13,7 +13,7 @@ struct PageCurlView: View {
     let settings: ReaderSettings
     let onPageChange: () -> Void
     let onTapCenter: () -> Void
-    
+
     var body: some View {
         PageCurlViewController(
             allPages: allPages,
@@ -37,62 +37,67 @@ struct PageCurlViewController: UIViewControllerRepresentable {
     let settings: ReaderSettings
     let onPageChange: () -> Void
     let onTapCenter: () -> Void
-    
+
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
-    
+
     func makeUIViewController(context: Context) -> UIPageViewController {
         let pageVC = UIPageViewController(
             transitionStyle: .pageCurl,
             navigationOrientation: .horizontal,
             options: [.spineLocation: NSNumber(value: UIPageViewController.SpineLocation.min.rawValue)]
         )
-        
+
         pageVC.delegate = context.coordinator
         pageVC.dataSource = context.coordinator
         pageVC.view.backgroundColor = UIColor(settings.bgColor)
-        
+
         // 设置初始页面
         if let initialVC = context.coordinator.viewController(at: currentPageIndex) {
             pageVC.setViewControllers([initialVC], direction: .forward, animated: false)
         }
-        
+
         // 添加点击手势
-        let tapGesture = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleTap(_:)))
+        let tapGesture = UITapGestureRecognizer(
+            target: context.coordinator,
+            action: #selector(Coordinator.handleTap(_:))
+        )
         pageVC.view.addGestureRecognizer(tapGesture)
-        
+
         return pageVC
     }
-    
+
     func updateUIViewController(_ pageVC: UIPageViewController, context: Context) {
         context.coordinator.parent = self
-        
+
         // 页面索引变化时更新显示
         if let currentVC = pageVC.viewControllers?.first as? PageContentViewController,
-           currentVC.pageIndex != currentPageIndex {
+            currentVC.pageIndex != currentPageIndex
+        {
             if let newVC = context.coordinator.viewController(at: currentPageIndex) {
-                let direction: UIPageViewController.NavigationDirection = currentVC.pageIndex < currentPageIndex ? .forward : .reverse
+                let direction: UIPageViewController.NavigationDirection =
+                    currentVC.pageIndex < currentPageIndex ? .forward : .reverse
                 pageVC.setViewControllers([newVC], direction: direction, animated: true)
             }
         }
     }
-    
+
     // MARK: - Coordinator
     class Coordinator: NSObject, UIPageViewControllerDelegate, UIPageViewControllerDataSource {
         var parent: PageCurlViewController
-        
+
         init(_ parent: PageCurlViewController) {
             self.parent = parent
         }
-        
+
         func viewController(at index: Int) -> PageContentViewController? {
             guard index >= 0 && index < parent.allPages.count else { return nil }
-            
+
             let vc = PageContentViewController()
             vc.pageIndex = index
             vc.view.backgroundColor = UIColor(parent.settings.bgColor)
-            
+
             // 使用共享的 PageContentView
             let pageView = PageContentView(
                 pageIndex: index,
@@ -101,44 +106,56 @@ struct PageCurlViewController: UIViewControllerRepresentable {
                 width: parent.pageWidth,
                 height: parent.pageHeight
             )
-            
+
             let hostingController = UIHostingController(rootView: AnyView(pageView))
             hostingController.view.backgroundColor = .clear
             hostingController.view.frame = vc.view.bounds
             hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            
+
             vc.addChild(hostingController)
             vc.view.addSubview(hostingController.view)
             hostingController.didMove(toParent: vc)
-            
+
             return vc
         }
-        
+
         // MARK: - UIPageViewControllerDataSource
-        func pageViewController(_ pageViewController: UIPageViewController, viewControllerBefore viewController: UIViewController) -> UIViewController? {
+        func pageViewController(
+            _ pageViewController: UIPageViewController,
+            viewControllerBefore viewController: UIViewController
+        ) -> UIViewController? {
             guard let vc = viewController as? PageContentViewController else { return nil }
             return self.viewController(at: vc.pageIndex - 1)
         }
-        
-        func pageViewController(_ pageViewController: UIPageViewController, viewControllerAfter viewController: UIViewController) -> UIViewController? {
+
+        func pageViewController(
+            _ pageViewController: UIPageViewController,
+            viewControllerAfter viewController: UIViewController
+        ) -> UIViewController? {
             guard let vc = viewController as? PageContentViewController else { return nil }
             return self.viewController(at: vc.pageIndex + 1)
         }
-        
+
         // MARK: - UIPageViewControllerDelegate
-        func pageViewController(_ pageViewController: UIPageViewController, didFinishAnimating finished: Bool, previousViewControllers: [UIViewController], transitionCompleted completed: Bool) {
+        func pageViewController(
+            _ pageViewController: UIPageViewController,
+            didFinishAnimating finished: Bool,
+            previousViewControllers: [UIViewController],
+            transitionCompleted completed: Bool
+        ) {
             if completed,
-               let currentVC = pageViewController.viewControllers?.first as? PageContentViewController {
+                let currentVC = pageViewController.viewControllers?.first as? PageContentViewController
+            {
                 parent.currentPageIndex = currentVC.pageIndex
                 parent.onPageChange()
             }
         }
-        
+
         // MARK: - 手势处理
         @objc func handleTap(_ gesture: UITapGestureRecognizer) {
             let location = gesture.location(in: gesture.view)
             let width = gesture.view?.bounds.width ?? 0
-            
+
             if location.x < width * 0.25 {
                 // 左侧点击 - 上一页
                 if parent.currentPageIndex > 0 {

@@ -9,7 +9,7 @@ struct EPUBChapter: Identifiable {
     let href: String
     var content: String
     let order: Int
-    
+
     init(id: String, title: String, href: String, content: String = "", order: Int) {
         self.id = id
         self.title = title

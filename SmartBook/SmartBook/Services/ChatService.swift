@@ -58,31 +58,35 @@ class StreamingChatService: NSObject {
 
         // 构建 OpenAI 格式的 messages 数组
         var messagesArray: [[String: Any]] = []
-        
+
         // 添加历史消息
         for msg in history {
             messagesArray.append([
                 "role": msg.role == .user ? "user" : "assistant",
-                "content": msg.content
+                "content": msg.content,
             ])
         }
-        
+
         // 添加当前消息
         messagesArray.append([
             "role": "user",
-            "content": message
+            "content": message,
         ])
 
         // 从配置读取工具开关（如果没有设置过，使用默认值）
-        var enableSearch = UserDefaults.standard.object(forKey: AppConfig.Keys.enableGoogleSearch) as? Bool ?? AppConfig.DefaultValues.enableGoogleSearch
-        var enableTools = UserDefaults.standard.object(forKey: AppConfig.Keys.enableMCPTools) as? Bool ?? AppConfig.DefaultValues.enableMCPTools
-        
+        var enableSearch =
+            UserDefaults.standard.object(forKey: AppConfig.Keys.enableGoogleSearch) as? Bool
+            ?? AppConfig.DefaultValues.enableGoogleSearch
+        var enableTools =
+            UserDefaults.standard.object(forKey: AppConfig.Keys.enableMCPTools) as? Bool
+            ?? AppConfig.DefaultValues.enableMCPTools
+
         // ✅ 互斥检查（Gemini 不支持同时使用）
         if enableSearch && enableTools {
             // 优先使用 MCP Tools
             enableSearch = false
         }
-        
+
         // 构建统一的请求体（OpenAI 格式 + 扩展字段）
         var body: [String: Any] = [
             "messages": messagesArray,
@@ -92,7 +96,7 @@ class StreamingChatService: NSObject {
             "rag": enableRag,
             "model": model,
             "assistant_id": assistant.id,
-            "language": Locale.current.language.languageCode?.identifier ?? "en", // 传递当前语言
+            "language": Locale.current.language.languageCode?.identifier ?? "en",  // 传递当前语言
         ]
 
         // 添加摘要（如果有）
@@ -108,7 +112,7 @@ class StreamingChatService: NSObject {
 
         // ✅ 使用 HTTPClient 创建 SSE 流式请求
         let task = HTTPClient.shared.streamingPost("/v1/chat/\(endpoint)", body: body, delegate: self)
-        
+
         // 🐛 调试：打印发送的请求数据
         print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         print("📤 发送聊天请求到后端")

@@ -49,10 +49,10 @@ struct InputToolBar: View {
                         Logger.info("🗑️ Document removed: \(url.lastPathComponent), remaining: \(mediaItems.count - 1)")
                     }
                     mediaItems.removeAll { $0.id == item.id }
-                }.padding(.top,10)
-                .transition(.move(edge: .top).combined(with: .opacity))
+                }.padding(.top, 10)
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
-            
+
             // 显示 ASR 状态消息（如果有）
             if let statusMessage = asrStreamService.statusMessage {
                 HStack(spacing: 6) {

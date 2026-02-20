@@ -5,9 +5,8 @@
 //  Created by Andrew on 2025/12/15.
 //
 
-import SwiftUI
 import Combine
-
+import SwiftUI
 
 struct CustomMenuView<Label: View, Content: View>: View, Animatable {
     var alignment: Alignment
@@ -18,7 +17,6 @@ struct CustomMenuView<Label: View, Content: View>: View, Animatable {
     @ViewBuilder var label: Label
     @EnvironmentObject private var obser: CustomMenuObservable
     @State private var contentSize = CGSize.zero
-
 
     var body: some View {
         let widthDiff = contentSize.width - labelSize.width
@@ -52,26 +50,26 @@ struct CustomMenuView<Label: View, Content: View>: View, Animatable {
                     .opacity(1 - labelOpacity)
                     .frame(width: labelSize.width, height: labelSize.height)
             }.clipped().compositingGroup()
-            .scaleEffect(
-                x: 1 + (blurProgress * 0.35),
-                y: 1 + (blurProgress * 0.45),
-                anchor: scaleAnchor
-            ).offset(y: offset * blurProgress).frame(
-                maxWidth: .infinity,
-                maxHeight: .infinity,
-                alignment: alignment
-            ).applyEdge(edgeInsets, alignment: alignment)
+                .scaleEffect(
+                    x: 1 + (blurProgress * 0.35),
+                    y: 1 + (blurProgress * 0.45),
+                    anchor: scaleAnchor
+                ).offset(y: offset * blurProgress).frame(
+                    maxWidth: .infinity,
+                    maxHeight: .infinity,
+                    alignment: alignment
+                ).applyEdge(edgeInsets, alignment: alignment)
         }.opacity(obser.progress > 0.1 ? 1 : obser.progress / 0.1)
-        .onAppear {
-            withAnimation(
-                .easeInOut(duration: 0.3),
-                {
-                    obser.progress = 1.0
-                }
-            )
-        }
+            .onAppear {
+                withAnimation(
+                    .easeInOut(duration: 0.3),
+                    {
+                        obser.progress = 1.0
+                    }
+                )
+            }
     }
-    
+
     func closeAction() {
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 0.25,
@@ -135,11 +133,11 @@ struct CustomMenuView<Label: View, Content: View>: View, Animatable {
 class CustomMenuObservable: ObservableObject {
     @Published var progress: CGFloat = 0
     var onClose: (() -> Void)?
-    
+
     func willShow() {
         progress = 0
     }
-    
+
     func close() {
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 0.25,
@@ -173,7 +171,7 @@ private struct PopOverHelper<Content: View>: View {
 extension View {
     @ViewBuilder
     fileprivate func applyEdge(_ edge: EdgeInsets, alignment: Alignment)
-    -> some View
+        -> some View
     {
         switch alignment {
         case .bottomTrailing:
@@ -181,7 +179,7 @@ extension View {
         case .topTrailing:
             self.padding(.top, edge.top).padding(.trailing, edge.trailing)
         case .topLeading:
-            self.padding(.top,edge.top).padding(.leading,edge.leading)
+            self.padding(.top, edge.top).padding(.leading, edge.leading)
         case .bottomLeading:
             self.padding(.bottom, edge.bottom).padding(.leading, edge.leading)
         default:
@@ -189,5 +187,3 @@ extension View {
         }
     }
 }
-
-

@@ -6,7 +6,7 @@ import SwiftUI
 struct MediaMenu: View {
     var onSelected: (MenuConfig.MediaMenuType) -> Void
     private let configs = MenuConfig.medias
-    
+
     var body: some View {
         VStack(spacing: 0) {
             VStack(spacing: 4) {
@@ -23,15 +23,16 @@ struct MediaMenu: View {
         }
         .padding(.vertical, 6)
     }
-    
+
     func menuItem(_ type: MenuConfig.MediaMenuType) -> some View {
         Button {
             onSelected(type)
         } label: {
             HStack(spacing: 15) {
-                Color.apprBlack.frame(width: 32, height: 32).opacity(0.08).clipShape(RoundedRectangle(cornerRadius: 16)).overlay {
-                    MenuIcon(config: type.config)
-                }
+                Color.apprBlack.frame(width: 32, height: 32).opacity(0.08).clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay {
+                        MenuIcon(config: type.config)
+                    }
                 Text(type.config.title).font(.headline).foregroundStyle(Color.apprBlack)
                 Spacer()
             }
@@ -47,7 +48,7 @@ struct AIFunctionMenu: View {
     @Binding var currentFunc: MenuConfig.AIModelFunctionType
     var action: (MenuConfig.AIModelFunctionType) -> Void
     var onUpgrade: (() -> Void)?  // 新增：升级VIP回调
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: 3) {
@@ -61,7 +62,7 @@ struct AIFunctionMenu: View {
         }
         .frame(height: 332)
     }
-    
+
     var upgradeView: some View {
         let config = MenuConfig.AIModelFunctionType.super.config
         return Button {
@@ -75,7 +76,10 @@ struct AIFunctionMenu: View {
                     }
                     Text(config.summary ?? "").font(.caption).foregroundStyle(.apprBlack).opacity(0.3)
                 }
-                Text(L("menu.upgrade")).font(.headline).foregroundStyle(.apprWhite).padding(.horizontal, 12).padding(.vertical, 8).background {
+                Text(L("menu.upgrade")).font(.headline).foregroundStyle(.apprWhite).padding(.horizontal, 12).padding(
+                    .vertical,
+                    8
+                ).background {
                     Color.apprBlack.clipShape(RoundedRectangle(cornerRadius: 18))
                 }
             }
@@ -84,7 +88,7 @@ struct AIFunctionMenu: View {
             .contentShape(Rectangle())
         }
     }
-    
+
     func menuItem(_ type: MenuConfig.AIModelFunctionType) -> some View {
         let config = type.config
         let isSelected = type == currentFunc
@@ -99,7 +103,10 @@ struct AIFunctionMenu: View {
                 }
                 Spacer()
                 if isSelected {
-                    Image(systemName: "checkmark").resizable().scaledToFit().foregroundStyle(.apprBlack).frame(width: 16, height: 16)
+                    Image(systemName: "checkmark").resizable().scaledToFit().foregroundStyle(.apprBlack).frame(
+                        width: 16,
+                        height: 16
+                    )
                 }
             }
             .padding(.all, 12)
@@ -120,7 +127,7 @@ struct MenuIcon: View {
     var config: MenuConfig.Config
     var size: CGFloat = 14
     var color: Color = Color.apprBlack
-    
+
     var body: some View {
         Group {
             if config.builtIn {
@@ -138,7 +145,7 @@ struct MenuIcon: View {
 struct AssistantMenu: View {
     @Binding var currentAssistant: MenuConfig.AssistantType
     var action: (MenuConfig.AssistantType) -> Void
-    
+
     var body: some View {
         VStack(spacing: 3) {
             ForEach(0..<MenuConfig.assistants.count, id: \.self) { i in
@@ -147,7 +154,7 @@ struct AssistantMenu: View {
         }
         .padding(.all, 6)
     }
-    
+
     func menuItem(_ type: MenuConfig.AssistantType) -> some View {
         let config = type.config
         let isSelected = type == currentAssistant
@@ -160,7 +167,10 @@ struct AssistantMenu: View {
                 Text(config.title).foregroundStyle(.apprBlack).opacity(0.8)
                 Spacer()
                 if isSelected {
-                    Image(systemName: "checkmark").resizable().scaledToFit().foregroundStyle(.apprBlack).frame(width: 16, height: 16)
+                    Image(systemName: "checkmark").resizable().scaledToFit().foregroundStyle(.apprBlack).frame(
+                        width: 16,
+                        height: 16
+                    )
                 }
             }
             .padding(.all, 12)

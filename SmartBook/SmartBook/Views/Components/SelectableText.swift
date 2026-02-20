@@ -13,7 +13,7 @@ struct SelectableText: UIViewRepresentable {
     let attributedText: NSAttributedString
     var textColor: UIColor = .white
     var backgroundColor: UIColor = .clear
-    
+
     func makeUIView(context: Context) -> CustomTextView {
         let textView = CustomTextView()
         textView.isEditable = false
@@ -23,16 +23,16 @@ struct SelectableText: UIViewRepresentable {
         textView.textContainerInset = .zero
         textView.textContainer.lineFragmentPadding = 0
         textView.dataDetectorTypes = .link
-        
+
         // 确保文本视图可以换行和调整大小
         textView.setContentHuggingPriority(.defaultLow, for: .horizontal)
         textView.setContentHuggingPriority(.required, for: .vertical)
         textView.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)  // 允许水平压缩（换行）
         textView.setContentCompressionResistancePriority(.required, for: .vertical)
-        
+
         return textView
     }
-    
+
     func updateUIView(_ uiView: CustomTextView, context: Context) {
         uiView.attributedText = attributedText
         uiView.backgroundColor = backgroundColor
@@ -48,7 +48,7 @@ class CustomTextView: UITextView {
         let textSize = sizeThatFits(CGSize(width: bounds.width, height: .greatestFiniteMagnitude))
         return CGSize(width: UIView.noIntrinsicMetric, height: textSize.height)
     }
-    
+
     override func layoutSubviews() {
         super.layoutSubviews()
         invalidateIntrinsicContentSize()
@@ -62,7 +62,7 @@ extension SelectableText {
             string: text,
             attributes: [
                 .font: font,
-                .foregroundColor: textColor
+                .foregroundColor: textColor,
             ]
         )
         self.attributedText = attributed

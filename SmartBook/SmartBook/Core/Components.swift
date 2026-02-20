@@ -88,7 +88,7 @@ struct GlassIconButtonStyle: ButtonStyle {
 // MARK: - 主要操作按钮样式（用于空状态等场景）
 struct PrimaryActionButtonStyle: ButtonStyle {
     var colors: ThemeColors = .dark
-    
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding(.horizontal, 24)
@@ -157,7 +157,7 @@ extension View {
             self
         }
     }
-    
+
     func glassEffect() -> some View {
         self
             .background {
@@ -179,7 +179,7 @@ extension View {
             }
             .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
-    
+
     // Menu专用玻璃效果（圆形，不干扰交互）
     func menuGlassEffect() -> some View {
         self
@@ -210,17 +210,18 @@ struct BookCoverView: View {
     let book: Book
     var colors: ThemeColors = .dark
     var showTitle: Bool = false
-    
+
     var body: some View {
         ZStack {
             coverImage
         }
     }
-    
+
     @ViewBuilder
     private var coverImage: some View {
         if let coverURLString = book.coverURL,
-           let coverURL = URL(string: coverURLString) {
+            let coverURL = URL(string: coverURLString)
+        {
             if coverURL.isFileURL {
                 if let uiImage = UIImage(contentsOfFile: coverURL.path) {
                     Image(uiImage: uiImage)
@@ -242,7 +243,7 @@ struct BookCoverView: View {
             placeholderCover
         }
     }
-    
+
     private var placeholderCover: some View {
         Rectangle()
             .fill(
@@ -255,7 +256,7 @@ struct BookCoverView: View {
             .overlay {
                 VStack(spacing: 8) {
                     Image(systemName: "book.closed.fill")
-                        .font(.largeTitle) // 大标题 - 动态字号
+                        .font(.largeTitle)  // 大标题 - 动态字号
                         .foregroundColor(colors.secondaryText.opacity(0.5))
                     if showTitle {
                         Text(book.title)

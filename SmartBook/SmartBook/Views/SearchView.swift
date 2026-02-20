@@ -6,27 +6,27 @@ struct SearchView: View {
     @Environment(BookState.self) var bookState
     @Environment(ThemeManager.self) var themeManager
     @Environment(\.colorScheme) var systemColorScheme
-    
+
     // ViewModel
     @State private var viewModel: SearchViewModel
-    
+
     // UI状态
     @State private var searchText = ""
     @FocusState private var isSearchFocused: Bool
     @State private var isPresented = false
-    
+
     var previousTabIcon: String = "books.vertical"
     var previousTabName: String = "书架"
     var onBack: (() -> Void)?
-    
+
     init() {
         _viewModel = State(wrappedValue: SearchViewModel(bookService: BookService()))
     }
-    
+
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
-    
+
     private let categories: [(name: String, color: Color, icon: String)] = [
         ("search.category.classics", .red, "book.fill"),
         ("search.category.history", .orange, "clock.fill"),
@@ -35,22 +35,22 @@ struct SearchView: View {
         ("search.category.scifi", .blue, "sparkles"),
         ("search.category.mystery", .indigo, "magnifyingglass"),
         ("search.category.literature", .green, "leaf.fill"),
-        ("search.category.modern", .cyan, "building.2.fill")
+        ("search.category.modern", .cyan, "building.2.fill"),
     ]
-    
+
     var filteredBooks: [Book] {
         guard !searchText.isEmpty else { return [] }
         return bookState.books.filter {
-            $0.title.localizedCaseInsensitiveContains(searchText) ||
-            $0.author.localizedCaseInsensitiveContains(searchText)
+            $0.title.localizedCaseInsensitiveContains(searchText)
+                || $0.author.localizedCaseInsensitiveContains(searchText)
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 colors.background.ignoresSafeArea()
-                
+
                 VStack(spacing: 0) {
                     mainContent
                 }
@@ -65,7 +65,7 @@ struct SearchView: View {
             }
         }.searchable(text: $searchText, prompt: L("search.placeholder"))
     }
-    
+
     @ViewBuilder
     var mainContent: some View {
         ScrollView {
@@ -83,7 +83,7 @@ struct SearchView: View {
                             .foregroundColor(.red)
                         }
                         .padding(.horizontal)
-                        
+
                         ForEach(viewModel.recentSearches, id: \.self) { search in
                             RecentSearchRow(text: search, colors: colors)
                                 .onTapGesture {
@@ -93,10 +93,13 @@ struct SearchView: View {
                     }
                     .padding(.top)
                 } else {
-                    LazyVGrid(columns: [
-                        GridItem(.flexible(), spacing: 12),
-                        GridItem(.flexible(), spacing: 12)
-                    ], spacing: 12) {
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.flexible(), spacing: 12),
+                            GridItem(.flexible(), spacing: 12),
+                        ],
+                        spacing: 12
+                    ) {
                         ForEach(categories, id: \.name) { category in
                             CategoryCard(name: L(category.name), color: category.color, icon: category.icon)
                                 .onTapGesture {
@@ -106,14 +109,14 @@ struct SearchView: View {
                     }
                     .padding()
                 }
-            
+
             } else {
                 VStack(alignment: .leading, spacing: 12) {
                     if filteredBooks.isEmpty {
                         VStack(spacing: 16) {
                             Spacer().frame(height: 60)
                             Image(systemName: "book.closed")
-                                .font(.system(size: 50)) // 装饰性大图标
+                                .font(.system(size: 50))  // 装饰性大图标
                                 .foregroundColor(colors.secondaryText)
                             Text(String(format: L("search.noResultsFor"), searchText))
                                 .font(.headline)
@@ -125,7 +128,7 @@ struct SearchView: View {
                             .font(.headline)
                             .foregroundColor(colors.primaryText)
                             .padding(.horizontal)
-                        
+
                         ForEach(filteredBooks) { book in
                             SearchResultRow(book: book, searchText: searchText, colors: colors)
                                 .onTapGesture {
@@ -142,20 +145,20 @@ struct SearchView: View {
             }
         }
     }
-    
+
 }
 
 struct CategoryCard: View {
     let name: String
     let color: Color
     let icon: String
-    
+
     var body: some View {
         ZStack(alignment: .bottomLeading) {
             RoundedRectangle(cornerRadius: 12)
                 .fill(color.gradient)
                 .frame(height: 100)
-            
+
             HStack {
                 VStack(alignment: .leading) {
                     Image(systemName: icon)
@@ -177,17 +180,17 @@ struct CategoryCard: View {
 struct RecentSearchRow: View {
     let text: String
     var colors: ThemeColors
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: "clock")
                 .foregroundColor(colors.secondaryText)
-            
+
             Text(text)
                 .foregroundColor(colors.primaryText)
-            
+
             Spacer()
-            
+
             Image(systemName: "arrow.up.left")
                 .font(.caption)
                 .foregroundColor(colors.secondaryText)
@@ -202,25 +205,25 @@ struct SearchResultRow: View {
     let book: Book
     let searchText: String
     var colors: ThemeColors
-    
+
     var body: some View {
         HStack(spacing: 12) {
             BookCoverView(book: book, colors: colors)
                 .frame(width: 50, height: 70)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 highlightedText(book.title, searchText: searchText, baseColor: colors.primaryText)
                     .font(.headline)
                     .lineLimit(2)
-                
+
                 Text(String(format: L("search.bookAuthor"), book.author))
                     .font(.caption)
                     .foregroundColor(colors.secondaryText)
             }
-            
+
             Spacer()
-            
+
             Button {
             } label: {
                 Image(systemName: "ellipsis")
@@ -230,7 +233,7 @@ struct SearchResultRow: View {
         .padding(.horizontal)
         .padding(.vertical, 8)
     }
-    
+
     @ViewBuilder
     func highlightedText(_ text: String, searchText: String, baseColor: Color) -> some View {
         if searchText.isEmpty {
@@ -239,14 +242,14 @@ struct SearchResultRow: View {
             Text(attributedString(for: text, searchText: searchText, baseColor: baseColor))
         }
     }
-    
+
     func attributedString(for text: String, searchText: String, baseColor: Color) -> AttributedString {
         var result = AttributedString(text)
         result.foregroundColor = baseColor
-        
+
         let lowercasedText = text.lowercased()
         let lowercasedSearch = searchText.lowercased()
-        
+
         var searchStart = lowercasedText.startIndex
         while let range = lowercasedText.range(of: lowercasedSearch, range: searchStart..<lowercasedText.endIndex) {
             if let attrRange = Range(NSRange(range, in: text), in: result) {
@@ -255,7 +258,7 @@ struct SearchResultRow: View {
             }
             searchStart = range.upperBound
         }
-        
+
         return result
     }
 }

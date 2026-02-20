@@ -12,7 +12,7 @@ extension Button {
     func glassEffect(size: CGSize = CGSize(width: 40, height: 40)) -> some View {
         if #available(iOS 26, *) {
             self.background {
-                Color.white.opacity(0.001).frame(width: size.width,height: size.height).glassEffect(
+                Color.white.opacity(0.001).frame(width: size.width, height: size.height).glassEffect(
                     .regular,
                     in: .rect(cornerRadius: size.height / 2)
                 )
@@ -21,7 +21,7 @@ extension Button {
             self.buttonStyle(.glassIcon)
         }
     }
-    
+
     @ViewBuilder
     func glassEffect(cornerRadius: CGFloat) -> some View {
         if #available(iOS 26, *) {

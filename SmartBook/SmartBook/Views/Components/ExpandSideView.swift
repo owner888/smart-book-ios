@@ -5,10 +5,10 @@
 //  Created by Andrew on 2026/1/14.
 //
 
-import SwiftUI
 import Combine
-import UIKit
+import SwiftUI
 import SwiftUIIntrospect
+import UIKit
 
 struct ExpandSideView<Side: View, Content: View>: View {
     @ViewBuilder var side: Side
@@ -42,7 +42,7 @@ struct ExpandSideView<Side: View, Content: View>: View {
                                 scrollOffset / sideWidth
                             ).ignoresSafeArea()
                         }.id(0)
-                        
+
                         ZStack {
                             content.frame(
                                 width: proxy.size.width,
@@ -61,13 +61,17 @@ struct ExpandSideView<Side: View, Content: View>: View {
                 .scrollTargetBehavior(.paging)
                 .scrollPosition(id: $obser.currentPage)
                 .scrollDisabled(disabledScroll)
-                .onScrollGeometryChange(for: CGFloat.self, of: { geo in
-                    geo.contentOffset.x
-                }, action: { _, newValue in
-                    scrollOffset = newValue
-                    obser.isMainPage = scrollOffset > sideWidth - 30
-                })
-                .introspect(.scrollView, on: .iOS(.v18,.v26)) { scrollView in
+                .onScrollGeometryChange(
+                    for: CGFloat.self,
+                    of: { geo in
+                        geo.contentOffset.x
+                    },
+                    action: { _, newValue in
+                        scrollOffset = newValue
+                        obser.isMainPage = scrollOffset > sideWidth - 30
+                    }
+                )
+                .introspect(.scrollView, on: .iOS(.v18, .v26)) { scrollView in
                     scrollView.bounces = false
                 }
                 .onAppear(perform: {
@@ -85,7 +89,7 @@ struct ExpandSideView<Side: View, Content: View>: View {
 class ExpandSideObservable: ObservableObject {
     @Published var isMainPage = false
     @Published var currentPage: Int? = nil
-    
+
     func jumpToPage(_ page: Int, animate: Bool = true) {
         if animate {
             withAnimation(.spring(duration: 0.25)) {
@@ -125,4 +129,3 @@ struct ScrollBouncerDisabler: UIViewRepresentable {
     }
     func updateUIView(_ uiView: UIView, context: Context) {}
 }
-

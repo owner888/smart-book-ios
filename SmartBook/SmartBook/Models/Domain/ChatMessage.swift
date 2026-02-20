@@ -22,7 +22,7 @@ struct ChatMessage: Identifiable, Codable {
 
     var stoppedByUser: Bool?
     var isStreaming: Bool
-    
+
     enum CodingKeys: String, CodingKey {
         case id, role, content, timestamp
         case thinking, sources, tools, usage, systemPrompt

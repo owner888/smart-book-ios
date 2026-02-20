@@ -7,7 +7,7 @@ enum TipsType {
     case success
     case error
     case warning
-    
+
     var icon: String {
         switch self {
         case .success: return "checkmark.circle.fill"
@@ -15,7 +15,7 @@ enum TipsType {
         case .warning: return "exclamationmark.triangle.fill"
         }
     }
-    
+
     var color: Color {
         switch self {
         case .success: return .green
@@ -29,7 +29,7 @@ enum TipsType {
 struct TipsView: View {
     let type: TipsType
     let message: String
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: type.icon)
@@ -53,7 +53,7 @@ struct TipsModifier: ViewModifier {
     let type: TipsType
     let message: String
     let duration: Double
-    
+
     func body(content: Content) -> some View {
         content
             .overlay(alignment: .top) {
@@ -90,12 +90,14 @@ extension View {
         message: String,
         duration: Double = 2.0
     ) -> some View {
-        modifier(TipsModifier(
-            isShowing: isShowing,
-            type: type,
-            message: message,
-            duration: duration
-        ))
+        modifier(
+            TipsModifier(
+                isShowing: isShowing,
+                type: type,
+                message: message,
+                duration: duration
+            )
+        )
     }
 }
 
@@ -105,12 +107,12 @@ extension View {
     func successTips(isShowing: Binding<Bool>, message: String = "Success", duration: Double = 2.0) -> some View {
         tips(isShowing: isShowing, type: .success, message: message, duration: duration)
     }
-    
+
     /// 错误提示
     func errorTips(isShowing: Binding<Bool>, message: String = "Error", duration: Double = 2.0) -> some View {
         tips(isShowing: isShowing, type: .error, message: message, duration: duration)
     }
-    
+
     /// 警告提示
     func warningTips(isShowing: Binding<Bool>, message: String = "Warning", duration: Double = 2.0) -> some View {
         tips(isShowing: isShowing, type: .warning, message: message, duration: duration)

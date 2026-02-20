@@ -5,9 +5,9 @@ import SwiftUI
 // MARK: - 主题模式
 enum AppThemeMode: Int, CaseIterable, Codable {
     case system = 0  // 跟随系统
-    case dark = 1    // 暗黑模式
-    case light = 2   // 浅色模式
-    
+    case dark = 1  // 暗黑模式
+    case light = 2  // 浅色模式
+
     var name: String {
         switch self {
         case .system: return L("settings.theme.system")
@@ -15,7 +15,7 @@ enum AppThemeMode: Int, CaseIterable, Codable {
         case .light: return L("settings.theme.light")
         }
     }
-    
+
     var icon: String {
         switch self {
         case .system: return "circle.lefthalf.filled"
@@ -23,7 +23,7 @@ enum AppThemeMode: Int, CaseIterable, Codable {
         case .light: return "sun.max.fill"
         }
     }
-    
+
     var colorScheme: ColorScheme? {
         switch self {
         case .system: return nil
@@ -40,29 +40,29 @@ struct ThemeColors {
     let cardBackground: Color
     let sidebarCardBackground: Color
     let inputBackground: Color
-    
+
     // 文字色
     let primaryText: Color
     let secondaryText: Color
-    
+
     // 消息气泡
     let userBubble: Color
     let assistantBubble: Color
-    
+
     // 分隔线
     let separator: Color
-    
+
     // 导航栏
     let navigationBar: Color
-    
+
     // 强调色
     let accentColor: Color
-    
+
     // 状态色
     let successColor: Color
     let errorColor: Color
     let warningColor: Color
-    
+
     // 暗黑主题
     static let dark = ThemeColors(
         background: Color.black,
@@ -80,7 +80,7 @@ struct ThemeColors {
         errorColor: Color.red,
         warningColor: Color.orange
     )
-    
+
     // 浅色主题
     static let light = ThemeColors(
         background: Color(UIColor.systemGroupedBackground),
@@ -104,22 +104,23 @@ struct ThemeColors {
 @Observable
 class ThemeManager {
     static let shared = ThemeManager()
-    
+
     var themeMode: AppThemeMode {
         didSet {
             save()
         }
     }
-    
+
     private init() {
         if let data = UserDefaults.standard.data(forKey: "AppThemeMode"),
-           let mode = try? JSONDecoder().decode(AppThemeMode.self, from: data) {
+            let mode = try? JSONDecoder().decode(AppThemeMode.self, from: data)
+        {
             themeMode = mode
         } else {
             themeMode = .dark
         }
     }
-    
+
     /// 根据系统当前颜色模式获取主题颜色
     func colors(for systemColorScheme: ColorScheme) -> ThemeColors {
         switch themeMode {
@@ -131,11 +132,11 @@ class ThemeManager {
             return .light
         }
     }
-    
+
     var colorScheme: ColorScheme? {
         themeMode.colorScheme
     }
-    
+
     private func save() {
         if let data = try? JSONEncoder().encode(themeMode) {
             UserDefaults.standard.set(data, forKey: "AppThemeMode")
@@ -160,7 +161,7 @@ extension View {
     func themedBackground(_ themeColors: ThemeColors) -> some View {
         self.background(themeColors.background.ignoresSafeArea())
     }
-    
+
     func themedCardBackground(_ themeColors: ThemeColors) -> some View {
         self.background(themeColors.cardBackground)
     }

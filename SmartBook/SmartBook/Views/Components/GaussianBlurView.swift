@@ -13,13 +13,12 @@ struct GaussianBlurView: UIViewRepresentable {
     var alpha: CGFloat = 1.0
     @Environment(\.colorScheme) private var colorScheme
 
-
     func makeUIView(context: UIViewRepresentableContext<GaussianBlurView>) -> UIView {
         let view = UIView(frame: .zero)
         view.backgroundColor = backgroundColor
         view.clipsToBounds = true
 
-        let blurEffect = UIBlurEffect(style: style ?? (colorScheme == .dark ?  .dark : .light))
+        let blurEffect = UIBlurEffect(style: style ?? (colorScheme == .dark ? .dark : .light))
         let blurView = UIVisualEffectView(effect: blurEffect)
         blurView.translatesAutoresizingMaskIntoConstraints = false
         blurView.alpha = alpha

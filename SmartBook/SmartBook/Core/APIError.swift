@@ -13,7 +13,7 @@ enum APIError: LocalizedError {
     case parseError
     case unknown
     case custom(String)
-    
+
     var errorDescription: String? {
         switch self {
         case .serverError:
@@ -36,7 +36,7 @@ enum APIError: LocalizedError {
             return message
         }
     }
-    
+
     /// 从 HTTP 状态码创建错误
     static func from(statusCode: Int) -> APIError {
         switch statusCode {
@@ -64,7 +64,7 @@ enum BookError: LocalizedError {
     case uploadFailed
     case deleteFailed
     case cannotDeleteBundled
-    
+
     var errorDescription: String? {
         switch self {
         case .notFound:
@@ -89,7 +89,7 @@ enum ChatError: LocalizedError {
     case noBook
     case emptyMessage
     case streamError
-    
+
     var errorDescription: String? {
         switch self {
         case .sendFailed:
@@ -109,7 +109,7 @@ enum MediaError: LocalizedError {
     case accessDenied
     case invalidImage
     case tooLarge
-    
+
     var errorDescription: String? {
         switch self {
         case .accessDenied:
@@ -130,7 +130,7 @@ enum ASRError: LocalizedError {
     case recognitionFailed
     case noAudioData
     case invalidAudioFormat
-    
+
     var errorDescription: String? {
         switch self {
         case .microphoneAccessDenied:
@@ -155,10 +155,10 @@ struct SearchResult: Codable, Identifiable {
     let chapterTitle: String?
     let chapterIndex: Int
     let score: Double
-    
+
     // Identifiable conformance
     var id: String { "\(chapterIndex)-\(score)" }
-    
+
     enum CodingKeys: String, CodingKey {
         case content
         case chapterTitle = "chapter_title"

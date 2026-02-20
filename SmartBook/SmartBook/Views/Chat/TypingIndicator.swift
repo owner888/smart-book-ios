@@ -5,7 +5,7 @@ import SwiftUI
 struct TypingIndicator: View {
     var colors: ThemeColors = .dark
     @State private var animating = false
-    
+
     var body: some View {
         HStack(spacing: 4) {
             ForEach(0..<3) { index in
@@ -34,7 +34,7 @@ struct TypingIndicator: View {
         TypingIndicator(colors: .light)
             .padding()
             .background(Color.white)
-        
+
         TypingIndicator(colors: .dark)
             .padding()
             .background(Color.black)

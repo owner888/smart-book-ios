@@ -10,15 +10,15 @@ import Foundation
 /// 对话摘要服务
 @MainActor
 class SummarizationService {
-    
+
     // MARK: - Properties
-    
+
     /// 摘要触发阈值（同时也是保留的历史消息数量）
     private let threshold: Int
-    
+
     /// 流式聊天服务（用于生成摘要）
     private let streamingService: StreamingChatService
-    
+
     /// 摘要助手（静态常量，避免重复创建）
     private static let summaryAssistant = Assistant(
         id: "summarize",
@@ -30,16 +30,16 @@ class SummarizationService {
         action: .chat,
         useRAG: false
     )
-    
+
     // MARK: - Initialization
-    
+
     init(threshold: Int = 3, streamingService: StreamingChatService = StreamingChatService()) {
         self.threshold = threshold
         self.streamingService = streamingService
     }
-    
+
     // MARK: - Public Methods
-    
+
     /// 获取对话上下文（摘要 + 最近消息）
     /// - Parameters:
     ///   - messages: 所有消息
@@ -64,7 +64,7 @@ class SummarizationService {
         let recentMessages = Array(messages.suffix(threshold))
         return (nil, recentMessages)
     }
-    
+
     /// 检查并触发摘要生成（如果需要）
     /// - Parameters:
     ///   - messages: 所有消息
@@ -80,7 +80,7 @@ class SummarizationService {
         let totalMessages = messages.count
         let summarizedCount = conversation.summarizedMessageCount
         let unsummarizedCount = totalMessages - summarizedCount
-        
+
         // threshold 代表轮数（1轮=用户+AI=2条消息）
         // 例：threshold=3 → 3轮对话 → 6条消息
         let roundThreshold = threshold * 2
@@ -96,7 +96,7 @@ class SummarizationService {
             }
         }
     }
-    
+
     /// 生成对话摘要
     /// - Parameters:
     ///   - messages: 所有消息
@@ -109,7 +109,7 @@ class SummarizationService {
     ) async {
         let summarizedCount = conversation.summarizedMessageCount
         let unsummarizedMessages = Array(messages.dropFirst(summarizedCount))
-        
+
         // 摘要所有未摘要消息，但保留最近N条作为历史
         let messagesToSummarize = Array(unsummarizedMessages.dropLast(threshold))
 
@@ -134,7 +134,7 @@ class SummarizationService {
         // 获取当前语言
         let currentLanguage = Locale.current.language.languageCode?.identifier ?? "en"
         let languageName = currentLanguage == "zh" ? "Chinese" : "English"
-        
+
         let summarizePrompt = """
             Please concisely summarize the key points of the above conversation, including: 1) The main topics discussed by the user 2) The key information and conclusions provided by AI 3) Any important background context. The summary should be brief and concise (100-200 words) for reference in subsequent conversations. If you can speak in \(languageName), then respond in \(languageName).
             """
@@ -165,14 +165,14 @@ class SummarizationService {
             Logger.error("❌ 摘要生成失败，内容为空")
             return
         }
-        
+
         conversation.summary = generatedSummary
         conversation.summarizedMessageCount = summarizedCount + messagesToSummarize.count
         conversation.touch()
-        
+
         // 通过 historyService 保存到数据库
         historyService?.saveSummary(summary: generatedSummary, messageCount: conversation.summarizedMessageCount)
-        
+
         Logger.info("✅ AI 摘要已保存，已摘要消息数: \(conversation.summarizedMessageCount)")
         Logger.info("📝 摘要内容: \(generatedSummary.prefix(100))...")
     }

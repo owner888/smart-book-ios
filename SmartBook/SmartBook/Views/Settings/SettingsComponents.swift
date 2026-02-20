@@ -6,10 +6,10 @@ import SwiftUI
 struct SettingsIcon: View {
     let icon: String
     let color: Color
-    
+
     var body: some View {
         Image(systemName: icon)
-            .font(.subheadline) // 15号 - 动态字号
+            .font(.subheadline)  // 15号 - 动态字号
             .fontWeight(.semibold)
             .foregroundColor(.white)
             .frame(width: 28, height: 28)
@@ -25,7 +25,7 @@ struct SettingsRow<Content: View>: View {
     let title: String
     var colors: ThemeColors = .dark
     @ViewBuilder let content: () -> Content
-    
+
     var body: some View {
         HStack(spacing: 12) {
             SettingsIcon(icon: icon, color: iconColor)

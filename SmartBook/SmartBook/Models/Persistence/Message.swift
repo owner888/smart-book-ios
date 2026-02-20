@@ -1,3 +1,4 @@
+import Foundation
 //
 //  MessageModel.swift
 //  SmartBook
@@ -5,7 +6,6 @@
 //  Created by kaka on 20/1/26.
 //
 import SwiftData
-import Foundation
 
 @Model
 class Message {
@@ -13,11 +13,11 @@ class Message {
     var role: Role?
     var content: String = ""
     var createdAt: Date = Date()
-    
+
     // 扩展字段以匹配 ChatMessage
     var thinking: String?
     var sourcesData: Data?  // JSON 序列化的 [RAGSource]
-    var usageData: Data?    // JSON 序列化的 UsageInfo
+    var usageData: Data?  // JSON 序列化的 UsageInfo
     var systemPrompt: String?
     var stoppedByUser: Bool = false
 
@@ -46,12 +46,12 @@ class Message {
         self.stoppedByUser = stoppedByUser
         self.conversation = conversation
     }
-    
+
     // 从 ChatMessage 创建
     convenience init(from chatMessage: ChatMessage, conversation: Conversation?) {
         let sourcesData = try? JSONEncoder().encode(chatMessage.sources)
         let usageData = try? JSONEncoder().encode(chatMessage.usage)
-        
+
         self.init(
             id: chatMessage.id,
             role: chatMessage.role,
@@ -65,12 +65,12 @@ class Message {
             conversation: conversation
         )
     }
-    
+
     // 转换为 ChatMessage
     func toChatMessage() -> ChatMessage {
         let sources = sourcesData.flatMap { try? JSONDecoder().decode([RAGSource].self, from: $0) }
         let usage = usageData.flatMap { try? JSONDecoder().decode(UsageInfo.self, from: $0) }
-        
+
         return ChatMessage(
             id: id,
             role: role ?? .user,

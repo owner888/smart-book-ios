@@ -6,5 +6,5 @@ import Foundation
 struct EPUBContent {
     var metadata: EPUBMetadata
     var chapters: [EPUBChapter]
-    var spine: [String] // 按阅读顺序排列的章节ID
+    var spine: [String]  // 按阅读顺序排列的章节ID
 }

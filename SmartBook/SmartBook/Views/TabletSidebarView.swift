@@ -10,7 +10,7 @@ struct TabletSidebarView: View {
     var onSelectChat: () -> Void
     var onSelectBookshelf: () -> Void
     var onSelectSettings: () -> Void
-    
+
     var body: some View {
         SidebarContent(
             colors: colors,
