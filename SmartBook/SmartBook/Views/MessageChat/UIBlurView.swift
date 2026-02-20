@@ -12,19 +12,19 @@ class UIBlurView: UIView {
     var style: UIBlurEffect.Style? = nil
     var background: UIColor = .clear
     var opacity: CGFloat = 1.0
-    
+
     var clearGlassEffect = false
-    
+
     override init(frame: CGRect) {
         super.init(frame: frame)
         setUp()
     }
-    
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setUp()
     }
-    
+
     func setUp() {
         self.backgroundColor = .clear
         let backgroundView = UIView()
@@ -77,6 +77,5 @@ class UIBlurView: UIView {
             ),
         ])
     }
-
 
 }

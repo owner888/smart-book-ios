@@ -15,7 +15,7 @@ struct InputToolContentView: View {
     @Binding var assistant: MenuConfig.AssistantType
     @Binding var inputText: String
     @FocusState private var focused: Bool
-    
+
     // Callbacks
     var openMedia: (CGRect) -> Void
     var openModel: (CGRect) -> Void
@@ -52,13 +52,15 @@ struct InputToolContentView: View {
                     case .image:
                         Logger.info("🗑️ Image removed, remaining: \(viewModel.mediaItems.count - 1)")
                     case .document(let url):
-                        Logger.info("🗑️ Document removed: \(url.lastPathComponent), remaining: \(viewModel.mediaItems.count - 1)")
+                        Logger.info(
+                            "🗑️ Document removed: \(url.lastPathComponent), remaining: \(viewModel.mediaItems.count - 1)"
+                        )
                     }
                     viewModel.mediaItems.removeAll { $0.id == item.id }
                 }.padding(.top, 10)
-                .transition(.move(edge: .top).combined(with: .opacity))
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
-            
+
             // 显示 ASR 状态消息（如果有）
             if let statusMessage = asrStreamService.statusMessage {
                 HStack(spacing: 6) {
@@ -99,8 +101,8 @@ struct InputToolContentView: View {
                     minHeight: 30,
                     maxHeight: 200
                 ).focused($focused)
-                .fixedSize(horizontal: false, vertical: true)
-                .scrollContentBackground(.hidden)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .scrollContentBackground(.hidden)
             }
 
             // 底部按钮栏
@@ -216,19 +218,19 @@ struct InputToolContentView: View {
             }
             .padding(.vertical, 6)
             .animation(.spring(duration: 0.3), value: hasInput)
-            .onChange(of: asrStreamService.statusMessage) { _ in
+            .onChange(of: asrStreamService.statusMessage) {
                 // ASR 状态消息变化时通知高度更新
                 onHeightChanged?()
             }
-            .onChange(of: isRecording) { _ in
+            .onChange(of: isRecording) {
                 // 录音状态变化时通知高度更新
                 onHeightChanged?()
             }
-            .onChange(of: isConnecting) { _ in
+            .onChange(of: isConnecting) {
                 // 连接状态变化时通知高度更新
                 onHeightChanged?()
             }
-            .onChange(of: viewModel.mediaItems.count) { _ in
+            .onChange(of: viewModel.mediaItems.count) {
                 // 媒体项数量变化时通知高度更新
                 onHeightChanged?()
             }
@@ -258,7 +260,8 @@ struct InputToolContentView: View {
                         Logger.info("✅ ASR 和 TTS 都已就绪，随时可用")
                     }
                 }
-            }.onReceive(NotificationCenter.default.publisher(for: Notification.Name("MainChangePage"))) { notification in
+            }.onReceive(NotificationCenter.default.publisher(for: Notification.Name("MainChangePage"))) {
+                notification in
                 if (notification.object as? Bool) == true {
                     if isEditing {
                         focused = true
@@ -323,7 +326,7 @@ struct InputToolContentView: View {
                         if isFinal {
                             Task { @MainActor in
                                 isRecording = false
-                                await asrStreamService?.stopRecording()
+                                asrStreamService?.stopRecording()
 
                                 let trimmedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
                                 if trimmedText.count >= 2 {
@@ -353,9 +356,7 @@ struct InputToolContentView: View {
         case "native":
             speechService.stopRecording()
         default:
-            Task {
-                await asrStreamService.stopRecording()
-            }
+            asrStreamService.stopRecording()
         }
 
         Logger.info("🛑 停止录音（连接保持）")

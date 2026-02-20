@@ -15,7 +15,7 @@ struct MessageChatViewViewWrapper: UIViewRepresentable {
     var selectedBook: Book? = nil
     var currentAssistant: Assistant? = nil
     let action: (MessageChatAction) -> Void
-    
+
     func makeUIView(context: Context) -> MessageChatView {
         let view = MessageChatView()
         view.bind(to: viewModel)
@@ -27,7 +27,7 @@ struct MessageChatViewViewWrapper: UIViewRepresentable {
         view.assistant = assistant
         return view
     }
-    
+
     func updateUIView(_ uiView: MessageChatView, context: Context) {
         uiView.hasBooks = hasBooks
         uiView.selectedBook = selectedBook

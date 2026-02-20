@@ -5,8 +5,8 @@
 //  Created by Andrew on 2026/2/10.
 //
 
-import UIKit
 import SwiftUI
+import UIKit
 
 class MessageInputTopView: UIView {
 
@@ -17,7 +17,6 @@ class MessageInputTopView: UIView {
     private var scrollOffset: CGFloat = 0
     var function: ((MenuConfig.TopFunctionType) -> Void)?
 
-    
     private var colors: ThemeColors {
         let colorScheme =
             traitCollection.userInterfaceStyle == .dark
@@ -74,6 +73,12 @@ class MessageInputTopView: UIView {
 
     // MARK: - Setup
     private func setupUI() {
+        // ✅ iOS 17+ 使用 registerForTraitChanges 替代 traitCollectionDidChange
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) {
+            (self: MessageInputTopView, _: UITraitCollection) in
+            self.updateAppearance()
+        }
+
         addSubview(scrollView)
         scrollView.addSubview(leftSpacer)
         scrollView.addSubview(stackView)
@@ -192,16 +197,10 @@ class MessageInputTopView: UIView {
         function?(functions[sender.tag])
     }
 
-    // MARK: - Trait Collection
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        updateAppearance()
-    }
-
     private func updateAppearance() {
         buttonViews.forEach { button in
             if let container = button.subviews.first {
-                let isGet = button.tag == 0 // 假设第一个是 getSuper
+                let isGet = button.tag == 0  // 假设第一个是 getSuper
                 container.backgroundColor = UIColor((isGet ? colors.accentColor : .apprBlack)).withAlphaComponent(0.1)
             }
             if let titleLabel = button.subviews.first?.subviews.last as? UILabel {
@@ -253,7 +252,7 @@ class MenuIconView: UIView {
         setupUI()
         updateSize()
     }
-    
+
     func configure(_ config: MenuConfig.Config, size: CGFloat) {
         self.config = config
         self.size = size
@@ -265,7 +264,7 @@ class MenuIconView: UIView {
         super.init(coder: coder)
         setupUI()
     }
-    
+
     private func updateSize() {
         self.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
@@ -276,19 +275,25 @@ class MenuIconView: UIView {
 
     // MARK: - Setup
     private func setupUI() {
+        // ✅ iOS 17+ 使用 registerForTraitChanges 替代 traitCollectionDidChange
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) {
+            (self: MenuIconView, _: UITraitCollection) in
+            self.updateImage()
+        }
+
         addSubview(imageView)
 
         NSLayoutConstraint.activate([
             imageView.topAnchor.constraint(equalTo: topAnchor),
             imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            imageView.widthAnchor.constraint(equalTo: widthAnchor,multiplier: 1),
-            imageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 1)
+            imageView.widthAnchor.constraint(equalTo: widthAnchor, multiplier: 1),
+            imageView.heightAnchor.constraint(equalTo: heightAnchor, multiplier: 1),
         ])
         updateImage()
     }
 
     private func updateImage() {
-        guard let config = config else {return}
+        guard let config = config else { return }
         let imageName: String
         if config.builtIn {
             // 系统 SF Symbols
@@ -323,13 +328,4 @@ class MenuIconView: UIView {
         updateImage()
     }
 
-    // MARK: - Trait Collection
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        // 如果颜色需要根据深色模式调整，可以在这里处理
-        updateImage()
-    }
 }
-
-
-

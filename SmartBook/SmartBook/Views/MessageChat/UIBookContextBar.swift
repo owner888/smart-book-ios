@@ -70,6 +70,12 @@ final class UIBookContextBar: UIView {
     private func setupUI() {
         translatesAutoresizingMaskIntoConstraints = false
 
+        // ✅ iOS 17+ 使用 registerForTraitChanges 替代 traitCollectionDidChange
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) {
+            (self: UIBookContextBar, _: UITraitCollection) in
+            self.applyColors()
+        }
+
         addSubview(bookIcon)
         addSubview(titleLabel)
         addSubview(clearBackground)
@@ -130,12 +136,4 @@ final class UIBookContextBar: UIView {
         onClear?()
     }
 
-    // MARK: - Trait Collection
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-            applyColors()
-        }
-    }
 }

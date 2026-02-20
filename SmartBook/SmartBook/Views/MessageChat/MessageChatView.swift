@@ -254,7 +254,7 @@ class MessageChatView: UIView {
         // 启用自动高度
         tableView.estimatedRowHeight = 20
         tableView.contentInset.bottom = 60  // 底部留出 60pt 空间
-        tableView.scrollIndicatorInsets.bottom = 60
+        tableView.verticalScrollIndicatorInsets.bottom = 60
         tableView.rowHeight = UITableView.automaticDimension
         tableView.reloadData()
         tableView.clipsToBounds = false
@@ -361,6 +361,9 @@ class MessageChatView: UIView {
             if !newMessages.isEmpty {
                 self.emptyStateView?.removeFromSuperview()
                 self.emptyStateView = nil
+            } else {
+                // 消息清空时（如创建新会话），重新创建空状态视图
+                self.createEmptyStateView()
             }
 
             // 智能更新：根据变化类型选择最小更新策略

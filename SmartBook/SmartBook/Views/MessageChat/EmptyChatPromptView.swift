@@ -96,6 +96,16 @@ final class UIEmptyStateView: UIView {
     private func setupUI() {
         addSubview(stackView)
 
+        // ✅ iOS 17+ 使用 registerForTraitChanges 替代 traitCollectionDidChange
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) {
+            (self: UIEmptyStateView, previousTraitCollection: UITraitCollection) in
+            let colorScheme =
+                self.traitCollection.userInterfaceStyle == .dark
+                ? ColorScheme.dark : .light
+            self.colors = ThemeManager.shared.colors(for: colorScheme)
+            self.applyColors()
+        }
+
         NSLayoutConstraint.activate([
             stackView.topAnchor.constraint(equalTo: topAnchor, constant: 20),
             stackView.leadingAnchor.constraint(
@@ -128,12 +138,17 @@ final class UIEmptyStateView: UIView {
 
     // MARK: - Configuration
 
-    func configure(colors: ThemeColors, hasBooks: Bool, onAddBook: @escaping () -> Void, isDefaultChatAssistant: Bool = false) {
+    func configure(
+        colors: ThemeColors,
+        hasBooks: Bool,
+        onAddBook: @escaping () -> Void,
+        isDefaultChatAssistant: Bool = false
+    ) {
         self.colors = colors
         self.hasBooks = hasBooks
         self.onAddBook = onAddBook
         self.isDefaultChatAssistant = isDefaultChatAssistant
-        
+
         if isDefaultChatAssistant {
             // ✅ Chat 助手：始终显示空聊天图标，无需选择书籍即可对话
             iconImageView.image = UIImage(systemName: "bubble.left.and.bubble.right")
@@ -163,7 +178,7 @@ final class UIEmptyStateView: UIView {
             addBookButton.configuration?.image = UIImage(systemName: "plus.circle.fill")
             addBookButton.isHidden = false
         }
-        
+
         applyColors()
     }
 
@@ -188,24 +203,6 @@ final class UIEmptyStateView: UIView {
 
     @objc private func addBookButtonTapped() {
         onAddBook?()
-    }
-
-    // MARK: - Trait Collection
-
-    override func traitCollectionDidChange(
-        _ previousTraitCollection: UITraitCollection?
-    ) {
-        super.traitCollectionDidChange(previousTraitCollection)
-
-        if traitCollection.hasDifferentColorAppearance(
-            comparedTo: previousTraitCollection
-        ) {
-            let colorScheme =
-                traitCollection.userInterfaceStyle == .dark
-                ? ColorScheme.dark : .light
-            colors = ThemeManager.shared.colors(for: colorScheme)
-            applyColors()
-        }
     }
 
     override func layoutSubviews() {

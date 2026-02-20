@@ -17,7 +17,6 @@ final class UIAssistantPromptBar: UIView {
     private let themeManager = ThemeManager.shared
     private var assistantColor: UIColor = .systemGreen
 
-
     // MARK: - UI Components
 
     private lazy var headerButton: UIButton = {
@@ -97,6 +96,12 @@ final class UIAssistantPromptBar: UIView {
         translatesAutoresizingMaskIntoConstraints = false
         clipsToBounds = true
 
+        // ✅ iOS 17+ 使用 registerForTraitChanges 替代 traitCollectionDidChange
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) {
+            (self: UIAssistantPromptBar, _: UITraitCollection) in
+            self.applyColors()
+        }
+
         addSubview(headerButton)
         addSubview(headerStack)
         addSubview(divider)
@@ -143,7 +148,7 @@ final class UIAssistantPromptBar: UIView {
         avatarLabel.text = assistant.avatar
         nameLabel.text = assistant.name
         promptLabel.text = assistant.systemPrompt
-        assistantColor = UIColor(Color(hex: assistant.color) ?? .green)
+        assistantColor = UIColor(Color(hex: assistant.color))
         applyColors()
     }
 
@@ -186,12 +191,4 @@ final class UIAssistantPromptBar: UIView {
         }
     }
 
-    // MARK: - Trait Collection
-
-    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
-        super.traitCollectionDidChange(previousTraitCollection)
-        if traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection) {
-            applyColors()
-        }
-    }
 }
