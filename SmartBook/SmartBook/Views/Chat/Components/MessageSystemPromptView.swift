@@ -6,7 +6,7 @@ struct MessageSystemPromptView: View {
     let prompt: String
     var colors: ThemeColors
     @Binding var isExpanded: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Button(action: { isExpanded.toggle() }) {
@@ -23,7 +23,7 @@ struct MessageSystemPromptView: View {
                 .foregroundColor(colors.primaryText)
             }
             .buttonStyle(.plain)
-            
+
             if isExpanded {
                 Text(prompt)
                     .font(.caption)

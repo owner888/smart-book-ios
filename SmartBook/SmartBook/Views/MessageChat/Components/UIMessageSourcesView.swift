@@ -20,7 +20,7 @@ final class UIMessageSourcesView: UIView {
         super.init(frame: frame)
         setupUI()
     }
-    
+
     required init?(coder: NSCoder) {
         super.init(coder: coder)
         setupUI()

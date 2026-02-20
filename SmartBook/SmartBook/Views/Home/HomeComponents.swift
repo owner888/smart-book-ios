@@ -6,35 +6,35 @@ import SwiftUI
 struct ReadingStatsCard: View {
     let stats: ReadingStats
     var colors: ThemeColors
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Text(L("home.readingStats"))
                 .font(.headline)
                 .foregroundColor(colors.primaryText)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             HStack(spacing: 0) {
                 StatItem(
                     value: "\(stats.totalBooksRead)",
                     label: L("home.booksRead"),
                     colors: colors
                 )
-                
+
                 Divider()
                     .frame(height: 40)
                     .background(colors.separator)
-                
+
                 StatItem(
                     value: stats.formattedTotalTime,
                     label: L("home.totalTime"),
                     colors: colors
                 )
-                
+
                 Divider()
                     .frame(height: 40)
                     .background(colors.separator)
-                
+
                 StatItem(
                     value: "\(stats.currentStreak)",
                     label: L("home.streak"),
@@ -42,7 +42,7 @@ struct ReadingStatsCard: View {
                 )
             }
             .padding(.vertical, 8)
-            
+
             // 今日阅读进度
             TodayReadingProgress(stats: stats, colors: colors)
         }
@@ -57,7 +57,7 @@ struct StatItem: View {
     let value: String
     let label: String
     var colors: ThemeColors
-    
+
     var body: some View {
         VStack(spacing: 4) {
             Text(value)
@@ -76,7 +76,7 @@ struct StatItem: View {
 struct TodayReadingProgress: View {
     let stats: ReadingStats
     var colors: ThemeColors
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
@@ -89,13 +89,13 @@ struct TodayReadingProgress: View {
                     .fontWeight(.medium)
                     .foregroundColor(.orange)
             }
-            
+
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(colors.inputBackground)
                         .frame(height: 8)
-                    
+
                     let progress = min(CGFloat(stats.todayMinutes) / 60.0, 1.0)
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.orange.gradient)
@@ -112,7 +112,7 @@ struct ContinueReadingSection: View {
     let books: [Book]
     var colors: ThemeColors
     let onSelect: (Book) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -122,7 +122,7 @@ struct ContinueReadingSection: View {
                 Spacer()
             }
             .padding(.horizontal)
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
                     ForEach(books) { book in
@@ -142,24 +142,24 @@ struct ContinueReadingSection: View {
 struct ContinueReadingCard: View {
     let book: Book
     var colors: ThemeColors
-    
+
     var body: some View {
         HStack(spacing: 12) {
             BookCoverView(book: book, colors: colors)
                 .frame(width: 60, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(book.title)
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(colors.primaryText)
                     .lineLimit(2)
-                
+
                 Text(book.author)
                     .font(.caption)
                     .foregroundColor(colors.secondaryText)
-                
+
                 // 阅读进度
                 HStack(spacing: 4) {
                     Image(systemName: "bookmark.fill")
@@ -171,7 +171,7 @@ struct ContinueReadingCard: View {
                         .foregroundColor(.orange)
                 }
             }
-            
+
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundColor(colors.secondaryText)
@@ -188,7 +188,7 @@ struct FavoritesSection: View {
     let books: [Book]
     var colors: ThemeColors
     let onSelect: (Book) -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -198,12 +198,15 @@ struct FavoritesSection: View {
                 Spacer()
             }
             .padding(.horizontal)
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 12),
-                GridItem(.flexible(), spacing: 12),
-                GridItem(.flexible(), spacing: 12)
-            ], spacing: 12) {
+
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                ],
+                spacing: 12
+            ) {
                 ForEach(books) { book in
                     FavoriteBookCard(book: book, colors: colors)
                         .onTapGesture {
@@ -220,13 +223,13 @@ struct FavoritesSection: View {
 struct FavoriteBookCard: View {
     let book: Book
     var colors: ThemeColors
-    
+
     var body: some View {
         VStack(spacing: 6) {
             BookCoverView(book: book, colors: colors)
                 .frame(height: 100)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-            
+
             Text(book.title)
                 .font(.caption)
                 .foregroundColor(colors.primaryText)
@@ -239,17 +242,17 @@ struct FavoriteBookCard: View {
 // MARK: - 空状态
 struct EmptyHomeState: View {
     var colors: ThemeColors
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Image(systemName: "book.pages")
-                .font(.system(size: 50)) // 装饰性大图标
+                .font(.system(size: 50))  // 装饰性大图标
                 .foregroundColor(colors.secondaryText)
-            
+
             Text(L("home.empty"))
                 .font(.headline)
                 .foregroundColor(colors.secondaryText)
-            
+
             Text(L("home.emptyTip"))
                 .font(.caption)
                 .foregroundColor(colors.secondaryText.opacity(0.7))
@@ -264,7 +267,7 @@ struct CheckInButton: View {
     let streak: String
     var colors: ThemeColors
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 4) {
