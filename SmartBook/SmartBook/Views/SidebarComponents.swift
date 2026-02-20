@@ -281,6 +281,7 @@ struct SearchAndNewChatView: View {
     var viewModel: ChatViewModel?
     var onSelectChat: () -> Void
     var style: SidebarStyle
+    @FocusState private var isSearchFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
@@ -295,6 +296,14 @@ struct SearchAndNewChatView: View {
                         .font(.subheadline)
                         .foregroundColor(style.textColor)
                         .textFieldStyle(.plain)
+                        .focused($isSearchFocused)
+                }
+                .onChange(of: isSearchFocused) { _, isFocused in
+                    // 搜索框获得焦点时，禁用侧边栏水平滚动，防止键盘弹出导致自动跳转到主页面
+                    NotificationCenter.default.post(
+                        name: .disableExpandScroll,
+                        object: isFocused
+                    )
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 11)
