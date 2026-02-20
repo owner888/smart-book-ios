@@ -5,9 +5,9 @@ import SwiftUI
 struct ReaderSettingsView: View {
     @Binding var settings: ReaderSettings
     @Environment(\.dismiss) private var dismiss
-    
+
     private let fontFamilies = ["System", "PingFang SC", "Heiti SC", "STSong", "Kaiti SC"]
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -16,7 +16,7 @@ struct ReaderSettingsView: View {
                         Stepper("\(Int(settings.fontSize))", value: $settings.fontSize, in: 14...28, step: 1)
                             .labelsHidden()
                     }
-                    
+
                     SettingsRow(icon: "character", iconColor: .purple, title: L("reader.fontFamily")) {
                         Picker("", selection: $settings.fontFamily) {
                             ForEach(fontFamilies, id: \.self) { family in
@@ -26,7 +26,7 @@ struct ReaderSettingsView: View {
                         .labelsHidden()
                         .tint(.gray)
                     }
-                    
+
                     SettingsRow(icon: "text.alignleft", iconColor: .green, title: L("reader.lineSpacing")) {
                         Stepper("\(Int(settings.lineSpacing))", value: $settings.lineSpacing, in: 4...16, step: 2)
                             .labelsHidden()
@@ -36,7 +36,7 @@ struct ReaderSettingsView: View {
                         .foregroundColor(.gray)
                 }
                 .listRowBackground(Color(white: 0.11))
-                
+
                 Section {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack(spacing: 12) {
@@ -44,7 +44,7 @@ struct ReaderSettingsView: View {
                             Text(L("reader.theme"))
                                 .foregroundColor(.white)
                         }
-                        
+
                         HStack(spacing: 16) {
                             ForEach(BackgroundOption.allCases, id: \.self) { option in
                                 BackgroundColorButton(
@@ -63,7 +63,7 @@ struct ReaderSettingsView: View {
                         .foregroundColor(.gray)
                 }
                 .listRowBackground(Color(white: 0.11))
-                
+
                 Section {
                     SettingsRow(icon: "text.justify.left", iconColor: .cyan, title: L("reader.textAlignment")) {
                         Picker("", selection: $settings.textAlignment) {
@@ -74,7 +74,7 @@ struct ReaderSettingsView: View {
                         .labelsHidden()
                         .tint(.gray)
                     }
-                    
+
                     SettingsRow(icon: "book.pages", iconColor: .pink, title: L("reader.pageTurnStyle")) {
                         Picker("", selection: $settings.pageTurnStyle) {
                             ForEach(PageTurnStyle.allCases, id: \.self) { style in
@@ -92,13 +92,13 @@ struct ReaderSettingsView: View {
                         .foregroundColor(.gray)
                 }
                 .listRowBackground(Color(white: 0.11))
-                
+
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
                         Text(L("settings.preview"))
                             .font(.caption)
                             .foregroundColor(.gray)
-                        
+
                         Text(L("reader.previewText"))
                             .font(settings.font)
                             .lineSpacing(settings.lineSpacing)
@@ -135,7 +135,7 @@ struct ReaderSettingsView: View {
         }
         .preferredColorScheme(.dark)
     }
-    
+
     private func alignmentFor(_ alignment: TextAlignment) -> Alignment {
         switch alignment {
         case .leading: return .leading
@@ -149,7 +149,7 @@ enum BackgroundOption: String, CaseIterable {
     case dark = "dark"
     case sepia = "sepia"
     case light = "light"
-    
+
     var color: Color {
         switch self {
         case .dark: return Color(hex: "1a1a2e")
@@ -157,7 +157,7 @@ enum BackgroundOption: String, CaseIterable {
         case .light: return Color.white
         }
     }
-    
+
     var name: String {
         switch self {
         case .dark: return L("reader.theme.dark")
@@ -165,7 +165,7 @@ enum BackgroundOption: String, CaseIterable {
         case .light: return L("reader.theme.light")
         }
     }
-    
+
     var icon: String {
         switch self {
         case .dark: return "moon.fill"
@@ -173,7 +173,7 @@ enum BackgroundOption: String, CaseIterable {
         case .light: return "sun.max.fill"
         }
     }
-    
+
     var iconColor: Color {
         switch self {
         case .dark: return .purple
@@ -187,7 +187,7 @@ struct BackgroundColorButton: View {
     let option: BackgroundOption
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 6) {
@@ -197,14 +197,17 @@ struct BackgroundColorButton: View {
                         .frame(width: 50, height: 50)
                         .overlay(
                             Circle()
-                                .stroke(isSelected ? Color.green : Color.gray.opacity(0.4), lineWidth: isSelected ? 3 : 1)
+                                .stroke(
+                                    isSelected ? Color.green : Color.gray.opacity(0.4),
+                                    lineWidth: isSelected ? 3 : 1
+                                )
                         )
-                    
+
                     Image(systemName: option.icon)
                         .foregroundColor(option.iconColor)
-                        .font(.body) // 17号 - 动态字号
+                        .font(.body)  // 17号 - 动态字号
                 }
-                
+
                 Text(option.name)
                     .font(.caption2)
                     .foregroundColor(isSelected ? .green : .gray)

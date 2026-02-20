@@ -3,6 +3,7 @@
 //  SmartBook
 //
 //  Created by Andrew on 2026/2/7.
+//  Refactored: XIB → pure code
 //
 
 import Combine
@@ -13,6 +14,8 @@ enum MessageChatAction {
     case sendMessage
     case topFunction(_ event: MenuConfig.TopFunctionType)
     case popover(_ action: MessagePopoverAction, frame: CGRect)
+    case addBook(hasBooks: Bool)  // true = 已有书籍，选择书籍；false = 无书籍，导入书籍
+    case deselectBook  // 取消选择书籍
 }
 
 enum MessagePopoverAction {
@@ -21,16 +24,20 @@ enum MessagePopoverAction {
     case chooseModel
 }
 
+// 纯代码实现，不再依赖 MessageChatView.xib
 class MessageChatView: UIView {
     var viewModel: ChatViewModel?
     var action: ((MessageChatAction) -> Void)?
-    @IBOutlet weak private var bottomConstraint: NSLayoutConstraint!
-    @IBOutlet weak private var inputBar: InputToolView!
-    @IBOutlet weak private var tableView: UITableView!
-    @IBOutlet weak private var bottomBtn: UIButton!
-    @IBOutlet weak private var topView: MessageInputTopView?
-    @IBOutlet weak private var mainView: UIView!
-    @IBOutlet weak private var emptyBgView: UIView!
+
+    // MARK: - 纯代码属性（替代 @IBOutlet）
+    private var bottomConstraint: NSLayoutConstraint!
+    private var inputBar: InputToolView!
+    private var tableView: UITableView!
+    private var bottomBtn: UIButton!
+    private var topView: MessageInputTopView?
+    private var mainView: UIView!
+    private var emptyBgView: UIView!
+
     private var cancellables = Set<AnyCancellable>()
     private var currentIdCancelables = Set<AnyCancellable>()
     private var messages = [ChatMessage]()
@@ -41,9 +48,46 @@ class MessageChatView: UIView {
     private let themeManager = ThemeManager.shared
     private var keyboardIsChanging = false
     private var emptyStateView: UIEmptyStateView?
+    private var bookContextBar: UIBookContextBar?
+    private var assistantPromptBar: UIAssistantPromptBar?
+    private var headerStack: UIStackView!
+    private var tableViewTopConstraint: NSLayoutConstraint!
+    private var emptyBgViewTopConstraint: NSLayoutConstraint!
     private var safeAreaBottom: CGFloat = 0.0
     private var scrollingTop = false
 
+<<<<<<< HEAD
+=======
+    /// 当前选中的书籍
+    var selectedBook: Book? {
+        didSet {
+            // 仅在书籍实际变化时才重建顶部栏
+            if oldValue?.id != selectedBook?.id {
+                updateHeaderBars()
+            }
+        }
+    }
+
+    /// 当前助手（用于显示系统提示词栏）
+    var currentAssistant: Assistant? {
+        didSet {
+            // 仅在助手 ID 或系统提示词变化时才重建顶部栏
+            if oldValue?.id != currentAssistant?.id || oldValue?.systemPrompt != currentAssistant?.systemPrompt {
+                updateHeaderBars()
+            }
+        }
+    }
+
+    /// 是否已有书籍（参考 SwiftUI: bookState.books.isEmpty）
+    var hasBooks: Bool = false {
+        didSet {
+            if hasBooks != oldValue {
+                updateEmptyStateView()
+            }
+        }
+    }
+
+>>>>>>> UIKitScrollTo
     var aiFunction: MenuConfig.AIModelFunctionType? {
         didSet {
             if let function = aiFunction {
@@ -57,6 +101,7 @@ class MessageChatView: UIView {
             if let newValue = assistant {
                 inputBar.assistant = newValue
 
+<<<<<<< HEAD
                 // ✅ 助手切换时更新空状态视图
                 let isChat = newValue == .chat
                 emptyStateView?.configure(
@@ -66,6 +111,10 @@ class MessageChatView: UIView {
                     },
                     isDefaultChatAssistant: isChat
                 )
+=======
+                // 助手切换时更新空状态视图（参考 SwiftUI: isDefaultChatAssistant）
+                updateEmptyStateView()
+>>>>>>> UIKitScrollTo
             }
         }
     }
@@ -79,35 +128,144 @@ class MessageChatView: UIView {
 
     override init(frame: CGRect) {
         super.init(frame: frame)
-        loadXib()
+        buildUI()
+        setUpUI()
     }
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
-        loadXib()
+        buildUI()
+        setUpUI()
     }
 
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
 
-    private func loadXib() {
-        let bundle = Bundle(for: type(of: self))
-        let nib = UINib(nibName: "MessageChatView", bundle: bundle)
-        if let view = nib.instantiate(withOwner: self).first as? UIView {
-            view.frame = self.bounds
-            view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            addSubview(view)
+    // MARK: - 纯代码构建 UI（替代 XIB）
+
+    private func buildUI() {
+        backgroundColor = .clear
+
+        // === mainView ===
+        mainView = UIView()
+        mainView.backgroundColor = .clear
+        mainView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(mainView)
+
+        // === emptyBgView ===
+        emptyBgView = UIView()
+        emptyBgView.backgroundColor = .clear
+        emptyBgView.translatesAutoresizingMaskIntoConstraints = false
+        mainView.addSubview(emptyBgView)
+
+        // === tableView ===
+        tableView = UITableView(frame: .zero, style: .plain)
+        tableView.backgroundColor = .clear
+        tableView.translatesAutoresizingMaskIntoConstraints = false
+
+        mainView.addSubview(tableView)
+
+        // === topView (MessageInputTopView) ===
+        topView = MessageInputTopView()
+        topView!.backgroundColor = .clear
+        topView!.translatesAutoresizingMaskIntoConstraints = false
+        mainView.addSubview(topView!)
+
+        // === bottomBtn (滚动到底部按钮，液态玻璃样式，与 Add Book 按钮一致) ===
+        var btnConfig: UIButton.Configuration
+        if #available(iOS 26.0, *) {
+            btnConfig = .glass()
+        } else {
+            btnConfig = .filled()
         }
-        setUpUI()
+        btnConfig.image = UIImage(systemName: "chevron.down")
+        btnConfig.cornerStyle = .capsule
+        btnConfig.baseBackgroundColor = .clear
+        btnConfig.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0)
+        let expandedBtn = ExpandedHitButton(type: .system)
+        expandedBtn.configuration = btnConfig
+        bottomBtn = expandedBtn
+        bottomBtn.isHidden = true
+        bottomBtn.translatesAutoresizingMaskIntoConstraints = false
+        bottomBtn.addTarget(self, action: #selector(scrollToBottomAction), for: .touchUpInside)
+        // iOS <26: 应用液态玻璃边框效果（与 EmptyChatPromptView 的 addBookButton 一致）
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
+        bottomBtn.configuration?.baseForegroundColor = isDarkMode ? .white : .black
+        bottomBtn.applyGlassEffect(isDarkMode: isDarkMode)
+        mainView.addSubview(bottomBtn)
+
+        // === inputBar (InputToolView) ===
+        inputBar = InputToolView()
+        inputBar.backgroundColor = .clear
+        inputBar.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(inputBar)
+
+        // === 约束 ===
+        // bottomConstraint: inputBar.bottom = self.bottom（稍后被 keyboardLayoutGuide 替代）
+        bottomConstraint = inputBar.bottomAnchor.constraint(equalTo: bottomAnchor)
+
+        // 存储可变的 top 约束（bookContextBar 出现时需要调整）
+        tableViewTopConstraint = tableView.topAnchor.constraint(equalTo: mainView.topAnchor)
+        emptyBgViewTopConstraint = emptyBgView.topAnchor.constraint(equalTo: mainView.topAnchor)
+
+        NSLayoutConstraint.activate([
+            // mainView: safeArea 约束
+            mainView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
+            mainView.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor),
+            mainView.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor),
+            mainView.bottomAnchor.constraint(equalTo: inputBar.topAnchor),
+
+            // emptyBgView: top/leading/trailing 跟随 mainView
+            emptyBgViewTopConstraint,
+            emptyBgView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor),
+            emptyBgView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor),
+
+            // tableView: mainView 内部，左右各 15pt padding
+            tableViewTopConstraint,
+            tableView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 15),
+            tableView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -15),
+            tableView.bottomAnchor.constraint(equalTo: mainView.bottomAnchor),
+
+            // topView: 底部对齐 mainView，高度 50，左右 12pt
+            topView!.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 12),
+            topView!.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -12),
+            topView!.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
+            topView!.heightAnchor.constraint(equalToConstant: 50),
+
+            // emptyBgView 底部到 topView 上方 50pt
+            emptyBgView.bottomAnchor.constraint(equalTo: topView!.topAnchor, constant: -50),
+
+            // bottomBtn: 右下角，视觉 38x38 液态玻璃圆形按钮，触摸区域 44x44（ExpandedHitButton）
+            bottomBtn.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -20),
+            bottomBtn.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
+            bottomBtn.widthAnchor.constraint(equalToConstant: 38),
+            bottomBtn.heightAnchor.constraint(equalToConstant: 38),
+
+            // inputBar: 左右各 15pt（safeArea），低优先级高度
+            inputBar.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 15),
+            inputBar.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -15),
+            bottomConstraint,
+        ])
+
+        // inputBar 高度低优先级约束
+        let heightConstraint = inputBar.heightAnchor.constraint(equalToConstant: 80)
+        heightConstraint.priority = .defaultLow
+        heightConstraint.isActive = true
     }
 
     func setUpUI() {
         let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
         safeAreaBottom = scene?.windows.first?.safeAreaInsets.bottom ?? 0
         self.clipsToBounds = true
+<<<<<<< HEAD
         // 注册 SwiftUI Cell
         tableView.register(SwiftUIMessageCell.self, forCellReuseIdentifier: SwiftUIMessageCell.identifier)
+=======
+
+        // 使用 class 注册（不再使用 XIB nib）
+        tableView.register(CommonChatCell.self, forCellReuseIdentifier: "commonChat")
+>>>>>>> UIKitScrollTo
         tableView.register(FootAdapterCell.self, forCellReuseIdentifier: "foot")
         tableView.separatorStyle = .none
         tableView.dataSource = self
@@ -115,12 +273,17 @@ class MessageChatView: UIView {
 
         // 启用自动高度
         tableView.estimatedRowHeight = 20
+        tableView.contentInset.bottom = 60  // 底部留出 60pt 空间
+        tableView.scrollIndicatorInsets.bottom = 60
         tableView.rowHeight = UITableView.automaticDimension
         tableView.reloadData()
         tableView.clipsToBounds = false
 
         inputBar.send = { [weak self] in
+<<<<<<< HEAD
             self?.topView?.isHidden = true
+=======
+>>>>>>> UIKitScrollTo
             self?.action?(.sendMessage)
         }
         inputBar.showPopover = { [weak self] (type, view) in
@@ -136,8 +299,13 @@ class MessageChatView: UIView {
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) {
             (self: Self, previousTraitCollection: UITraitCollection) in
             self.tableView.reloadData()
+            // ✅ 更新 bottomBtn 液态玻璃效果（暗黑/浅色模式切换）
+            let isDark = self.traitCollection.userInterfaceStyle == .dark
+            self.bottomBtn.configuration?.baseForegroundColor = isDark ? .white : .black
+            self.bottomBtn.applyGlassEffect(isDarkMode: isDark)
         }
 
+        // 键盘跟随
         bottomConstraint.isActive = false
         let keyboardConstraint = inputBar.bottomAnchor.constraint(
             equalTo: self.keyboardLayoutGuide.topAnchor,
@@ -149,7 +317,8 @@ class MessageChatView: UIView {
             forName: UIResponder.keyboardWillShowNotification,
             object: nil,
             queue: OperationQueue.main
-        ) { notification in
+        ) { [weak self] notification in
+            guard let self = self else { return }
             guard let userInfo = notification.userInfo,
                 let keyboardFrame = userInfo[
                     UIResponder.keyboardFrameEndUserInfoKey
@@ -169,19 +338,30 @@ class MessageChatView: UIView {
             } else {
                 self.onKeyboardFrameChange(notification)
             }
+<<<<<<< HEAD
             DispatchQueue.main.asyncAfter(
                 deadline: .now() + 0.3,
                 execute: {
                     self.keyboardIsChanging = false
                 }
             )
+=======
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.keyboardIsChanging = false
+            }
+>>>>>>> UIKitScrollTo
         }
 
         NotificationCenter.default.addObserver(
             forName: UIResponder.keyboardWillHideNotification,
             object: nil,
             queue: OperationQueue.main
+<<<<<<< HEAD
         ) { notification in
+=======
+        ) { [weak self] notification in
+            guard let self = self else { return }
+>>>>>>> UIKitScrollTo
             if let bottom = self.originBottom {
                 self.viewModel?.scrollBottom = bottom
                 self.reloadBottom()
@@ -189,6 +369,7 @@ class MessageChatView: UIView {
             }
             self.originBottom = nil
             self.keyboardIsChanging = true
+<<<<<<< HEAD
             DispatchQueue.main.asyncAfter(
                 deadline: .now() + 0.3,
                 execute: {
@@ -205,20 +386,41 @@ class MessageChatView: UIView {
         mainView.addGestureRecognizer(tapGesture)
         createEmptyStateView()
 
+=======
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+                self?.keyboardIsChanging = false
+            }
+        }
+
+        // 点击空白处收起键盘
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapEvent))
+        mainView.addGestureRecognizer(tapGesture)
+        createEmptyStateView()
+>>>>>>> UIKitScrollTo
     }
 
+    // MARK: - 数据绑定
     func bind(to viewModel: ChatViewModel) {
         self.viewModel = viewModel
         inputBar.bind(to: viewModel)
         viewModel.$messages.receive(on: DispatchQueue.main).sink {
-            [weak self] messages in
+            [weak self] newMessages in
             guard let self = self else { return }
-            self.messages = messages
-            if !messages.isEmpty {
+            if !newMessages.isEmpty {
+                self.topView?.isHidden = true
+            }
+            let oldMessages = self.messages
+            self.messages = newMessages
+            // 空状态管理：根据消息数量显示/隐藏 emptyBgView 和 emptyStateView
+            self.emptyBgView.isHidden = !newMessages.isEmpty
+
+            if !newMessages.isEmpty {
                 self.emptyStateView?.removeFromSuperview()
                 self.emptyStateView = nil
             }
-            self.tableView.reloadData()
+
+            // 智能更新：根据变化类型选择最小更新策略
+            self.smartReloadTable(oldMessages: oldMessages, newMessages: newMessages)
 
         }.store(in: &cancellables)
         viewModel.$currentMessageId.receive(on: DispatchQueue.main).sink {
@@ -226,9 +428,76 @@ class MessageChatView: UIView {
             guard let self = self else { return }
             self.onSended()
         }.store(in: &currentIdCancelables)
+<<<<<<< HEAD
 
     }
 
+=======
+    }
+
+    /// 智能表格更新：避免流式更新时全量 reloadData
+    private func smartReloadTable(oldMessages: [ChatMessage], newMessages: [ChatMessage]) {
+        // 空 → 有消息：全量刷新
+        if oldMessages.isEmpty && !newMessages.isEmpty {
+            tableView.reloadData()
+            return
+        }
+
+        // 有消息 → 空：全量刷新（清空对话）
+        if !oldMessages.isEmpty && newMessages.isEmpty {
+            tableView.reloadData()
+            return
+        }
+
+        // 新增了消息（发送用户消息 或 创建 AI 占位消息）
+        if newMessages.count > oldMessages.count {
+            let newIndexPaths = (oldMessages.count..<newMessages.count).map {
+                IndexPath(row: $0, section: 0)
+            }
+            tableView.insertRows(at: newIndexPaths, with: .none)
+            return
+        }
+
+        // 消息数量减少（删除消息）：全量刷新
+        if newMessages.count < oldMessages.count {
+            tableView.reloadData()
+            return
+        }
+
+        // 消息数量相同 → 内容更新（流式更新 AI 回复）
+        if newMessages.count == oldMessages.count && !newMessages.isEmpty {
+            let lastIndex = newMessages.count - 1
+            let lastOld = oldMessages[lastIndex]
+            let lastNew = newMessages[lastIndex]
+
+            // 只有内容或状态变化时才更新
+            if lastOld.content != lastNew.content
+                || lastOld.isStreaming != lastNew.isStreaming
+                || lastOld.thinking != lastNew.thinking
+                || lastOld.tools?.count != lastNew.tools?.count
+            {
+                let indexPath = IndexPath(row: lastIndex, section: 0)
+
+                // 流式更新时：直接更新可见 cell 内容，避免 reloadRows 导致闪屏
+                if lastNew.isStreaming,
+                    let cell = tableView.cellForRow(at: indexPath) as? CommonChatCell
+                {
+                    cell.configure(lastNew, assistant: nil, colors: colors)
+                    // 通知 tableView 重新计算高度（不重建 cell）
+                    UIView.performWithoutAnimation {
+                        tableView.beginUpdates()
+                        tableView.endUpdates()
+                    }
+                } else {
+                    // 非流式（如 isStreaming → false）：用 reloadRows 完整刷新
+                    tableView.reloadRows(at: [indexPath], with: .none)
+                }
+                return
+            }
+        }
+    }
+
+>>>>>>> UIKitScrollTo
     @objc func tapEvent() {
         UIApplication.shared.sendAction(
             #selector(UIResponder.resignFirstResponder),
@@ -239,7 +508,10 @@ class MessageChatView: UIView {
     }
 
     func onKeyboardFrameChange(_ notification: Notification) {
+<<<<<<< HEAD
 
+=======
+>>>>>>> UIKitScrollTo
         if bottomBtn.isHidden {
             guard let userInfo = notification.userInfo,
                 let duration = userInfo[
@@ -264,6 +536,10 @@ class MessageChatView: UIView {
         }
     }
 
+<<<<<<< HEAD
+=======
+    /// 创建空状态视图（首次加载或消息清空时调用）
+>>>>>>> UIKitScrollTo
     private func createEmptyStateView() {
         if emptyStateView == nil {
             let view = UIEmptyStateView(frame: CGRect.zero)
@@ -274,21 +550,132 @@ class MessageChatView: UIView {
                 view.centerYAnchor.constraint(equalTo: emptyBgView.centerYAnchor),
             ])
 
+<<<<<<< HEAD
             // ✅ 配置空状态视图，传递助手类型
             let isChat = assistant == .chat
             view.configure(
                 colors: colors,
                 onAddBook: {
                     // TODO: 处理添加书籍
+=======
+            let isChat = assistant == .chat
+            let currentHasBooks = hasBooks
+            view.configure(
+                colors: colors,
+                hasBooks: currentHasBooks,
+                onAddBook: { [weak self] in
+                    guard let self = self else { return }
+                    self.action?(.addBook(hasBooks: currentHasBooks))
+>>>>>>> UIKitScrollTo
                 },
                 isDefaultChatAssistant: isChat
             )
 
             emptyStateView = view
+
+            // 空状态时：将 emptyBgView 提到 tableView 前面，确保按钮可点击
+            mainView.bringSubviewToFront(emptyBgView)
         }
     }
 
+<<<<<<< HEAD
     @IBAction func scrollToBottomAction() {
+=======
+    // MARK: - 顶部栏管理（BookContextBar + AssistantPromptBar）
+
+    /// headerStack 底部约束到 tableView/emptyBgView 的 top
+    private var tableViewToHeaderConstraint: NSLayoutConstraint?
+    private var emptyBgToHeaderConstraint: NSLayoutConstraint?
+
+    private func updateHeaderBars() {
+        // 移除旧约束和 headerStack
+        tableViewToHeaderConstraint?.isActive = false
+        emptyBgToHeaderConstraint?.isActive = false
+        tableViewToHeaderConstraint = nil
+        emptyBgToHeaderConstraint = nil
+        headerStack?.removeFromSuperview()
+        bookContextBar = nil
+        assistantPromptBar = nil
+
+        var headerViews = [UIView]()
+
+        // 1. BookContextBar（选中书籍时显示）
+        if let book = selectedBook {
+            let bar = UIBookContextBar()
+            bar.configure(book: book) { [weak self] in
+                self?.action?(.deselectBook)
+            }
+            bookContextBar = bar
+            headerViews.append(bar)
+
+            // 2. AssistantPromptBar（有系统提示词时显示，仅在选中书籍时）
+            if let assistant = currentAssistant, !assistant.systemPrompt.isEmpty {
+                let promptBar = UIAssistantPromptBar()
+                promptBar.configure(assistant: assistant)
+                // 不再需要 onHeightChanged 回调
+                assistantPromptBar = promptBar
+                headerViews.append(promptBar)
+            }
+        }
+
+        if headerViews.isEmpty {
+            headerStack = nil
+            // 恢复原始 top 约束
+            tableViewTopConstraint.constant = 0
+            emptyBgViewTopConstraint.constant = 0
+        } else {
+            // 创建 headerStack
+            let stack = UIStackView(arrangedSubviews: headerViews)
+            stack.axis = .vertical
+            stack.spacing = 0
+            stack.translatesAutoresizingMaskIntoConstraints = false
+            mainView.addSubview(stack)
+
+            NSLayoutConstraint.activate([
+                stack.topAnchor.constraint(equalTo: mainView.topAnchor),
+                stack.leadingAnchor.constraint(equalTo: mainView.leadingAnchor),
+                stack.trailingAnchor.constraint(equalTo: mainView.trailingAnchor),
+            ])
+            headerStack = stack
+
+            // 禁用原始的 top 约束，改用 headerStack.bottom 驱动
+            tableViewTopConstraint.isActive = false
+            emptyBgViewTopConstraint.isActive = false
+
+            // tableView.top = headerStack.bottom（自动跟随 headerStack 高度变化）
+            let tvConstraint = tableView.topAnchor.constraint(equalTo: stack.bottomAnchor)
+            tvConstraint.isActive = true
+            tableViewToHeaderConstraint = tvConstraint
+
+            let emptyConstraint = emptyBgView.topAnchor.constraint(equalTo: stack.bottomAnchor)
+            emptyConstraint.isActive = true
+            emptyBgToHeaderConstraint = emptyConstraint
+        }
+
+        UIView.animate(withDuration: 0.25) {
+            self.mainView.layoutIfNeeded()
+        }
+    }
+
+    /// 更新空状态视图（助手切换或书籍状态变化时调用）
+    private func updateEmptyStateView() {
+        guard let emptyStateView = emptyStateView else { return }
+
+        let isChat = assistant == .chat
+        let currentHasBooks = hasBooks
+        emptyStateView.configure(
+            colors: colors,
+            hasBooks: currentHasBooks,
+            onAddBook: { [weak self] in
+                guard let self = self else { return }
+                self.action?(.addBook(hasBooks: currentHasBooks))
+            },
+            isDefaultChatAssistant: isChat
+        )
+    }
+
+    @objc func scrollToBottomAction() {
+>>>>>>> UIKitScrollTo
         scrollToBottom(animated: true)
     }
 
@@ -309,6 +696,7 @@ class MessageChatView: UIView {
     private func messageChangedSize(_ height: CGFloat, id: UUID) {
         messageHeights[id] = height
         guard let viewModel = viewModel else { return }
+<<<<<<< HEAD
         //        if let qMess = messageHeights[viewModel.currentMessageId!] {
         //            print("==问题高度: \(qMess)")
         //        }
@@ -316,6 +704,8 @@ class MessageChatView: UIView {
         //            let answer = messageHeights[messageId] {
         //            print("==回答高度: \(answer)")
         //        }
+=======
+>>>>>>> UIKitScrollTo
         if id == viewModel.answerMessageId,
             viewModel.isLoading
         {
@@ -323,7 +713,10 @@ class MessageChatView: UIView {
             if let adaptatio = adaptationBottom {
                 bottom = adaptatio
             } else {
+<<<<<<< HEAD
                 // 如果没有获取到显示问题后的高度后,需要再获取一次.
+=======
+>>>>>>> UIKitScrollTo
                 if let questionId = viewModel.currentMessageId,
                     let questionHeight = messageHeights[questionId]
                 {
@@ -334,7 +727,10 @@ class MessageChatView: UIView {
                     adaptationBottom = bottom
                 }
             }
+<<<<<<< HEAD
             // 根据回答内容的高度逐步越少底部空余高度
+=======
+>>>>>>> UIKitScrollTo
             if let bottom = bottom {
                 let offset = max(bottom - height, 0)
                 if abs(viewModel.scrollBottom - offset) > 10 || (viewModel.scrollBottom > 0 && offset == 0) {
@@ -374,7 +770,10 @@ class MessageChatView: UIView {
         )
     }
 
+<<<<<<< HEAD
     // 滚到问题消息到顶部
+=======
+>>>>>>> UIKitScrollTo
     private func scrollToMessageTop(_ messageId: UUID) {
         guard let viewModel = viewModel,
             let answerMessageId = viewModel.answerMessageId
@@ -415,12 +814,15 @@ class MessageChatView: UIView {
                 }
             )
         }
-
     }
 
     private func reloadBottom() {
         if let space = viewModel?.scrollBottom {
+<<<<<<< HEAD
             // 底部间距至少 60pt，避免被 TopFunctionType 按钮遮挡
+=======
+            // 保持至少 60pt 底部间距
+>>>>>>> UIKitScrollTo
             let bottomInset = max(space, 60)
             tableView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: bottomInset, right: 0)
         }
@@ -437,8 +839,12 @@ class MessageChatView: UIView {
 
             let isAtBottom = offset > effectiveContentHeight - 20
             bottomBtn.isHidden = isAtBottom
+<<<<<<< HEAD
 
             // print("== table view offset: \(offset), contentSize: \(effectiveContentHeight), frame: \(tableView.frame.size.height), isAtBottom: \(isAtBottom)")
+=======
+            print("== scroll offset: \(offset), content height: \(effectiveContentHeight)")
+>>>>>>> UIKitScrollTo
         }
     }
 }
@@ -506,5 +912,15 @@ private class FootAdapterCell: UITableViewCell {
 
     required init?(coder: NSCoder) {
         super.init(coder: coder)
+    }
+}
+
+/// 扩大触摸区域的按钮：视觉 38x38，触摸 44x44（Apple 推荐最小触摸目标）
+private class ExpandedHitButton: UIButton {
+    /// 触摸区域向外扩展的距离（负值 = 向外扩展）
+    var expandInsets = UIEdgeInsets(top: -3, left: -3, bottom: -3, right: -3)
+
+    override func point(inside point: CGPoint, with event: UIEvent?) -> Bool {
+        return bounds.inset(by: expandInsets).contains(point)
     }
 }

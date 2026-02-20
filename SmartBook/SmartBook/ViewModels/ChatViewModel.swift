@@ -57,7 +57,12 @@ class ChatViewModel: ObservableObject {
         }
     }
 
-    // ✅ 依赖注入，方便测试和管理
+    deinit {
+        cancelDisplay()
+        Logger.info("♻️ ChatViewModel 已释放")
+    }
+
+    // 依赖注入，方便测试和管理
     init(
         streamingService: StreamingChatService = StreamingChatService(),
         ttsCoordinator: TTSCoordinatorService? = nil,
@@ -70,6 +75,9 @@ class ChatViewModel: ObservableObject {
             ttsCoordinator
             ?? DIContainer.shared.makeTTSCoordinatorService(provider: AppConfig.DefaultValues.ttsProvider)
         self.mediaService = mediaService ?? MediaProcessingService()
+
+        // 确保 ViewModel 释放时清理 Timer
+        Logger.info("🏗️ ChatViewModel 已创建")
 
         // 设置 TTS 播放完成回调（合并所有必要逻辑）
         Logger.info("🔧 ChatViewModel.init: 正在设置播放完成回调")
@@ -84,7 +92,7 @@ class ChatViewModel: ObservableObject {
                 // 设置播放状态为 false
                 self.ttsStreamService.isPlaying = false
 
-                Logger.info("✅ TTS 播放完成: isLoading=\(self.isLoading), isPlaying=\(self.ttsStreamService.isPlaying)")
+                Logger.info("TTS 播放完成: isLoading=\(self.isLoading), isPlaying=\(self.ttsStreamService.isPlaying)")
             }
         }
     }
@@ -130,7 +138,7 @@ class ChatViewModel: ObservableObject {
         streamingService.stopStreaming()
         isLoading = false
 
-        // ✅ 使用协调服务停止所有 TTS
+        // 使用协调服务停止所有 TTS
         Task { @MainActor in
             await ttsCoordinator.stopAll()
         }
@@ -140,7 +148,7 @@ class ChatViewModel: ObservableObject {
     func sendMessage(_ text: String, mediaItems: [MediaItem] = [], enableTTS: Bool = false) async {
         guard let bookState = bookState else { return }
 
-        // ✅ 使用媒体处理服务
+        // 使用媒体处理服务
         let processedMedia = mediaService.processMediaItems(mediaItems)
 
         // 过滤空字符串（如果有媒体，文本可以为空）
@@ -149,7 +157,7 @@ class ChatViewModel: ObservableObject {
             Logger.warning("⚠️ 消息太短且无媒体，拒绝发送")
             return
         }
-        
+
         answerMessageId = nil
 
         // 用户消息内容（不包含媒体描述，像 Grok 一样）
@@ -167,7 +175,7 @@ class ChatViewModel: ObservableObject {
 
         // 再添加用户消息（包含媒体项）
         let userMessage = ChatMessage(
-            role: .user, 
+            role: .user,
             content: finalContent,
             mediaItems: mediaItems.isEmpty ? nil : mediaItems
         )
@@ -181,7 +189,7 @@ class ChatViewModel: ObservableObject {
         streamingContent = ""
         streamingThinking = ""  // 重置思考内容
         streamingSources = nil  // 重置检索来源
-        streamingTools = nil  // ✅ 重置工具调用
+        streamingTools = nil  // 重置工具调用
         answerContents.removeAll()
         contentIndex = 0
         cancelDisplay()
@@ -193,7 +201,7 @@ class ChatViewModel: ObservableObject {
         let messageIndex = messages.count - 1
         currentMessageIndex = messageIndex
 
-        // ✅ 如果启用 TTS，准备流式 TTS（仅 Google）
+        // 如果启用 TTS，准备流式 TTS（仅 Google）
         if enableTTS {
             Task {
                 await ttsCoordinator.prepareStreaming()
@@ -210,7 +218,7 @@ class ChatViewModel: ObservableObject {
             enableRag: false,
             summary: summary,
             history: recentMessages,
-            images: processedMedia.images  // ✅ 直接使用处理后的图片数据
+            images: processedMedia.images  // 直接使用处理后的图片数据
         ) { [weak self] event in
             guard let self = self else { return }
 
@@ -241,7 +249,7 @@ class ChatViewModel: ObservableObject {
                     Logger.info("🔧 收到工具调用事件！")
                     Logger.info("🔧 工具数量: \(tools.count)")
                     Logger.info("🔧 工具详情: \(tools.map { "\($0.name)(\($0.success ? "成功" : "失败"))" })")
-                    
+
                     // 保存工具调用
                     self.streamingTools = tools
 
@@ -284,7 +292,7 @@ class ChatViewModel: ObservableObject {
                     self.answerContents.append(content)
                     self.wordByWordDisplay()
 
-                    // ✅ 使用协调服务发送流式文本
+                    // 使用协调服务发送流式文本
                     if enableTTS {
                         Task {
                             await self.ttsCoordinator.sendStreamingText(content)
@@ -294,7 +302,7 @@ class ChatViewModel: ObservableObject {
                 case .error(let error):
                     if messageIndex < self.messages.count {
                         self.cancelDisplay()
-                        
+
                         self.messages[messageIndex] = ChatMessage(
                             id: self.messages[messageIndex].id,
                             role: .assistant,
@@ -318,7 +326,7 @@ class ChatViewModel: ObservableObject {
                     self.isLoading = false
                     self.cancelDisplay()
 
-                    // ✅ 使用协调服务停止 TTS
+                    // 使用协调服务停止 TTS
                     Task {
                         await self.ttsCoordinator.stopAll()
                     }
@@ -375,7 +383,7 @@ class ChatViewModel: ObservableObject {
                             "💾 保存助手回复到数据库（thinking: \(self.streamingThinking.isEmpty ? "无" : "有"), sources: \(self.streamingSources?.count ?? 0)）"
                         )
 
-                        // ✅ 使用协调服务播放 TTS
+                        // 使用协调服务播放 TTS
                         if enableTTS {
                             Task {
                                 await self.ttsCoordinator.speak(messageContent)
@@ -406,7 +414,8 @@ class ChatViewModel: ObservableObject {
             wordTimer = Timer.scheduledTimer(
                 withTimeInterval: 0.12,
                 repeats: true,
-                block: { _ in
+                block: { [weak self] _ in
+                    guard let self = self else { return }
                     if self.contentIndex < self.answerContents.count {
                         let content = self.answerContents[self.contentIndex]
                         let words = content.map { String($0) }
@@ -423,7 +432,7 @@ class ChatViewModel: ObservableObject {
                                     content: self.streamingContent,
                                     thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking,  // 保留思考内容
                                     sources: self.streamingSources,  // 保留检索来源
-                                    tools: self.streamingTools,  // ✅ 保留工具调用
+                                    tools: self.streamingTools,  // 保留工具调用
                                     isStreaming: true
                                 )
                                 self.wordIndex += takeCount
@@ -433,15 +442,17 @@ class ChatViewModel: ObservableObject {
                             self.contentIndex += 1
                         }
                     } else {
-                        self.messages[self.currentMessageIndex] = ChatMessage(
-                            id: self.messages[self.currentMessageIndex].id,
-                            role: .assistant,
-                            content: self.streamingContent,
-                            thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking,  // 保留思考内容
-                            sources: self.streamingSources,  // 保留检索来源
-                            tools: self.streamingTools,  // ✅ 保留工具调用
-                            isStreaming: false
-                        )
+                        if self.currentMessageIndex < self.messages.count {
+                            self.messages[self.currentMessageIndex] = ChatMessage(
+                                id: self.messages[self.currentMessageIndex].id,
+                                role: .assistant,
+                                content: self.streamingContent,
+                                thinking: self.streamingThinking.isEmpty ? nil : self.streamingThinking,  // 保留思考内容
+                                sources: self.streamingSources,  // 保留检索来源
+                                tools: self.streamingTools,  // 保留工具调用
+                                isStreaming: false
+                            )
+                        }
                         self.isLoading = false
                         self.cancelDisplay()
                     }

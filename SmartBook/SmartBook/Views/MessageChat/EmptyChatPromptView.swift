@@ -22,6 +22,7 @@ final class UIEmptyStateView: UIView {
     private var onAddBook: (() -> Void)?
     private var cancellables = Set<AnyCancellable>()
     private var isDefaultChatAssistant: Bool = false  // ✅ 是否为默认 Chat 助手
+    private var hasBooks: Bool = false  // ✅ 是否已有书籍（参考 SwiftUI: bookState.books.isEmpty）
 
     // MARK: - UI Components
 
@@ -127,23 +128,39 @@ final class UIEmptyStateView: UIView {
 
     // MARK: - Configuration
 
-    func configure(colors: ThemeColors, onAddBook: @escaping () -> Void, isDefaultChatAssistant: Bool = false) {
+    func configure(colors: ThemeColors, hasBooks: Bool, onAddBook: @escaping () -> Void, isDefaultChatAssistant: Bool = false) {
         self.colors = colors
+        self.hasBooks = hasBooks
         self.onAddBook = onAddBook
         self.isDefaultChatAssistant = isDefaultChatAssistant
         
-        // ✅ 根据助手类型切换图标和显示内容
         if isDefaultChatAssistant {
-            // Chat 助手：聊天图标，隐藏其他内容
+            // ✅ Chat 助手：始终显示空聊天图标，无需选择书籍即可对话
             iconImageView.image = UIImage(systemName: "bubble.left.and.bubble.right")
             titleLabel.isHidden = true
             descriptionLabel.isHidden = true
             addBookButton.isHidden = true
-        } else {
-            // 其他助手：书籍图标，显示完整内容
-            iconImageView.image = UIImage(systemName: "books.vertical")
+        } else if hasBooks {
+            // ✅ 有书籍但未选择：显示"选择书籍"（参考 SwiftUI EmptyChatStateView）
+            iconImageView.image = UIImage(systemName: "bubble.left.and.bubble.right")
+            titleLabel.text = L("chat.emptyState.noBookTitle")
             titleLabel.isHidden = false
+            descriptionLabel.text = L("chat.emptyState.noBookDesc")
             descriptionLabel.isHidden = false
+            // 按钮显示"选择书籍"
+            addBookButton.configuration?.title = L("chat.menu.selectBook")
+            addBookButton.configuration?.image = UIImage(systemName: "book")
+            addBookButton.isHidden = false
+        } else {
+            // ✅ 没有书籍：显示"导入书籍"（参考 SwiftUI EmptyStateView）
+            iconImageView.image = UIImage(systemName: "books.vertical")
+            titleLabel.text = L("chat.emptyState.title")
+            titleLabel.isHidden = false
+            descriptionLabel.text = L("chat.emptyState.desc")
+            descriptionLabel.isHidden = false
+            // 按钮显示"添加书籍"
+            addBookButton.configuration?.title = L("chat.emptyState.addBook")
+            addBookButton.configuration?.image = UIImage(systemName: "plus.circle.fill")
             addBookButton.isHidden = false
         }
         

@@ -6,11 +6,10 @@ import Foundation
 /// 应用配置管理器
 enum AppConfig {
     
-    // MARK: - API 配置
+    // MARK: - API 配置（从 Info.plist / Secrets.xcconfig 读取）
     
-    /// API 基础 URL
-    /// 从 UserDefaults 读取，如果不存在则返回默认配置值
-    /// 优先级：UserDefaults > Info.plist (Secrets.xcconfig) > 硬编码默认值
+    /// API 基础 URL（HTTP/HTTPS）
+    /// 优先级：UserDefaults（设置页面修改）> Info.plist (Secrets.xcconfig) > 硬编码默认值
     static var apiBaseURL: String {
         UserDefaults.standard.string(forKey: Keys.apiBaseURL) ?? defaultAPIBaseURL
     }
@@ -19,6 +18,16 @@ enum AppConfig {
     /// 用于 @AppStorage 的初始值和回退值
     static var defaultAPIBaseURL: String {
         Bundle.main.infoDictionary?["API_BASE_URL"] as? String ?? DefaultValues.apiBaseURL
+    }
+    
+    /// WebSocket ASR URL（语音识别）
+    static var apiASRURL: String {
+        Bundle.main.infoDictionary?["API_ASR_URL"] as? String ?? DefaultValues.apiASRURL
+    }
+    
+    /// WebSocket TTS URL（语音合成）
+    static var apiTTSURL: String {
+        Bundle.main.infoDictionary?["API_TTS_URL"] as? String ?? DefaultValues.apiTTSURL
     }
     
     /// API Key
@@ -45,6 +54,8 @@ enum AppConfig {
     
     enum DefaultValues {
         static let apiBaseURL = "http://localhost:9527"
+        static let apiASRURL = "ws://localhost:9525"
+        static let apiTTSURL = "ws://localhost:9524"
         static let autoTTS = true
         static let ttsRate = 1.0
         static let asrProvider = "deepgram" // native, google, deepgram

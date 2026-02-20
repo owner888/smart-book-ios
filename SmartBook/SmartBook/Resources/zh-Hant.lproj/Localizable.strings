@@ -207,6 +207,15 @@
 "voice.rate" = "語速";
 "voice.rate.value" = "%.1fx";
 
+/* AI Tools */
+"settings.aiTools" = "AI 工具";
+"settings.aiTools.mcp" = "MCP 工具";
+"settings.aiTools.mcp.desc" = "時間、計算、網頁抓取、書籍搜尋";
+"settings.aiTools.googleSearch" = "Google 搜尋";
+"settings.aiTools.googleSearch.desc" = "搜尋最新資訊";
+"settings.aiTools.conflict" = "⚠️ Google 搜尋和 MCP 工具不能同時使用，將優先使用 MCP 工具";
+"settings.aiTools.description" = "AI 可以根據需要智能調用工具獲取即時資訊";
+
 /* Data Management */
 "data.title" = "資料管理";
 "data.description" = "管理應用程式資料和快取";

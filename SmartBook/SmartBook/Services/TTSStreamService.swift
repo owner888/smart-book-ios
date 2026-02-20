@@ -43,17 +43,8 @@ class TTSStreamService: NSObject, ObservableObject {
 
     @MainActor
     func connect(model: String = "aura-asteria-zh") async {
-        // 构建 WebSocket URL
-        var wsURL = AppConfig.apiBaseURL
-            .replacingOccurrences(of: "http://", with: "ws://")
-            .replacingOccurrences(of: "https://", with: "wss://")
-
-        if let urlComponents = URLComponents(string: wsURL) {
-            var components = urlComponents
-            components.path = ""
-            components.port = 9524  // TTS WebSocket 端口
-            wsURL = components.string ?? wsURL
-        }
+        // 使用 AppConfig 统一管理的 WebSocket URL
+        let wsURL = AppConfig.apiTTSURL
 
         Logger.info("TTS WebSocket URL: \(wsURL)")
 

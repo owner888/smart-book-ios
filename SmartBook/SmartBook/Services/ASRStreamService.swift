@@ -42,20 +42,9 @@ class ASRStreamService: NSObject, ObservableObject {
 
     @MainActor
     func connect(language: String = "zh-CN", model: String = "nova-2") async {
-        // 构建 WebSocket URL
-        var wsURL = AppConfig.apiBaseURL
-            .replacingOccurrences(of: "http://", with: "ws://")
-            .replacingOccurrences(of: "https://", with: "wss://")
+        // 使用 AppConfig 统一管理的 WebSocket URL
+        let wsURL = AppConfig.apiASRURL
 
-        // 移除路径部分，只保留 host:port
-        if let urlComponents = URLComponents(string: wsURL) {
-            var components = urlComponents
-            components.path = ""
-            components.port = 9525  // ASR WebSocket 端口
-            wsURL = components.string ?? wsURL
-        }
-
-        Logger.info("原始 API URL: \(AppConfig.apiBaseURL)")
         Logger.info("WebSocket URL: \(wsURL)")
 
         guard let url = URL(string: wsURL) else {

@@ -225,6 +225,15 @@
 "settings.asr.language.spanish" = "Spanish";
 "settings.asr.language.thai" = "Thai";
 
+/* AI Tools */
+"settings.aiTools" = "AI Tools";
+"settings.aiTools.mcp" = "MCP Tools";
+"settings.aiTools.mcp.desc" = "Time, calculation, web scraping, book search";
+"settings.aiTools.googleSearch" = "Google Search";
+"settings.aiTools.googleSearch.desc" = "Search for latest information";
+"settings.aiTools.conflict" = "⚠️ Google Search and MCP tools cannot be used simultaneously, MCP tools will take priority";
+"settings.aiTools.description" = "AI can intelligently call tools to get real-time information as needed";
+
 /* Data Management */
 "data.title" = "Data Management";
 "data.description" = "Manage app data and cache";

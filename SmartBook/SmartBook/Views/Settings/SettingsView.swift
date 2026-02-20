@@ -14,18 +14,19 @@ struct SettingsView: View {
     @AppStorage(AppConfig.Keys.asrProvider) private var asrProvider = AppConfig.DefaultValues.asrProvider
     @AppStorage(AppConfig.Keys.asrLanguage) private var asrLanguage = AppConfig.DefaultValues.asrLanguage
     @AppStorage(AppConfig.Keys.ttsProvider) private var ttsProvider = AppConfig.DefaultValues.ttsProvider
-    @AppStorage(AppConfig.Keys.enableGoogleSearch) private var enableGoogleSearch = AppConfig.DefaultValues.enableGoogleSearch
+    @AppStorage(AppConfig.Keys.enableGoogleSearch) private var enableGoogleSearch = AppConfig.DefaultValues
+        .enableGoogleSearch
     @AppStorage(AppConfig.Keys.enableMCPTools) private var enableMCPTools = AppConfig.DefaultValues.enableMCPTools
-    
+
     @State private var showServerEditor = false
     @State private var editingURL = ""
     @State private var showResetAlert = false
     @State private var showClearCacheAlert = false
-    
+
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -50,7 +51,7 @@ struct SettingsView: View {
                         .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
-                
+
                 // 服务器设置
                 Section {
                     Button {
@@ -78,10 +79,10 @@ struct SettingsView: View {
                         .foregroundColor(colors.secondaryText)
                 } footer: {
                     // Text(L("server.description"))
-                        // .foregroundColor(colors.secondaryText)
+                    // .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
-                
+
                 // 语音设置
                 Section {
                     // ASR 提供商选择
@@ -98,7 +99,7 @@ struct SettingsView: View {
                         .labelsHidden()
                         .tint(colors.secondaryText)
                     }
-                    
+
                     // 语言选择
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "globe", color: .cyan)
@@ -118,18 +119,7 @@ struct SettingsView: View {
                         .labelsHidden()
                         .tint(colors.secondaryText)
                     }
-                    
-                    // ASR 说明
-                    if asrProvider != "native" {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(asrProviderDescription)
-                                .font(.caption)
-                                .foregroundColor(colors.secondaryText)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                        .padding(.vertical, 4)
-                    }
-                    
+
                     // TTS 提供商选择
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "speaker.wave.3", color: .purple)
@@ -143,7 +133,7 @@ struct SettingsView: View {
                         .labelsHidden()
                         .tint(colors.secondaryText)
                     }
-                    
+
                     // 语音选择
                     NavigationLink {
                         VoiceSelectionView()
@@ -154,7 +144,7 @@ struct SettingsView: View {
                                 .foregroundColor(colors.primaryText)
                         }
                     }
-                    
+
                     // 语速（仅 iOS 原生 TTS）
                     if ttsProvider == "native" {
                         VStack(spacing: 8) {
@@ -175,7 +165,7 @@ struct SettingsView: View {
                         .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
-                
+
                 // AI 工具设置
                 Section {
                     // MCP 工具开关
@@ -183,45 +173,45 @@ struct SettingsView: View {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "wrench.and.screwdriver.fill", color: .blue)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("MCP 工具")
+                                Text(L("settings.aiTools.mcp"))
                                     .foregroundColor(colors.primaryText)
-                                Text("时间、计算、网页抓取、书籍搜索")
-                                    .font(.caption)
-                                    .foregroundColor(colors.secondaryText)
-                            }
-                        }
-                    }
-                    .tint(.blue)
-                    
-                    // Google Search 开关
-                    Toggle(isOn: $enableGoogleSearch) {
-                        HStack(spacing: 12) {
-                            SettingsIcon(icon: "magnifyingglass", color: .green)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Google Search")
-                                    .foregroundColor(colors.primaryText)
-                                Text("搜索最新信息")
+                                Text(L("settings.aiTools.mcp.desc"))
                                     .font(.caption)
                                     .foregroundColor(colors.secondaryText)
                             }
                         }
                     }
                     .tint(.green)
-                    
+
+                    // Google Search 开关
+                    Toggle(isOn: $enableGoogleSearch) {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "magnifyingglass", color: .green)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(L("settings.aiTools.googleSearch"))
+                                    .foregroundColor(colors.primaryText)
+                                Text(L("settings.aiTools.googleSearch.desc"))
+                                    .font(.caption)
+                                    .foregroundColor(colors.secondaryText)
+                            }
+                        }
+                    }
+                    .tint(.green)
+
                 } header: {
-                    Text("AI 工具")
+                    Text(L("settings.aiTools"))
                         .foregroundColor(colors.secondaryText)
                 } footer: {
                     if enableGoogleSearch && enableMCPTools {
-                        Text("⚠️ Google Search 和 MCP 工具不能同时使用，将优先使用 MCP 工具")
+                        Text(L("settings.aiTools.conflict"))
                             .foregroundColor(.orange)
                     } else {
-                        Text("AI 可以根据需要智能调用工具获取实时信息")
+                        Text(L("settings.aiTools.description"))
                             .foregroundColor(colors.secondaryText)
                     }
                 }
                 .listRowBackground(colors.cardBackground)
-                
+
                 // 数据管理
                 Section {
                     // 重置设置
@@ -234,7 +224,7 @@ struct SettingsView: View {
                                 .foregroundColor(colors.primaryText)
                         }
                     }
-                    
+
                     // 清除缓存
                     Button {
                         showClearCacheAlert = true
@@ -257,14 +247,14 @@ struct SettingsView: View {
                         .foregroundColor(colors.secondaryText)
                 }
                 .listRowBackground(colors.cardBackground)
-                
+
                 // 关于
                 Section {
                     SettingsRow(icon: "info.circle", iconColor: .cyan, title: L("settings.version"), colors: colors) {
                         Text("1.0.0")
                             .foregroundColor(colors.secondaryText)
                     }
-                    
+
                     Link(destination: URL(string: "https://github.com")!) {
                         HStack(spacing: 12) {
                             SettingsIcon(icon: "link", color: .pink)
@@ -304,7 +294,7 @@ struct SettingsView: View {
                 }
             }
             .alert(L("data.resetSettings.title"), isPresented: $showResetAlert) {
-                Button(L("common.cancel"), role: .cancel) { }
+                Button(L("common.cancel"), role: .cancel) {}
                 Button(L("data.resetSettings.confirm"), role: .destructive) {
                     resetAllSettings()
                 }
@@ -312,7 +302,7 @@ struct SettingsView: View {
                 Text(L("data.resetSettings.message"))
             }
             .alert(L("data.clearCache.title"), isPresented: $showClearCacheAlert) {
-                Button(L("common.cancel"), role: .cancel) { }
+                Button(L("common.cancel"), role: .cancel) {}
                 Button(L("data.clearCache.confirm"), role: .destructive) {
                     clearCache()
                 }
@@ -324,21 +314,9 @@ struct SettingsView: View {
             ttsService.rate = Float(newValue)
         }
     }
-    
+
     // MARK: - Helper Methods
-    
-    /// ASR 提供商描述
-    private var asrProviderDescription: String {
-        switch asrProvider {
-        case "google":
-            return "使用 Google Cloud 语音识别，高精度但费用较高（$0.024/分钟）。需要后端配置 Google API Key。"
-        case "deepgram":
-            return "使用 Deepgram 语音识别，高精度且费用低（$0.0043/分钟，比 Google 节省 82%）。推荐使用！需要后端配置 Deepgram API Key。"
-        default:
-            return ""
-        }
-    }
-    
+
     /// 重置所有设置到默认值
     private func resetAllSettings() {
         apiBaseURL = AppConfig.defaultAPIBaseURL
@@ -350,15 +328,19 @@ struct SettingsView: View {
         enableGoogleSearch = AppConfig.DefaultValues.enableGoogleSearch
         enableMCPTools = AppConfig.DefaultValues.enableMCPTools
     }
-    
+
     /// 计算缓存大小
     private func calculateCacheSize() -> String {
         guard let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
             return "0 KB"
         }
-        
+
         do {
-            let contents = try FileManager.default.contentsOfDirectory(at: cacheURL, includingPropertiesForKeys: [.fileSizeKey], options: .skipsHiddenFiles)
+            let contents = try FileManager.default.contentsOfDirectory(
+                at: cacheURL,
+                includingPropertiesForKeys: [.fileSizeKey],
+                options: .skipsHiddenFiles
+            )
             let totalSize = contents.reduce(0) { size, url in
                 let fileSize = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
                 return size + fileSize
@@ -368,26 +350,30 @@ struct SettingsView: View {
             return "0 KB"
         }
     }
-    
+
     /// 清除缓存
     private func clearCache() {
         guard let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
             return
         }
-        
+
         do {
-            let contents = try FileManager.default.contentsOfDirectory(at: cacheURL, includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
+            let contents = try FileManager.default.contentsOfDirectory(
+                at: cacheURL,
+                includingPropertiesForKeys: nil,
+                options: .skipsHiddenFiles
+            )
             for fileURL in contents {
                 try? FileManager.default.removeItem(at: fileURL)
             }
-            
+
             // 清除 URLCache
             URLCache.shared.removeAllCachedResponses()
         } catch {
             print("清除缓存失败: \(error)")
         }
     }
-    
+
     /// 格式化字节大小
     private func formatBytes(_ bytes: Int) -> String {
         let formatter = ByteCountFormatter()

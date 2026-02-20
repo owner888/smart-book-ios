@@ -209,7 +209,7 @@ struct MediaItemThumbnail: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
             }
-            .frame(width: 120, height: 120)
+            .frame(width: 110, height: 110)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
