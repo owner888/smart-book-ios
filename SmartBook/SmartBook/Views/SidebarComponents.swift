@@ -291,7 +291,7 @@ struct SearchAndNewChatView: View {
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(style.secondaryTextColor)
 
-                    TextField("Search", text: $searchText)
+                    TextField(L("search.title"), text: $searchText)
                         .font(.subheadline)
                         .foregroundColor(style.textColor)
                         .textFieldStyle(.plain)
