@@ -121,17 +121,17 @@ final class UIMessageSystemPromptView: UIView {
         containerStack.addArrangedSubview(headerStack)
         containerStack.addArrangedSubview(promptContainer)
         
-        // Initially collapsed
+        // 初始状态为收起
         promptContainer.isHidden = true
         promptHeightConstraint = promptContainer.heightAnchor.constraint(equalToConstant: 0)
         promptHeightConstraint?.isActive = true
         
-        // Add tap gesture to header
+        // 点击 header 切换展开/收缩
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(headerTapped))
         headerStack.isUserInteractionEnabled = true
         headerStack.addGestureRecognizer(tapGesture)
         
-        // Setup border and background
+        // 设置边框和背景
         setupBorderAndBackground()
     }
     

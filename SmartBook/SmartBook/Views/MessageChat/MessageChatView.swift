@@ -158,17 +158,29 @@ class MessageChatView: UIView {
         mainView.addSubview(topView!)
 
         // === bottomBtn (滚动到底部按钮) ===
+        // 触摸区域 44x44（Apple 推荐最小触摸目标），视觉圆圈 32x32
         bottomBtn = UIButton(type: .system)
         bottomBtn.isHidden = true
         bottomBtn.translatesAutoresizingMaskIntoConstraints = false
-        bottomBtn.backgroundColor = UIColor(named: "ApprBlackColor") ?? .black
+        bottomBtn.backgroundColor = .clear  // 外层透明
         bottomBtn.tintColor = UIColor(named: "ApprWhiteColor") ?? .white
         var btnConfig = UIButton.Configuration.plain()
         btnConfig.image = UIImage(systemName: "chevron.down")
         bottomBtn.configuration = btnConfig
-        bottomBtn.layer.cornerRadius = 16
-        bottomBtn.clipsToBounds = true
         bottomBtn.addTarget(self, action: #selector(scrollToBottomAction), for: .touchUpInside)
+        // 添加 32x32 视觉背景圆圈（居中于 44x44 按钮内）
+        let btnBgView = UIView()
+        btnBgView.backgroundColor = UIColor(named: "ApprBlackColor") ?? .black
+        btnBgView.layer.cornerRadius = 16
+        btnBgView.isUserInteractionEnabled = false  // 不拦截触摸
+        btnBgView.translatesAutoresizingMaskIntoConstraints = false
+        bottomBtn.insertSubview(btnBgView, at: 0)
+        NSLayoutConstraint.activate([
+            btnBgView.centerXAnchor.constraint(equalTo: bottomBtn.centerXAnchor),
+            btnBgView.centerYAnchor.constraint(equalTo: bottomBtn.centerYAnchor),
+            btnBgView.widthAnchor.constraint(equalToConstant: 32),
+            btnBgView.heightAnchor.constraint(equalToConstant: 32),
+        ])
         mainView.addSubview(bottomBtn)
 
         // === inputBar (InputToolView) ===
@@ -212,11 +224,11 @@ class MessageChatView: UIView {
             // emptyBgView 底部到 topView 上方 50pt
             emptyBgView.bottomAnchor.constraint(equalTo: topView!.topAnchor, constant: -50),
 
-            // bottomBtn: 右下角
-            bottomBtn.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -20),
-            bottomBtn.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
-            bottomBtn.widthAnchor.constraint(equalToConstant: 32),
-            bottomBtn.heightAnchor.constraint(equalToConstant: 32),
+            // bottomBtn: 右下角（44x44 触摸区域，内含 32x32 视觉圆圈居中，补偿 6pt 偏移）
+            bottomBtn.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -14),
+            bottomBtn.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: 0),
+            bottomBtn.widthAnchor.constraint(equalToConstant: 44),
+            bottomBtn.heightAnchor.constraint(equalToConstant: 44),
 
             // inputBar: 左右各 15pt（safeArea），低优先级高度
             inputBar.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 15),
@@ -324,8 +336,8 @@ class MessageChatView: UIView {
             }
         }
 
+        // 点击空白处收起键盘
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(tapEvent))
-        tapGesture.cancelsTouchesInView = false  // 不拦截子视图（UIButton）的点击
         mainView.addGestureRecognizer(tapGesture)
         createEmptyStateView()
     }
