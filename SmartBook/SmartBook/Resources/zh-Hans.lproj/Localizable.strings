@@ -225,6 +225,15 @@
 "settings.asr.language.spanish" = "西班牙语";
 "settings.asr.language.thai" = "泰语";
 
+/* AI Tools */
+"settings.aiTools" = "AI 工具";
+"settings.aiTools.mcp" = "MCP 工具";
+"settings.aiTools.mcp.desc" = "时间、计算、网页抓取、书籍搜索";
+"settings.aiTools.googleSearch" = "Google 搜索";
+"settings.aiTools.googleSearch.desc" = "搜索最新信息";
+"settings.aiTools.conflict" = "⚠️ Google 搜索和 MCP 工具不能同时使用，将优先使用 MCP 工具";
+"settings.aiTools.description" = "AI 可以根据需要智能调用工具获取实时信息";
+
 /* Data Management */
 "data.title" = "数据管理";
 "data.description" = "管理应用数据和缓存";
