@@ -134,8 +134,8 @@ final class UIEmptyStateView: UIView {
         self.onAddBook = onAddBook
         self.isDefaultChatAssistant = isDefaultChatAssistant
         
-        if isDefaultChatAssistant && hasBooks {
-            // ✅ Chat 助手 + 已有书籍：只显示聊天图标（参考 SwiftUI EmptyChatStateView isDefaultChatAssistant=true）
+        if isDefaultChatAssistant {
+            // ✅ Chat 助手：始终显示空聊天图标，无需选择书籍即可对话
             iconImageView.image = UIImage(systemName: "bubble.left.and.bubble.right")
             titleLabel.isHidden = true
             descriptionLabel.isHidden = true
