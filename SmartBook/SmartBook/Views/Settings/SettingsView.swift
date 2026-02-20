@@ -181,7 +181,7 @@ struct SettingsView: View {
                             }
                         }
                     }
-                    .tint(.blue)
+                    .tint(.green)
 
                     // Google Search 开关
                     Toggle(isOn: $enableGoogleSearch) {
