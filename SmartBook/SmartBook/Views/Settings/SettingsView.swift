@@ -46,6 +46,26 @@ struct SettingsView: View {
                         .labelsHidden()
                         .tint(colors.secondaryText)
                     }
+
+                    // App 语言 - 跳转到系统设置
+                    Button {
+                        if let url = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "globe", color: .blue)
+                            Text(L("settings.appLanguage"))
+                                .foregroundColor(colors.primaryText)
+                            Spacer()
+                            Text(currentLanguageName())
+                                .font(.subheadline)
+                                .foregroundColor(colors.secondaryText)
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundColor(colors.secondaryText)
+                        }
+                    }
                 } header: {
                     Text(L("settings.general"))
                         .foregroundColor(colors.secondaryText)
@@ -372,6 +392,16 @@ struct SettingsView: View {
         } catch {
             print("清除缓存失败: \(error)")
         }
+    }
+
+    /// 获取当前 App 语言名称
+    private func currentLanguageName() -> String {
+        guard let preferredLanguage = Bundle.main.preferredLocalizations.first else {
+            return L("settings.language.system")
+        }
+        let locale = Locale.current
+        return locale.localizedString(forLanguageCode: preferredLanguage)?.capitalized
+            ?? preferredLanguage
     }
 
     /// 格式化字节大小
