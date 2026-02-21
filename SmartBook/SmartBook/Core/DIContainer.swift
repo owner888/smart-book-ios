@@ -37,21 +37,50 @@ class DIContainer {
         BookState()
     }()
 
+    // MARK: - 单例服务（全局共享，避免 SwiftUI 重建视图）
+
+    private lazy var _bookService: BookService = {
+        BookService()
+    }()
+
+    private lazy var _ttsService: TTSService = {
+        TTSService()
+    }()
+
+    private lazy var _checkInService: CheckInService = {
+        CheckInService()
+    }()
+
+    /// 共享的 ChatViewModel（避免 SwiftUI 视图重建导致 deinit）
+    private lazy var _chatViewModel: ChatViewModel = {
+        let streamingService = makeStreamingChatService()
+        let ttsCoordinator = makeTTSCoordinatorService(provider: AppConfig.DefaultValues.ttsProvider)
+        let ttsStreamService = makeTTSStreamService()
+        let mediaService = makeMediaProcessingService()
+
+        return ChatViewModel(
+            streamingService: streamingService,
+            ttsCoordinator: ttsCoordinator,
+            ttsStreamService: ttsStreamService,
+            mediaService: mediaService
+        )
+    }()
+
     // MARK: - 业务服务工厂方法
 
-    /// 创建 BookService 实例
+    /// 获取共享的 BookService 实例
     func makeBookService() -> BookService {
-        BookService()
+        _bookService
     }
 
-    /// 创建 TTSService 实例
+    /// 获取共享的 TTSService 实例
     func makeTTSService() -> TTSService {
-        TTSService()
+        _ttsService
     }
 
-    /// 创建 CheckInService 实例
+    /// 获取共享的 CheckInService 实例
     func makeCheckInService() -> CheckInService {
-        CheckInService()
+        _checkInService
     }
 
     /// 创建 StreamingChatService 实例
@@ -93,19 +122,9 @@ class DIContainer {
 
     // MARK: - ViewModel 工厂方法
 
-    /// 创建 ChatViewModel 实例
+    /// 获取共享的 ChatViewModel 实例（单例，避免 WebSocket 断开）
     func makeChatViewModel() -> ChatViewModel {
-        let streamingService = makeStreamingChatService()
-        let ttsCoordinator = makeTTSCoordinatorService(provider: AppConfig.DefaultValues.ttsProvider)
-        let ttsStreamService = makeTTSStreamService()
-        let mediaService = makeMediaProcessingService()
-
-        return ChatViewModel(
-            streamingService: streamingService,
-            ttsCoordinator: ttsCoordinator,
-            ttsStreamService: ttsStreamService,
-            mediaService: mediaService
-        )
+        _chatViewModel
     }
 
     // MARK: - 访问单例服务
