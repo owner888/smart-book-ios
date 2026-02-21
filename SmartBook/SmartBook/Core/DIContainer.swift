@@ -51,6 +51,14 @@ class DIContainer {
         CheckInService()
     }()
 
+    /// 共享的 SummarizationService
+    private lazy var _summarizationService: SummarizationService = {
+        SummarizationService(threshold: 3)
+    }()
+
+    /// 共享的 ChatHistoryService（延迟初始化，需要 ModelContext）
+    private var _chatHistoryService: ChatHistoryService?
+
     /// 共享的 ChatViewModel（避免 SwiftUI 视图重建导致 deinit）
     private lazy var _chatViewModel: ChatViewModel = {
         let streamingService = makeStreamingChatService()
@@ -83,6 +91,21 @@ class DIContainer {
         _checkInService
     }
 
+    /// 获取共享的 SummarizationService 实例
+    func makeSummarizationService(threshold: Int = 3) -> SummarizationService {
+        _summarizationService
+    }
+
+    /// 获取或创建共享的 ChatHistoryService 实例（需要 ModelContext，首次调用时初始化）
+    func makeChatHistoryService(modelContext: ModelContext) -> ChatHistoryService {
+        if let existing = _chatHistoryService {
+            return existing
+        }
+        let service = ChatHistoryService(modelContext: modelContext)
+        _chatHistoryService = service
+        return service
+    }
+
     /// 创建 StreamingChatService 实例
     func makeStreamingChatService() -> StreamingChatService {
         StreamingChatService()
@@ -91,21 +114,6 @@ class DIContainer {
     /// 创建 TTSStreamService 实例
     func makeTTSStreamService() -> TTSStreamService {
         TTSStreamService()
-    }
-
-    /// 创建 ASRService 实例
-    func makeASRService() -> ASRService {
-        ASRService()
-    }
-
-    /// 创建 ChatHistoryService 实例
-    func makeChatHistoryService(modelContext: ModelContext) -> ChatHistoryService {
-        ChatHistoryService(modelContext: modelContext)
-    }
-
-    /// 创建 SummarizationService 实例
-    func makeSummarizationService(threshold: Int = 3) -> SummarizationService {
-        SummarizationService(threshold: threshold)
     }
 
     /// 创建 MediaProcessingService 实例
