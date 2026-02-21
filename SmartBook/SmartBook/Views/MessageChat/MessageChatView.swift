@@ -155,6 +155,7 @@ class MessageChatView: UIView {
         topView = MessageInputTopView()
         topView!.backgroundColor = .clear
         topView!.translatesAutoresizingMaskIntoConstraints = false
+        topView!.isHidden = true
         mainView.addSubview(topView!)
 
         // === bottomBtn (滚动到底部按钮，液态玻璃样式，与 Add Book 按钮一致) ===

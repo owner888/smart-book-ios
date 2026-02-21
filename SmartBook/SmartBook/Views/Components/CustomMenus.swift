@@ -52,8 +52,8 @@ struct AIFunctionMenu: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 3) {
-                upgradeView
-                Color.apprBlack.frame(height: 0.5).opacity(0.15).padding(.horizontal, 12)
+                // upgradeView
+                // Color.apprBlack.frame(height: 0.5).opacity(0.15).padding(.horizontal, 12)
                 ForEach(0..<MenuConfig.aiFunctions.count, id: \.self) { i in
                     menuItem(MenuConfig.aiFunctions[i])
                 }
