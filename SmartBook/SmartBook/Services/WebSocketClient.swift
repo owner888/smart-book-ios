@@ -210,7 +210,9 @@ class WebSocketClient: NSObject {
                 do {
                     try await self.send(json: ["type": "ping"])
                 } catch {
-                    Logger.error("发送心跳失败: \(error.localizedDescription)")
+                    await MainActor.run {
+                        Logger.error("发送心跳失败: \(error.localizedDescription)")
+                    }
                 }
             }
         }

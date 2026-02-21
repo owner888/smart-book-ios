@@ -66,6 +66,7 @@ class Message {
         )
     }
 
+    @MainActor
     // 转换为 ChatMessage
     func toChatMessage() -> ChatMessage {
         let sources = sourcesData.flatMap { try? JSONDecoder().decode([RAGSource].self, from: $0) }
