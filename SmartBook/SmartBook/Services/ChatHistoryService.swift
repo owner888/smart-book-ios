@@ -25,7 +25,7 @@ class ChatHistoryService: ObservableObject {
     // MARK: - 对话管理
 
     /// 创建新对话
-    func createConversation(title: String = "新对话", bookId: UUID? = nil, bookTitle: String? = nil) -> Conversation {
+    func createConversation(title: String = L("chatHistory.newChat"), bookId: UUID? = nil, bookTitle: String? = nil) -> Conversation {
         let conversation = Conversation(
             title: title,
             bookId: bookId,
@@ -118,7 +118,7 @@ class ChatHistoryService: ObservableObject {
         // 如果没有当前对话且是用户消息，自动创建新对话
         if conversation == nil && chatMessage.role == .user {
             // 使用第一条用户消息作为标题
-            conversation = Conversation(title: "临时")
+            conversation = Conversation(title: L("chatHistory.newChat"))
             conversation!.generateTitle(from: chatMessage.content)
             modelContext.insert(conversation!)
             currentConversation = conversation

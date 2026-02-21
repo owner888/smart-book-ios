@@ -115,7 +115,7 @@ class BookshelfViewModel {
                     }
                     bookState.selectedBook = book
                 } catch {
-                    importError = "选择书籍失败: \(error.localizedDescription)"
+                    importError = "\(L("error.book.uploadFailed")): \(error.localizedDescription)"
                     showingError = true
                 }
             }

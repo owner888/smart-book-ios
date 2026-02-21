@@ -157,6 +157,13 @@
 "message.action.speak" = "朗读";
 "message.action.copied" = "已复制";
 
+/* Book Upload */
+"book.uploading" = "上传书籍中...";
+
+/* Chat Alerts */
+"chat.bookRequired.title" = "需要选择书籍";
+"chat.bookRequired.message" = "使用此助手需要先选择一本书籍";
+
 /* AI */
 "ai.analysis" = "AI 分析";
 "ai.summary" = "内容摘要";
@@ -354,6 +361,7 @@
 "chat.stoppedByUser" = "用户已停止响应";
 
 /* Chat History */
+"chatHistory.newChat" = "新对话";
 "chatHistory.empty" = "暂无历史对话";
 "chatHistory.startNew" = "开始新对话";
 "chatHistory.rename.title" = "重命名对话";

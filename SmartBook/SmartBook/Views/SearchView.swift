@@ -16,7 +16,7 @@ struct SearchView: View {
     @State private var isPresented = false
 
     var previousTabIcon: String = "books.vertical"
-    var previousTabName: String = "书架"
+    var previousTabName: String = L("library.title")
     var onBack: (() -> Void)?
 
     init() {

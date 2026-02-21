@@ -157,6 +157,13 @@
 "message.action.speak" = "Read Aloud";
 "message.action.copied" = "Copied";
 
+/* Book Upload */
+"book.uploading" = "Uploading book...";
+
+/* Chat Alerts */
+"chat.bookRequired.title" = "Book Required";
+"chat.bookRequired.message" = "Please select a book first to use this assistant";
+
 /* AI */
 "ai.analysis" = "AI Analysis";
 "ai.summary" = "Summary";
@@ -354,6 +361,7 @@
 "chat.stoppedByUser" = "Response stopped by the user";
 
 /* Chat History */
+"chatHistory.newChat" = "New Chat";
 "chatHistory.empty" = "No conversations yet";
 "chatHistory.startNew" = "Start New Conversation";
 "chatHistory.rename.title" = "Rename Conversation";

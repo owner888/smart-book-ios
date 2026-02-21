@@ -29,7 +29,7 @@ struct TXTReaderView: View {
             // 阅读控制栏
             readerControlBar
         }
-        .navigationTitle(chapters.isEmpty ? "正在加载..." : chapters[currentChapterIndex].title)
+        .navigationTitle(chapters.isEmpty ? L("common.loading") : chapters[currentChapterIndex].title)
         .navigationBarTitleDisplayMode(.inline)
         .task {
             await loadContent()
@@ -39,7 +39,7 @@ struct TXTReaderView: View {
     // MARK: - 章节选择器
 
     private var chapterPicker: some View {
-        Picker("章节", selection: $currentChapterIndex) {
+        Picker(L("reader.toc"), selection: $currentChapterIndex) {
             ForEach(0..<chapters.count, id: \.self) { index in
                 Text(chapters[index].title)
                     .tag(index)
@@ -123,7 +123,7 @@ struct TXTReaderView: View {
 
     private func loadContent() async {
         guard let loadedContent = TXTParser.extractText(from: txtURL.path) else {
-            content = "无法读取文件"
+            content = L("error.fileNotFound")
             return
         }
 
@@ -139,7 +139,7 @@ struct TXTReaderView: View {
         if let sampleURL = Bundle.main.url(forResource: "sample", withExtension: "txt") {
             TXTReaderView(txtURL: sampleURL)
         } else {
-            Text("没有找到示例 TXT")
+            Text("No sample TXT found")
         }
     }
 }

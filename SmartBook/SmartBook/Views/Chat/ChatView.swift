@@ -172,7 +172,7 @@ struct ChatView: View {
                             .frame(width: 200)
                             .tint(.green)
 
-                        Text("📤 \(uploadProgress < 0.01 ? "导入书籍中..." : "上传书籍中... \(Int(uploadProgress * 100))%")")
+                        Text("📤 \(uploadProgress < 0.01 ? L("library.importing") : "\(L("book.uploading")) \(Int(uploadProgress * 100))%")")
                             .font(.caption)
                             .foregroundColor(.white)
                     }
@@ -218,13 +218,13 @@ struct ChatView: View {
         .onChange(of: modelService.currentModel) { _, newModel in
             viewModel.selectedModel = newModel.id
         }
-        .alert("需要选择书籍", isPresented: $showBookRequiredAlert) {
-            Button("取消", role: .cancel) {}
-            Button("选择书籍") {
+        .alert(L("chat.bookRequired.title"), isPresented: $showBookRequiredAlert) {
+            Button(L("common.cancel"), role: .cancel) {}
+            Button(L("chat.menu.selectBook")) {
                 showBookPicker = true
             }
         } message: {
-            Text("使用此助手需要先选择一本书籍")
+            Text(L("chat.bookRequired.message"))
         }
     }
 

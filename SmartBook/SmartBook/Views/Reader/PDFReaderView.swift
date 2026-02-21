@@ -41,6 +41,6 @@ struct PDFKitView: UIViewRepresentable {
     if let sampleURL = Bundle.main.url(forResource: "sample", withExtension: "pdf") {
         PDFReaderView(pdfURL: sampleURL)
     } else {
-        Text("没有找到示例 PDF")
+        Text("No sample PDF found")
     }
 }

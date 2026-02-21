@@ -85,7 +85,7 @@ class HomeViewModel {
     func checkIn() async {
         do {
             try await checkInService.checkIn()
-            checkInMessage = "签到成功！"
+            checkInMessage = L("checkIn.done")
             showingCheckInAlert = true
 
             // 刷新统计数据

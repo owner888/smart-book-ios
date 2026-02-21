@@ -61,7 +61,7 @@ class Conversation {
         if trimmed.count > maxLength {
             title = String(trimmed.prefix(maxLength)) + "..."
         } else {
-            title = trimmed.isEmpty ? "新对话" : trimmed
+            title = trimmed.isEmpty ? L("chatHistory.newChat") : trimmed
         }
     }
 }
