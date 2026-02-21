@@ -25,9 +25,10 @@ class ChatHistoryService: ObservableObject {
     // MARK: - 对话管理
 
     /// 创建新对话
-    func createConversation(title: String = L("chatHistory.newChat"), bookId: UUID? = nil, bookTitle: String? = nil) -> Conversation {
+    func createConversation(title: String? = nil, bookId: UUID? = nil, bookTitle: String? = nil) -> Conversation {
+        let conversationTitle = title ?? L("chatHistory.newChat")
         let conversation = Conversation(
-            title: title,
+            title: conversationTitle,
             bookId: bookId,
             bookTitle: bookTitle
         )
@@ -37,7 +38,7 @@ class ChatHistoryService: ObservableObject {
         currentConversation = conversation
         loadConversations()
 
-        Logger.info("✅ 创建新对话: \(title)")
+        Logger.info("✅ 创建新对话: \(conversationTitle)")
         return conversation
     }
 
