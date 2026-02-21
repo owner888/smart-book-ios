@@ -30,9 +30,9 @@ struct SmartBookApp: App {
                 .environment(container.modelService)
                 .environment(container.assistantService)
                 .environment(container.bookState)
-                .environment(container.makeBookService())
-                .environmentObject(container.makeTTSService())
-                .environment(container.makeCheckInService())
+                .environment(container.bookService)
+                .environmentObject(container.ttsService)
+                .environment(container.checkInService)
                 .preferredColorScheme(container.themeManager.colorScheme)
         }
         .modelContainer(

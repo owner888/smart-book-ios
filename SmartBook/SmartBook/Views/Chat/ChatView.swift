@@ -30,10 +30,10 @@ struct ChatView: View {
 
     @StateObject private var menuObser = CustomMenuObservable()
 
-    // ✅ 使用 DI 容器创建 ViewModel
+    // ✅ 使用 DI 容器获取共享 ViewModel
     init() {
         let container = DIContainer.shared
-        _viewModel = StateObject(wrappedValue: container.makeChatViewModel())
+        _viewModel = StateObject(wrappedValue: container.chatViewModel)
     }
 
     @State private var showBookPicker = false
@@ -187,7 +187,7 @@ struct ChatView: View {
         .onAppear {
             // ✅ 使用 DI 容器初始化历史服务
             if historyService == nil {
-                historyService = container.makeChatHistoryService(modelContext: modelContext)
+                historyService = container.chatHistoryService(modelContext: modelContext)
                 viewModel.historyService = historyService
 
                 // 如果有当前对话（从历史列表选择的），加载消息
@@ -202,9 +202,7 @@ struct ChatView: View {
 
             // ✅ 使用 DI 容器初始化摘要服务
             if viewModel.summarizationService == nil {
-                viewModel.summarizationService = container.makeSummarizationService(
-                    threshold: viewModel.summarizationThreshold
-                )
+                viewModel.summarizationService = container.summarizationService
                 Logger.info("✅ 摘要服务已初始化，阈值: \(viewModel.summarizationThreshold)")
             }
 

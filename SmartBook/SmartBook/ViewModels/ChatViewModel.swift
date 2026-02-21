@@ -70,10 +70,14 @@ class ChatViewModel: ObservableObject {
         mediaService: MediaProcessingService? = nil
     ) {
         self.streamingService = streamingService
-        self.ttsStreamService = ttsStreamService ?? DIContainer.shared.makeTTSStreamService()
+        self.ttsStreamService = ttsStreamService ?? TTSStreamService()
         self.ttsCoordinator =
             ttsCoordinator
-            ?? DIContainer.shared.makeTTSCoordinatorService(provider: AppConfig.DefaultValues.ttsProvider)
+            ?? TTSCoordinatorService(
+                nativeTTS: DIContainer.shared.ttsService,
+                streamTTS: self.ttsStreamService,
+                provider: AppConfig.DefaultValues.ttsProvider
+            )
         self.mediaService = mediaService ?? MediaProcessingService()
 
         // 确保 ViewModel 释放时清理 Timer

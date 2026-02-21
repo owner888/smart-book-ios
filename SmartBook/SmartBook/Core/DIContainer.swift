@@ -61,78 +61,36 @@ class DIContainer {
 
     /// 共享的 ChatViewModel（避免 SwiftUI 视图重建导致 deinit）
     private lazy var _chatViewModel: ChatViewModel = {
-        let streamingService = makeStreamingChatService()
-        let ttsCoordinator = makeTTSCoordinatorService(provider: AppConfig.DefaultValues.ttsProvider)
-        let ttsStreamService = makeTTSStreamService()
-        let mediaService = makeMediaProcessingService()
-
+        let ttsStreamService = TTSStreamService()
+        let ttsCoordinator = TTSCoordinatorService(
+            nativeTTS: _ttsService,
+            streamTTS: ttsStreamService,
+            provider: AppConfig.DefaultValues.ttsProvider
+        )
         return ChatViewModel(
-            streamingService: streamingService,
+            streamingService: StreamingChatService(),
             ttsCoordinator: ttsCoordinator,
             ttsStreamService: ttsStreamService,
-            mediaService: mediaService
+            mediaService: MediaProcessingService()
         )
     }()
 
-    // MARK: - 业务服务工厂方法
+    // MARK: - 服务访问方法
 
-    /// 获取共享的 BookService 实例
-    func makeBookService() -> BookService {
-        _bookService
-    }
+    var bookService: BookService { _bookService }
+    var ttsService: TTSService { _ttsService }
+    var checkInService: CheckInService { _checkInService }
+    var summarizationService: SummarizationService { _summarizationService }
+    var chatViewModel: ChatViewModel { _chatViewModel }
 
-    /// 获取共享的 TTSService 实例
-    func makeTTSService() -> TTSService {
-        _ttsService
-    }
-
-    /// 获取共享的 CheckInService 实例
-    func makeCheckInService() -> CheckInService {
-        _checkInService
-    }
-
-    /// 获取共享的 SummarizationService 实例
-    func makeSummarizationService(threshold: Int = 3) -> SummarizationService {
-        _summarizationService
-    }
-
-    /// 获取或创建共享的 ChatHistoryService 实例（需要 ModelContext，首次调用时初始化）
-    func makeChatHistoryService(modelContext: ModelContext) -> ChatHistoryService {
+    /// 获取或创建共享的 ChatHistoryService（需要 ModelContext，首次调用时初始化）
+    func chatHistoryService(modelContext: ModelContext) -> ChatHistoryService {
         if let existing = _chatHistoryService {
             return existing
         }
         let service = ChatHistoryService(modelContext: modelContext)
         _chatHistoryService = service
         return service
-    }
-
-    /// 创建 StreamingChatService 实例
-    func makeStreamingChatService() -> StreamingChatService {
-        StreamingChatService()
-    }
-
-    /// 创建 TTSStreamService 实例
-    func makeTTSStreamService() -> TTSStreamService {
-        TTSStreamService()
-    }
-
-    /// 创建 MediaProcessingService 实例
-    func makeMediaProcessingService() -> MediaProcessingService {
-        MediaProcessingService()
-    }
-
-    /// 创建 TTSCoordinatorService 实例
-    func makeTTSCoordinatorService(provider: String) -> TTSCoordinatorService {
-        let nativeTTS = makeTTSService()
-        let streamTTS = makeTTSStreamService()
-        return TTSCoordinatorService(nativeTTS: nativeTTS, streamTTS: streamTTS, provider: provider)
-    }
-
-    // MARK: - ViewModel 工厂方法
-
-    /// 获取共享的 ChatViewModel 实例（单例，避免 WebSocket 断开）
-    func makeChatViewModel() -> ChatViewModel {
-        _chatViewModel
     }
 
     // MARK: - 访问单例服务
@@ -161,21 +119,3 @@ extension EnvironmentValues {
     @Entry var diContainer: DIContainer = .shared
 }
 
-// MARK: - 测试支持
-
-#if DEBUG
-    /// 测试专用的依赖注入容器
-    /// 可以注入 Mock 服务用于单元测试
-    class TestDIContainer: DIContainer {
-        var mockBookService: BookService?
-        var mockChatService: StreamingChatService?
-
-        override func makeBookService() -> BookService {
-            mockBookService ?? super.makeBookService()
-        }
-
-        override func makeStreamingChatService() -> StreamingChatService {
-            mockChatService ?? super.makeStreamingChatService()
-        }
-    }
-#endif
