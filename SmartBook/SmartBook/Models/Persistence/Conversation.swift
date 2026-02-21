@@ -40,15 +40,6 @@ class Conversation {
         self.bookTitle = bookTitle
     }
 
-    // 转换为 ChatConversation
-    func toChatConversation() -> ChatConversation {
-        return ChatConversation(
-            id: id,
-            title: title,
-            createdAt: createdAt
-        )
-    }
-
     // 更新时间戳
     func touch() {
         updatedAt = Date()
