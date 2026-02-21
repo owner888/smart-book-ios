@@ -357,6 +357,10 @@
 "chatHistory.delete.message" = "This conversation will be deleted from your account. It will be in Recently Deleted for 30 days.";
 "chatHistory.menu.rename" = "Rename";
 "chatHistory.menu.delete" = "Delete";
+"chatHistory.clearAll" = "Clear All";
+"chatHistory.clearAll.title" = "Clear All?";
+"chatHistory.clearAll.message" = "All conversations will be permanently deleted. This action cannot be undone.";
+"chatHistory.clearAll.confirm" = "Clear All";
 
 /* AI Models */
 "model.heavy" = "Heavy";

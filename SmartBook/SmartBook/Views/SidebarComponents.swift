@@ -89,6 +89,8 @@ struct ConversationsSectionView: View {
     var searchText: String
     var style: SidebarStyle
 
+    @State private var showClearAllAlert = false
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // 标题栏
@@ -115,6 +117,24 @@ struct ConversationsSectionView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .contextMenu {
+                Button(role: .destructive) {
+                    showClearAllAlert = true
+                } label: {
+                    Label(L("chatHistory.clearAll"), systemImage: "trash")
+                }
+            }
+            .alert(L("chatHistory.clearAll.title"), isPresented: $showClearAllAlert) {
+                Button(L("common.cancel"), role: .cancel) {}
+                Button(L("chatHistory.clearAll.confirm"), role: .destructive) {
+                    if let historyService = historyService {
+                        historyService.clearAllConversations()
+                        viewModel?.startNewConversation()
+                    }
+                }
+            } message: {
+                Text(L("chatHistory.clearAll.message"))
+            }
 
             // 对话列表
             if isExpanded {
@@ -164,6 +184,10 @@ struct ConversationsListView: View {
                     onTap: {
                         viewModel.switchToConversation(conversation)
                         onSelectConversation()
+                    },
+                    onDelete: {
+                        historyService.deleteConversation(conversation)
+                        viewModel.startNewConversation()
                     }
                 )
             }
@@ -177,6 +201,9 @@ struct ConversationItemView: View {
     var isSelected: Bool = false
     var style: SidebarStyle
     var onTap: () -> Void
+    var onDelete: (() -> Void)? = nil
+
+    @State private var showDeleteAlert = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -238,6 +265,21 @@ struct ConversationItemView: View {
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: onTap)
+        .contextMenu {
+            Button(role: .destructive) {
+                showDeleteAlert = true
+            } label: {
+                Label(L("chatHistory.menu.delete"), systemImage: "trash")
+            }
+        }
+        .alert(L("chatHistory.delete.title"), isPresented: $showDeleteAlert) {
+            Button(L("common.cancel"), role: .cancel) {}
+            Button(L("common.delete"), role: .destructive) {
+                onDelete?()
+            }
+        } message: {
+            Text(L("chatHistory.delete.message"))
+        }
     }
 }
 

@@ -357,6 +357,10 @@
 "chatHistory.delete.message" = "此对话将从您的账户中删除，将在最近删除中保留30天。";
 "chatHistory.menu.rename" = "重命名";
 "chatHistory.menu.delete" = "删除";
+"chatHistory.clearAll" = "清空会话";
+"chatHistory.clearAll.title" = "清空会话？";
+"chatHistory.clearAll.message" = "所有会话将被永久删除，此操作无法撤销。";
+"chatHistory.clearAll.confirm" = "全部清空";
 
 /* AI Models */
 "model.heavy" = "Heavy";

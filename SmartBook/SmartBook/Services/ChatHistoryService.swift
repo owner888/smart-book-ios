@@ -84,6 +84,19 @@ class ChatHistoryService: ObservableObject {
         Logger.info("✏️ 重命名对话: \(newTitle)")
     }
 
+    /// 清空所有对话
+    func clearAllConversations() {
+        for conversation in conversations {
+            conversation.messages?.forEach { modelContext.delete($0) }
+            modelContext.delete(conversation)
+        }
+        saveContext()
+
+        currentConversation = nil
+        loadConversations()
+        Logger.info("🧹 清空所有对话")
+    }
+
     /// 清空当前对话的消息
     func clearCurrentConversationMessages() {
         guard let conversation = currentConversation else { return }
