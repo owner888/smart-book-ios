@@ -734,7 +734,7 @@ class MessageChatView: UIView {
 
             let isAtBottom = offset > effectiveContentHeight - 20
             bottomBtn.isHidden = isAtBottom
-            print("== scroll offset: \(offset), content height: \(effectiveContentHeight)")
+            // print("== scroll offset: \(offset), content height: \(effectiveContentHeight)")
         }
     }
 }
