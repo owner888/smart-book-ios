@@ -567,12 +567,12 @@ class MessageChatView: UIView {
             tableViewTopConstraint.isActive = false
             emptyBgViewTopConstraint.isActive = false
 
-            // tableView.top = headerStack.bottom（自动跟随 headerStack 高度变化）
-            let tvConstraint = tableView.topAnchor.constraint(equalTo: stack.bottomAnchor)
+            // tableView.top = headerStack.bottom + 12pt 间距（与消息气泡间距一致）
+            let tvConstraint = tableView.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: 12)
             tvConstraint.isActive = true
             tableViewToHeaderConstraint = tvConstraint
 
-            let emptyConstraint = emptyBgView.topAnchor.constraint(equalTo: stack.bottomAnchor)
+            let emptyConstraint = emptyBgView.topAnchor.constraint(equalTo: stack.bottomAnchor, constant: 12)
             emptyConstraint.isActive = true
             emptyBgToHeaderConstraint = emptyConstraint
         }
