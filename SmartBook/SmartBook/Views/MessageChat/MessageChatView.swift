@@ -62,6 +62,7 @@ class MessageChatView: UIView {
             // 仅在书籍实际变化时才重建顶部栏
             if oldValue?.id != selectedBook?.id {
                 updateHeaderBars()
+                updateEmptyStateView()  // ✅ 选择/取消书籍时更新空状态（隐藏 Add Book 按钮）
             }
         }
     }
@@ -494,7 +495,8 @@ class MessageChatView: UIView {
                     guard let self = self else { return }
                     self.action?(.addBook(hasBooks: currentHasBooks))
                 },
-                isDefaultChatAssistant: isChat
+                isDefaultChatAssistant: isChat,
+                hasSelectedBook: selectedBook != nil
             )
 
             emptyStateView = view
@@ -593,7 +595,8 @@ class MessageChatView: UIView {
                 guard let self = self else { return }
                 self.action?(.addBook(hasBooks: currentHasBooks))
             },
-            isDefaultChatAssistant: isChat
+            isDefaultChatAssistant: isChat,
+            hasSelectedBook: selectedBook != nil
         )
     }
 

@@ -23,6 +23,7 @@ final class UIEmptyStateView: UIView {
     private var cancellables = Set<AnyCancellable>()
     private var isDefaultChatAssistant: Bool = false  // ✅ 是否为默认 Chat 助手
     private var hasBooks: Bool = false  // ✅ 是否已有书籍（参考 SwiftUI: bookState.books.isEmpty）
+    private var hasSelectedBook: Bool = false  // ✅ 是否已选择书籍
 
     // MARK: - UI Components
 
@@ -142,15 +143,23 @@ final class UIEmptyStateView: UIView {
         colors: ThemeColors,
         hasBooks: Bool,
         onAddBook: @escaping () -> Void,
-        isDefaultChatAssistant: Bool = false
+        isDefaultChatAssistant: Bool = false,
+        hasSelectedBook: Bool = false
     ) {
         self.colors = colors
         self.hasBooks = hasBooks
         self.onAddBook = onAddBook
         self.isDefaultChatAssistant = isDefaultChatAssistant
+        self.hasSelectedBook = hasSelectedBook
 
         if isDefaultChatAssistant {
             // ✅ Chat 助手：始终显示空聊天图标，无需选择书籍即可对话
+            iconImageView.image = UIImage(systemName: "bubble.left.and.bubble.right")
+            titleLabel.isHidden = true
+            descriptionLabel.isHidden = true
+            addBookButton.isHidden = true
+        } else if hasSelectedBook {
+            // ✅ 已选择书籍：显示聊天图标，隐藏按钮
             iconImageView.image = UIImage(systemName: "bubble.left.and.bubble.right")
             titleLabel.isHidden = true
             descriptionLabel.isHidden = true
