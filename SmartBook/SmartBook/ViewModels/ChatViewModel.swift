@@ -69,13 +69,14 @@ class ChatViewModel: ObservableObject {
         ttsStreamService: TTSStreamService? = nil,
         mediaService: MediaProcessingService? = nil
     ) {
+        let resolvedTTSStream = ttsStreamService ?? TTSStreamService()
         self.streamingService = streamingService
-        self.ttsStreamService = ttsStreamService ?? TTSStreamService()
+        self.ttsStreamService = resolvedTTSStream
         self.ttsCoordinator =
             ttsCoordinator
             ?? TTSCoordinatorService(
                 nativeTTS: DIContainer.shared.ttsService,
-                streamTTS: self.ttsStreamService,
+                streamTTS: resolvedTTSStream,
                 provider: AppConfig.DefaultValues.ttsProvider
             )
         self.mediaService = mediaService ?? MediaProcessingService()
