@@ -83,7 +83,7 @@ struct MessageThinkingView: View {
             HStack {
                 Image(systemName: "brain.head.profile")
                     .foregroundColor(.purple)
-                Text("Thinking...")
+                Text(L("message.thinking"))
                     .font(.caption)  // 12号
                     .fontWeight(.medium)
                 Spacer()
@@ -728,7 +728,7 @@ struct MessageActionsView: View {
         HStack(spacing: 16) {
             if let speak = onSpeak {
                 Button(action: speak) {
-                    Label("朗读", systemImage: "speaker.wave.2")
+                    Label(L("message.action.speak"), systemImage: "speaker.wave.2")
                         .font(.caption)  // 12号
                 }
                 .buttonStyle(.borderless)
@@ -736,7 +736,7 @@ struct MessageActionsView: View {
 
             if let copy = onCopy {
                 Button(action: copy) {
-                    Label("复制", systemImage: "doc.on.doc")
+                    Label(L("chat.contextMenu.copy"), systemImage: "doc.on.doc")
                         .font(.caption)  // 12号
                 }
                 .buttonStyle(.borderless)
@@ -744,7 +744,7 @@ struct MessageActionsView: View {
 
             if let regenerate = onRegenerate {
                 Button(action: regenerate) {
-                    Label("重新生成", systemImage: "arrow.clockwise")
+                    Label(L("chat.contextMenu.regenerate"), systemImage: "arrow.clockwise")
                         .font(.caption)  // 12号
                 }
                 .buttonStyle(.borderless)

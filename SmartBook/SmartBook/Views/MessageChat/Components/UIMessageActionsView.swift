@@ -31,7 +31,7 @@ final class UIMessageActionsView: UIView {
 
         var btnConfig = UIButton.Configuration.plain()
         btnConfig.image = image
-        btnConfig.title = "复制"
+        btnConfig.title = L("chat.contextMenu.copy")
         btnConfig.imagePadding = 4
         btnConfig.contentInsets = .init(top: 4, leading: 0, bottom: 4, trailing: 0)
         btnConfig.baseForegroundColor = .secondaryLabel
@@ -82,7 +82,7 @@ final class UIMessageActionsView: UIView {
         let config = UIImage.SymbolConfiguration(pointSize: 12)
         let checkImage = UIImage(systemName: "checkmark", withConfiguration: config)
         copyButton.configuration?.image = checkImage
-        copyButton.configuration?.title = "已复制"
+        copyButton.configuration?.title = L("message.action.copied")
         copyButton.configuration?.baseForegroundColor = .systemGreen
 
         // 1.5 秒后恢复
@@ -90,7 +90,7 @@ final class UIMessageActionsView: UIView {
             guard let self = self else { return }
             let docImage = UIImage(systemName: "doc.on.doc", withConfiguration: config)
             self.copyButton.configuration?.image = docImage
-            self.copyButton.configuration?.title = "复制"
+            self.copyButton.configuration?.title = L("chat.contextMenu.copy")
             self.copyButton.configuration?.baseForegroundColor = .secondaryLabel
         }
     }

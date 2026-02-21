@@ -152,6 +152,11 @@
 "chat.contextMenu.regenerate" = "重新產生";
 "chat.contextMenu.share" = "分享";
 
+/* Message Actions */
+"message.thinking" = "思考中...";
+"message.action.speak" = "朗讀";
+"message.action.copied" = "已複製";
+
 /* AI */
 "ai.analysis" = "AI 分析";
 "ai.summary" = "內容摘要";

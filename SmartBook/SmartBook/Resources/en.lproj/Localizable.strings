@@ -152,6 +152,11 @@
 "chat.contextMenu.regenerate" = "Regenerate";
 "chat.contextMenu.share" = "Share";
 
+/* Message Actions */
+"message.thinking" = "Thinking...";
+"message.action.speak" = "Read Aloud";
+"message.action.copied" = "Copied";
+
 /* AI */
 "ai.analysis" = "AI Analysis";
 "ai.summary" = "Summary";
