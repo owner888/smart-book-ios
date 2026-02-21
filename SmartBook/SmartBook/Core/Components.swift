@@ -2,48 +2,6 @@
 
 import SwiftUI
 
-// MARK: - iOS 26 液态玻璃效果按钮样式
-struct GlassButtonStyle: ButtonStyle {
-    var foregroundColor: Color = .primary
-    var shadowColor: Color = .black.opacity(0.15)
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .background {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(.ultraThinMaterial)
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(
-                                    configuration.isPressed ? 0.12 : 0.18
-                                ),
-                                .white.opacity(
-                                    configuration.isPressed ? 0.02 : 0.05
-                                ),
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-            }
-            .shadow(
-                color: shadowColor,
-                radius: configuration.isPressed ? 4 : 8,
-                x: 0,
-                y: configuration.isPressed ? 2 : 4
-            )
-            .foregroundColor(foregroundColor)
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-            .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
-    }
-}
-
 // MARK: - 液态玻璃图标按钮样式
 struct GlassIconButtonStyle: ButtonStyle {
     var size: CGFloat = 44
@@ -128,12 +86,6 @@ struct PrimaryActionButtonStyle: ButtonStyle {
 }
 
 // MARK: - 按钮样式扩展
-extension ButtonStyle where Self == GlassButtonStyle {
-    static var glass: GlassButtonStyle {
-        GlassButtonStyle()
-    }
-}
-
 extension ButtonStyle where Self == GlassIconButtonStyle {
     static var glassIcon: GlassIconButtonStyle {
         GlassIconButtonStyle()
@@ -146,7 +98,7 @@ extension ButtonStyle where Self == PrimaryActionButtonStyle {
     }
 }
 
-// MARK: - 玻璃效果视图扩展
+// MARK: - View 扩展
 extension View {
     /// 条件修饰器扩展
     @ViewBuilder
@@ -156,52 +108,6 @@ extension View {
         } else {
             self
         }
-    }
-
-    func glassEffect() -> some View {
-        self
-            .background {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(0.18),
-                                .white.opacity(0.05),
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-            }
-            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
-    }
-
-    // Menu专用玻璃效果（圆形，不干扰交互）
-    func menuGlassEffect() -> some View {
-        self
-            .padding(14)
-            .background {
-                Circle()
-                    .fill(.ultraThinMaterial)
-            }
-            .overlay {
-                Circle()
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(0.18),
-                                .white.opacity(0.05),
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-            }
-            .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
     }
 }
 
