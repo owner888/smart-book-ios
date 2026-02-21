@@ -172,9 +172,11 @@ struct ChatView: View {
                             .frame(width: 200)
                             .tint(.green)
 
-                        Text("📤 \(uploadProgress < 0.01 ? L("library.importing") : "\(L("book.uploading")) \(Int(uploadProgress * 100))%")")
-                            .font(.caption)
-                            .foregroundColor(.white)
+                        Text(
+                            "📤 \(uploadProgress < 0.01 ? L("library.importing") : "\(L("book.uploading")) \(Int(uploadProgress * 100))%")"
+                        )
+                        .font(.caption)
+                        .foregroundColor(.white)
                     }
                     .padding(24)
                     .background(
@@ -294,134 +296,6 @@ struct ChatView: View {
                             showDocumentPicker: $showDocumentPicker
                         ).environmentObject(menuObser)
                     }
-
-                    /*
-                    VStack(spacing: 0) {
-                        // 聊天内容区域
-                        InputToolBarView(
-                            viewModel: viewModel,
-                            inputText: $inputText,
-                            content: {
-                                ZStack(alignment: .top) {
-                                    // 对话列表（始终显示，无论是否选择书籍）
-                                    if viewModel.messages.isEmpty {
-                                        VStack {
-                                            Spacer()
-                                            if bookState.books.isEmpty {
-                                                EmptyStateView(
-                                                    colors: colors,
-                                                    onAddBook: {
-                                                        showBookImporter = true
-                                                    }
-                                                )
-                                            } else {
-                                                EmptyChatStateView(
-                                                    colors: colors,
-                                                    onAddBook: {
-                                                        showBookPicker = true
-                                                    },
-                                                    isDefaultChatAssistant: assistantService.currentAssistant.id
-                                                        == "chat"
-                                                )
-                                            }
-                                            Spacer()
-                                        }
-                                    } else {
-                                        ZStack(alignment: .bottom) {
-                                            // 有消息时显示对话列表
-                                            ScrollViewReader { scrollProxy in
-                                                let _ =
-                                                    viewModel.scrollProxy =
-                                                    scrollProxy
-                                                ScrollView {
-                                                    LazyVStack(spacing: 12) {
-                                                        ForEach(viewModel.messages) { message in
-                                                            MessageBubble(
-                                                                message: message,
-                                                                colors: colors
-                                                            )
-                                                            .onGeometryChange(
-                                                                for: CGFloat.self,
-                                                                of: { geo in
-                                                                    geo.frame(in: .global).height
-                                                                },
-                                                                action: { newValue in
-                                                                    messageChangedSize(newValue, id: message.id)
-                                                                }
-                                                            )
-                                                            .id(message.id)
-                                                        }
-                                                    }
-                                                    Color.clear.frame(
-                                                        height: viewModel
-                                                            .scrollBottom
-                                                    )
-                                                    bottomAnchorView
-                                                }.scrollClipDisabled().scrollDismissesKeyboard(.interactively)
-                                                    .contentMargins(
-                                                        .top,
-                                                        headerSpacer,
-                                                        for: .scrollContent
-                                                    ).onGeometryChange(
-                                                        for: CGRect.self,
-                                                        of: { geo in
-                                                            geo.frame(
-                                                                in: .global
-                                                            )
-                                                        },
-                                                        action: { newValue in
-                                                            scrollViewFrame =
-                                                            newValue
-                                                            //scrollViewChangedSize()
-                                                        }
-                                                    )
-                                            }
-                                        }
-                                    }
-                                    VStack(spacing: 0) {
-                                        if let book = bookState.selectedBook {
-                                            BookContextBar(
-                                                book: book,
-                                                colors: colors
-                                            ) {
-                                                withAnimation {
-                                                    bookState.selectedBook = nil
-                                                }
-                                            }
-                                            // 系统提示词显示（如果有）
-                                            if !assistantService
-                                                .currentAssistant.systemPrompt
-                                                .isEmpty
-                                            {
-                                                AssistantPromptBar(
-                                                    assistant: assistantService
-                                                        .currentAssistant,
-                                                    colors: colors
-                                                )
-                                            }
-                                        }
-                                    }.onGeometryChange(for: CGFloat.self) {
-                                        geo in
-                                        geo.frame(in: .global).height
-                                    } action: { newValue in
-                                        headerSpacer = newValue
-                                    }
-                                }
-                            },
-                            onSend: { sendMessage() }
-                         )
-                        .environmentObject(sideObser)
-                    }.ignoresSafeArea(.keyboard)
-                    .onChange(
-                        of: viewModel
-                            .currentMessageId
-                    ) {
-                        if viewModel
-                            .currentMessageId != nil
-                        {
-                            onSended()
-                        }
-                    }*/
                 }
                 .onAppear {
                     updateAIFunction(from: modelService.currentModel.id)
