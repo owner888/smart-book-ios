@@ -163,7 +163,8 @@
 /* Chat Alerts */
 "chat.bookRequired.title" = "需要选择书籍";
 "chat.bookRequired.message" = "使用此助手需要先选择一本书籍";
-
+"chat.switchAssistant.title" = "切换助手";
+"chat.switchAssistant.message" = "当前对话已有消息，是否新建对话？";
 /* AI */
 "ai.analysis" = "AI 分析";
 "ai.summary" = "内容摘要";

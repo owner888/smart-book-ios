@@ -163,7 +163,8 @@
 /* Chat Alerts */
 "chat.bookRequired.title" = "Book Required";
 "chat.bookRequired.message" = "Please select a book first to use this assistant";
-
+"chat.switchAssistant.title" = "Switch Assistant";
+"chat.switchAssistant.message" = "You have messages in the current chat. Would you like to start a new chat?";
 /* AI */
 "ai.analysis" = "AI Analysis";
 "ai.summary" = "Summary";

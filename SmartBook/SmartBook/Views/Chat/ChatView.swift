@@ -50,6 +50,8 @@ struct ChatView: View {
     @State private var answerInitialHeight = 0.0
     @State private var lastAnchorPosition: CGFloat?
     @State private var showBookRequiredAlert = false  // 显示需要选择书籍的提示
+    @State private var showNewChatAlert = false  // 切换助手时提示新建对话
+    @State private var previousAssistant: MenuConfig.AssistantType = .chat  // 记录切换前的助手
 
     @State private var currentKeyboard: CGFloat = 0
 
@@ -218,6 +220,13 @@ struct ChatView: View {
         .onChange(of: modelService.currentModel) { _, newModel in
             viewModel.selectedModel = newModel.id
         }
+        .onChange(of: assistant) { oldValue, newValue in
+            // ✅ 切换助手时，如果有消息，提示用户是否新建对话
+            if oldValue != newValue && !viewModel.messages.isEmpty {
+                previousAssistant = oldValue
+                showNewChatAlert = true
+            }
+        }
         .alert(L("chat.bookRequired.title"), isPresented: $showBookRequiredAlert) {
             Button(L("common.cancel"), role: .cancel) {}
             Button(L("chat.menu.selectBook")) {
@@ -225,6 +234,18 @@ struct ChatView: View {
             }
         } message: {
             Text(L("chat.bookRequired.message"))
+        }
+        .alert(L("chat.switchAssistant.title"), isPresented: $showNewChatAlert) {
+            Button(L("chatHistory.newChat")) {
+                // ✅ 新建对话并切换助手
+                viewModel.startNewConversation()
+            }
+            Button(L("common.cancel"), role: .cancel) {
+                // ✅ 取消：恢复到之前的助手
+                assistant = previousAssistant
+            }
+        } message: {
+            Text(L("chat.switchAssistant.message"))
         }
     }
 
