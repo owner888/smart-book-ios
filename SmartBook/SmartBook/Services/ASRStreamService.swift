@@ -48,7 +48,7 @@ class ASRStreamService: NSObject, ObservableObject {
         Logger.info("WebSocket URL: \(wsURL)")
 
         guard let url = URL(string: wsURL) else {
-            self.error = "无效的 WebSocket URL"
+            self.error = L("asr.error.invalidURL")
             Logger.error("无效的 WebSocket URL: \(wsURL)")
             return
         }
@@ -108,14 +108,14 @@ class ASRStreamService: NSObject, ObservableObject {
                 Logger.info("WebSocket 连接成功")
 
             case "connecting":
-                let message = json["message"] as? String ?? "正在连接 Deepgram..."
+                let message = json["message"] as? String ?? "Connecting to Deepgram..."
                 Logger.info("📡 \(message)")
-                self.statusMessage = "📡 正在连接语音识别服务..."
+                self.statusMessage = "📡 \(L("asr.status.connecting"))"
 
             case "started":
                 Logger.info("识别已启动，Deepgram 准备就绪")
                 self.deepgramConnectionTime = Date()
-                self.statusMessage = "🎤 开始说话..."
+                self.statusMessage = "🎤 \(L("asr.status.startSpeaking"))"
 
                 // 启动无音频检测计时器（15秒后如果没有识别结果，给出提示）
                 self.startNoAudioDetectionTimer()
@@ -156,7 +156,7 @@ class ASRStreamService: NSObject, ObservableObject {
 
                 // 如果是在录音过程中断开（非主动停止），显示警告
                 if self.isRecording {
-                    self.statusMessage = "⚠️ 语音识别服务已断开，请重新开始"
+                    self.statusMessage = "⚠️ \(L("asr.status.disconnected"))"
                 } else {
                     // 主动停止的情况，不显示错误
                     self.statusMessage = nil
@@ -176,16 +176,16 @@ class ASRStreamService: NSObject, ObservableObject {
                 self.error = errorMsg
 
                 // 根据错误类型显示不同的状态消息
-                if errorMsg.contains("API") || errorMsg.contains("认证") {
-                    self.statusMessage = "❌ API 配置错误，请联系管理员"
-                } else if errorMsg.contains("网络") || errorMsg.contains("连接") || errorMsg.contains("超时") {
-                    self.statusMessage = "❌ 网络连接失败，请检查网络"
+                if errorMsg.contains("API") || errorMsg.contains("认证") || errorMsg.contains("auth") {
+                    self.statusMessage = "❌ \(L("asr.error.apiConfig"))"
+                } else if errorMsg.contains("网络") || errorMsg.contains("连接") || errorMsg.contains("超时") || errorMsg.contains("network") || errorMsg.contains("timeout") {
+                    self.statusMessage = "❌ \(L("asr.error.network"))"
                 } else if errorMsg.contains("DNS") {
-                    self.statusMessage = "❌ 网络配置错误"
-                } else if errorMsg.contains("不可用") || errorMsg.contains("503") {
-                    self.statusMessage = "❌ 服务暂时不可用，请稍后再试"
-                } else if errorMsg.contains("频率") || errorMsg.contains("超限") {
-                    self.statusMessage = "❌ 使用频率过高，请稍后再试"
+                    self.statusMessage = "❌ \(L("asr.error.dns"))"
+                } else if errorMsg.contains("不可用") || errorMsg.contains("503") || errorMsg.contains("unavailable") {
+                    self.statusMessage = "❌ \(L("asr.error.unavailable"))"
+                } else if errorMsg.contains("频率") || errorMsg.contains("超限") || errorMsg.contains("rate") {
+                    self.statusMessage = "❌ \(L("asr.error.rateLimit"))"
                 } else {
                     self.statusMessage = "❌ \(errorMsg)"
                 }
@@ -233,7 +233,7 @@ class ASRStreamService: NSObject, ObservableObject {
         self.onTranscriptUpdate = onTranscriptUpdate
 
         guard isConnected else {
-            self.error = "WebSocket 未连接"
+            self.error = L("asr.error.notConnected")
             return
         }
 
@@ -259,8 +259,8 @@ class ASRStreamService: NSObject, ObservableObject {
             try audioSession.setActive(true)
         } catch {
             Logger.error("音频会话配置失败: \(error)")
-            self.error = "音频会话配置失败"
-            self.statusMessage = "❌ 麦克风配置失败"
+            self.error = L("error.asr.audioSessionFailed")
+            self.statusMessage = "❌ \(L("asr.error.micConfig"))"
             return
         }
 
@@ -277,8 +277,8 @@ class ASRStreamService: NSObject, ObservableObject {
                 interleaved: true  // ✅ Deepgram 需要交错格式
             )
         else {
-            self.error = "无法创建音频格式"
-            self.statusMessage = "❌ 音频格式错误"
+            self.error = L("error.asr.invalidAudioFormat")
+            self.statusMessage = "❌ \(L("asr.error.audioFormat"))"
             return
         }
 
@@ -286,8 +286,8 @@ class ASRStreamService: NSObject, ObservableObject {
 
         // 创建格式转换器
         guard let converter = AVAudioConverter(from: inputFormat, to: targetFormat) else {
-            self.error = "无法创建音频转换器"
-            self.statusMessage = "❌ 音频转换器错误"
+            self.error = L("asr.error.converterFailed")
+            self.statusMessage = "❌ \(L("asr.error.converterFailed"))"
             return
         }
 
@@ -309,8 +309,8 @@ class ASRStreamService: NSObject, ObservableObject {
             Logger.info("✅ 音频引擎已启动，开始录音")
         } catch {
             Logger.error("音频引擎启动失败: \(error)")
-            self.error = "无法启动录音"
-            self.statusMessage = "❌ 无法启动录音"
+            self.error = L("error.asr.recordingFailed")
+            self.statusMessage = "❌ \(L("error.asr.recordingFailed"))"
         }
     }
 
@@ -391,18 +391,18 @@ class ASRStreamService: NSObject, ObservableObject {
                     let timeSinceLastTranscript = Date().timeIntervalSince(lastTime)
                     if timeSinceLastTranscript > 10 {
                         if self.isDetectingAudio {
-                            self.statusMessage = "🔊 检测到声音但无法识别，请说清楚一点"
+                            self.statusMessage = "🔊 \(L("asr.status.cannotRecognize"))"
                         } else {
-                            self.statusMessage = "🤔 没有检测到声音，请靠近麦克风说话"
+                            self.statusMessage = "🤔 \(L("asr.status.noAudio"))"
                         }
                     }
                 } else if let connectionTime = self.deepgramConnectionTime {
                     let timeSinceConnection = Date().timeIntervalSince(connectionTime)
                     if timeSinceConnection > 8 {
                         if self.isDetectingAudio {
-                            self.statusMessage = "🔊 检测到声音但无法识别，请说清楚一点"
+                            self.statusMessage = "🔊 \(L("asr.status.cannotRecognize"))"
                         } else {
-                            self.statusMessage = "🤔 没有检测到声音，请靠近麦克风说话"
+                            self.statusMessage = "🤔 \(L("asr.status.noAudio"))"
                         }
                     }
                 }

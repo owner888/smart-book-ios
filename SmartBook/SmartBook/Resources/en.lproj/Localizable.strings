@@ -336,6 +336,23 @@
 "error.asr.noAudioData" = "No audio data";
 "error.asr.invalidAudioFormat" = "Invalid audio format";
 
+/* ASR Stream Status */
+"asr.error.invalidURL" = "Invalid WebSocket URL";
+"asr.error.notConnected" = "WebSocket not connected";
+"asr.error.apiConfig" = "API configuration error, please contact admin";
+"asr.error.network" = "Network connection failed, please check your network";
+"asr.error.dns" = "Network configuration error";
+"asr.error.unavailable" = "Service temporarily unavailable, please try later";
+"asr.error.rateLimit" = "Too many requests, please try later";
+"asr.error.micConfig" = "Microphone configuration failed";
+"asr.error.audioFormat" = "Audio format error";
+"asr.error.converterFailed" = "Audio converter error";
+"asr.status.connecting" = "Connecting to speech recognition...";
+"asr.status.startSpeaking" = "Start speaking...";
+"asr.status.disconnected" = "Speech recognition disconnected, please restart";
+"asr.status.cannotRecognize" = "Sound detected but cannot recognize, please speak more clearly";
+"asr.status.noAudio" = "No sound detected, please speak closer to the microphone";
+
 /* Navigation */
 "nav.library" = "Library";
 "nav.recent" = "Recent";

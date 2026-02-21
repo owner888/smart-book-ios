@@ -318,6 +318,23 @@
 "error.asr.noAudioData" = "沒有錄音資料";
 "error.asr.invalidAudioFormat" = "無效的音訊格式";
 
+/* ASR Stream Status */
+"asr.error.invalidURL" = "無效的 WebSocket URL";
+"asr.error.notConnected" = "WebSocket 未連線";
+"asr.error.apiConfig" = "API 設定錯誤，請聯繫管理員";
+"asr.error.network" = "網路連線失敗，請檢查網路";
+"asr.error.dns" = "網路設定錯誤";
+"asr.error.unavailable" = "服務暫時不可用，請稍後再試";
+"asr.error.rateLimit" = "使用頻率過高，請稍後再試";
+"asr.error.micConfig" = "麥克風設定失敗";
+"asr.error.audioFormat" = "音訊格式錯誤";
+"asr.error.converterFailed" = "音訊轉換器錯誤";
+"asr.status.connecting" = "正在連線語音辨識服務...";
+"asr.status.startSpeaking" = "開始說話...";
+"asr.status.disconnected" = "語音辨識服務已斷開，請重新開始";
+"asr.status.cannotRecognize" = "偵測到聲音但無法辨識，請說清楚一點";
+"asr.status.noAudio" = "沒有偵測到聲音，請靠近麥克風說話";
+
 /* Navigation */
 "nav.library" = "資料庫";
 "nav.recent" = "最近";

@@ -336,6 +336,23 @@
 "error.asr.noAudioData" = "没有录音数据";
 "error.asr.invalidAudioFormat" = "无效的音频格式";
 
+/* ASR Stream Status */
+"asr.error.invalidURL" = "无效的 WebSocket URL";
+"asr.error.notConnected" = "WebSocket 未连接";
+"asr.error.apiConfig" = "API 配置错误，请联系管理员";
+"asr.error.network" = "网络连接失败，请检查网络";
+"asr.error.dns" = "网络配置错误";
+"asr.error.unavailable" = "服务暂时不可用，请稍后再试";
+"asr.error.rateLimit" = "使用频率过高，请稍后再试";
+"asr.error.micConfig" = "麦克风配置失败";
+"asr.error.audioFormat" = "音频格式错误";
+"asr.error.converterFailed" = "音频转换器错误";
+"asr.status.connecting" = "正在连接语音识别服务...";
+"asr.status.startSpeaking" = "开始说话...";
+"asr.status.disconnected" = "语音识别服务已断开，请重新开始";
+"asr.status.cannotRecognize" = "检测到声音但无法识别，请说清楚一点";
+"asr.status.noAudio" = "没有检测到声音，请靠近麦克风说话";
+
 /* Navigation */
 "nav.library" = "资料库";
 "nav.recent" = "最近";
