@@ -11,45 +11,33 @@ struct ContentView: View {
     @State private var showConsentView = false
 
     var body: some View {
-        ZStack {
-            ChatView()
-                .task {
-                    // 在视图出现时加载书籍列表
-                    await bookState.loadBooks(using: bookService)
-                }
-
-            // AI 数据共享同意弹窗（首次启动时显示）
-            if showConsentView {
+        ChatView()
+            .task {
+                // 在视图出现时加载书籍列表
+                await bookState.loadBooks(using: bookService)
+            }
+            .fullScreenCover(isPresented: $showConsentView) {
                 AIDataConsentView(
                     hasConsented: $aiDataConsentGiven,
                     onAgree: {
                         aiDataConsentGiven = true
-                        withAnimation(.easeOut(duration: 0.3)) {
-                            showConsentView = false
-                        }
+                        showConsentView = false
                     },
                     onDecline: {
-                        // 用户拒绝，仍然关闭弹窗，但不设置同意标志
-                        // 用户可以使用阅读功能，但 AI 功能将被限制
-                        withAnimation(.easeOut(duration: 0.3)) {
-                            showConsentView = false
-                        }
+                        // 用户拒绝，退出 App
+                        exit(0)
                     }
                 )
-                .transition(.opacity)
-                .zIndex(100)
+                .interactiveDismissDisabled(true) // 禁止下滑关闭
             }
-        }
-        .onAppear {
-            // 如果用户还没有同意过，显示同意弹窗
-            if !aiDataConsentGiven {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    withAnimation(.easeIn(duration: 0.3)) {
+            .onAppear {
+                // 如果用户还没有同意过，显示同意弹窗
+                if !aiDataConsentGiven {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         showConsentView = true
                     }
                 }
             }
-        }
     }
 }
 
