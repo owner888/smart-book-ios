@@ -11,8 +11,6 @@ struct AIDataConsentView: View {
     var onAgree: () -> Void
     var onDecline: () -> Void
 
-    @State private var showPrivacyPolicy = false
-
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
@@ -112,18 +110,6 @@ struct AIDataConsentView: View {
                 }
                 .padding(.horizontal, 32)
 
-                Spacer(minLength: 8)
-
-                // 隐私政策链接
-                Button {
-                    showPrivacyPolicy = true
-                } label: {
-                    Text(L("consent.viewPrivacyPolicy"))
-                        .font(.footnote)
-                        .foregroundColor(.blue)
-                        .underline()
-                }
-
                 Spacer(minLength: 12)
 
                 // 按钮
@@ -160,9 +146,6 @@ struct AIDataConsentView: View {
 
                 Spacer(minLength: 8)
             }
-        }
-        .sheet(isPresented: $showPrivacyPolicy) {
-            PrivacyPolicyWebView()
         }
     }
 }
