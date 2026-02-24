@@ -1,5 +1,5 @@
-// AIDataConsentView.swift - AI 数据共享同意弹窗（全屏，不可滚动）
-// 满足 Apple App Store 审核要求：在发送用户数据到第三方 AI 服务前获得用户明确同意
+// AIDataConsentView.swift - 欢迎页（全屏，首次启动显示）
+// 简洁友好的欢迎界面，继续即表示同意使用条款和隐私政策
 
 import SwiftUI
 import WebKit
@@ -11,6 +11,9 @@ struct AIDataConsentView: View {
     var onAgree: () -> Void
     var onDecline: () -> Void
 
+    @State private var showTerms = false
+    @State private var showPrivacy = false
+
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
     }
@@ -21,161 +24,107 @@ struct AIDataConsentView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                Spacer(minLength: 8)
+                Spacer()
 
-                // 头部图标 + 标题
-                Image(systemName: "brain.head.profile")
-                    .font(.system(size: 48))
-                    .foregroundColor(.blue)
+                // App Logo
+                Image("AppIconImage")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 100, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 22))
+                    .shadow(color: .black.opacity(0.1), radius: 10, y: 4)
 
-                Text(L("consent.title"))
-                    .font(.title2)
+                // App 名称
+                Text("Smart Book")
+                    .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(colors.primaryText)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 8)
+                    .padding(.top, 20)
 
-                // 说明文字
-                Text(L("consent.description"))
-                    .font(.footnote)
+                // 技术支持说明
+                Text(L("consent.poweredBy"))
+                    .font(.subheadline)
                     .foregroundColor(colors.secondaryText)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 28)
                     .padding(.top, 8)
 
-                Spacer(minLength: 8)
+                Spacer()
 
-                // 数据共享详情
-                VStack(alignment: .leading, spacing: 10) {
-                    ConsentServiceRow(
-                        icon: "bubble.left.and.text.bubble.right",
-                        iconColor: .blue,
-                        title: "Google Gemini",
-                        description: L("consent.service.gemini"),
-                        colors: colors
-                    )
-                    Divider()
-                    ConsentServiceRow(
-                        icon: "speaker.wave.3",
-                        iconColor: .green,
-                        title: "Google Cloud TTS",
-                        description: L("consent.service.googleTTS"),
-                        colors: colors
-                    )
-                    Divider()
-                    ConsentServiceRow(
-                        icon: "mic.fill",
-                        iconColor: .purple,
-                        title: "Deepgram",
-                        description: L("consent.service.deepgram"),
-                        colors: colors
-                    )
-                }
-                .padding(14)
-                .background(colors.cardBackground)
-                .cornerRadius(12)
-                .padding(.horizontal, 24)
-
-                Spacer(minLength: 8)
-
-                // 数据保护说明
-                VStack(alignment: .leading, spacing: 6) {
-                    Label {
-                        Text(L("consent.protection.encrypted"))
-                            .font(.caption)
-                            .foregroundColor(colors.secondaryText)
-                    } icon: {
-                        Image(systemName: "lock.shield")
-                            .foregroundColor(.green)
-                            .font(.caption)
-                    }
-                    Label {
-                        Text(L("consent.protection.noTraining"))
-                            .font(.caption)
-                            .foregroundColor(colors.secondaryText)
-                    } icon: {
-                        Image(systemName: "xmark.shield")
-                            .foregroundColor(.orange)
-                            .font(.caption)
-                    }
-                    Label {
-                        Text(L("consent.protection.withdraw"))
-                            .font(.caption)
-                            .foregroundColor(colors.secondaryText)
-                    } icon: {
-                        Image(systemName: "arrow.uturn.backward.circle")
-                            .foregroundColor(.blue)
-                            .font(.caption)
-                    }
+                // 继续按钮
+                Button {
+                    onAgree()
+                } label: {
+                    Text(L("consent.continue"))
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.blue)
+                        .cornerRadius(14)
                 }
                 .padding(.horizontal, 32)
 
-                Spacer(minLength: 12)
-
-                // 按钮
-                VStack(spacing: 10) {
-                    Button {
-                        onAgree()
-                    } label: {
-                        Text(L("consent.agree"))
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.blue)
-                            .cornerRadius(14)
-                    }
+                // 使用条款和隐私政策说明
+                HStack(spacing: 0) {
+                    Text(L("consent.agreementPrefix"))
+                        .font(.caption)
+                        .foregroundColor(colors.secondaryText)
 
                     Button {
-                        onDecline()
+                        showTerms = true
                     } label: {
-                        Text(L("consent.decline"))
-                            .font(.subheadline)
-                            .foregroundColor(.red)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
+                        Text(L("consent.termsOfService"))
+                            .font(.caption)
+                            .foregroundColor(.blue)
                     }
 
-                    Text(L("consent.declineNote"))
-                        .font(.caption2)
-                        .foregroundColor(colors.secondaryText.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 16)
+                    Text(L("consent.and"))
+                        .font(.caption)
+                        .foregroundColor(colors.secondaryText)
+
+                    Button {
+                        showPrivacy = true
+                    } label: {
+                        Text(L("consent.privacyPolicy"))
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    }
                 }
-                .padding(.horizontal, 28)
-
-                Spacer(minLength: 8)
+                .padding(.top, 14)
+                .padding(.bottom, 40)
             }
+        }
+        .sheet(isPresented: $showTerms) {
+            TermsWebView()
+        }
+        .sheet(isPresented: $showPrivacy) {
+            PrivacyPolicyWebView()
         }
     }
 }
 
-// MARK: - 服务行组件
-struct ConsentServiceRow: View {
-    let icon: String
-    let iconColor: Color
-    let title: String
-    let description: String
-    let colors: ThemeColors
+// MARK: - 使用条款 WebView
+struct TermsWebView: View {
+    @Environment(\.dismiss) var dismiss
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.title3)
-                .foregroundColor(iconColor)
-                .frame(width: 28)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundColor(colors.primaryText)
-                Text(description)
-                    .font(.caption2)
-                    .foregroundColor(colors.secondaryText)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
+        NavigationStack {
+            WebViewContainer(url: termsURL())
+                .navigationTitle(L("settings.termsOfService"))
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button(L("common.done")) {
+                            dismiss()
+                        }
+                    }
+                }
         }
+    }
+
+    private func termsURL() -> URL {
+        let lang = Locale.current.language.languageCode?.identifier ?? "en"
+        let url = lang.hasPrefix("zh") ? "https://raccoonx.ai/service/cn" : "https://raccoonx.ai/service"
+        return URL(string: url)!
     }
 }
 
@@ -200,9 +149,8 @@ struct PrivacyPolicyWebView: View {
 
     private func privacyPolicyURL() -> URL {
         let lang = Locale.current.language.languageCode?.identifier ?? "en"
-        let path = lang.hasPrefix("zh") ? "/privacy_cn.html" : "/privacy.html"
-        return URL(string: "\(AppConfig.apiBaseURL)\(path)")
-            ?? URL(string: "https://example.com/privacy")!
+        let url = lang.hasPrefix("zh") ? "https://raccoonx.ai/privacy/cn" : "https://raccoonx.ai/privacy"
+        return URL(string: url)!
     }
 }
 
