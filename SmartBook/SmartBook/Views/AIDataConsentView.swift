@@ -64,31 +64,35 @@ struct AIDataConsentView: View {
                 .padding(.horizontal, 32)
 
                 // 使用条款和隐私政策说明
-                HStack(spacing: 0) {
+                VStack(spacing: 2) {
                     Text(L("consent.agreementPrefix"))
                         .font(.caption)
                         .foregroundColor(colors.secondaryText)
 
-                    Button {
-                        showTerms = true
-                    } label: {
-                        Text(L("consent.termsOfService"))
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                    }
+                    HStack(spacing: 0) {
+                        Button {
+                            showTerms = true
+                        } label: {
+                            Text(L("consent.termsOfService"))
+                                .font(.caption)
+                                .foregroundColor(.blue)
+                        }
 
-                    Text(L("consent.and"))
-                        .font(.caption)
-                        .foregroundColor(colors.secondaryText)
-
-                    Button {
-                        showPrivacy = true
-                    } label: {
-                        Text(L("consent.privacyPolicy"))
+                        Text(L("consent.and"))
                             .font(.caption)
-                            .foregroundColor(.blue)
+                            .foregroundColor(colors.secondaryText)
+
+                        Button {
+                            showPrivacy = true
+                        } label: {
+                            Text(L("consent.privacyPolicy"))
+                                .font(.caption)
+                                .foregroundColor(.blue)
+                        }
                     }
                 }
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
                 .padding(.top, 14)
                 .padding(.bottom, 40)
             }

@@ -427,7 +427,7 @@
 /* Welcome */
 "consent.poweredBy" = "Powered by Gemini & Deepgram";
 "consent.continue" = "Continue";
-"consent.agreementPrefix" = "By continuing, you agree to our ";
+"consent.agreementPrefix" = "By continuing you agree to the ";
 "consent.termsOfService" = "Terms of Service";
 "consent.and" = " and ";
 "consent.privacyPolicy" = "Privacy Policy";
