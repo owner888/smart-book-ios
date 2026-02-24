@@ -423,3 +423,23 @@
 "settings.asr.language.german" = "德語";
 "settings.asr.language.spanish" = "西班牙語";
 "settings.asr.language.thai" = "泰語";
+
+/* AI Data Consent - AI 資料共享同意 */
+"consent.title" = "AI 資料共享說明";
+"consent.description" = "本應用程式使用第三方 AI 服務提供智慧對話、語音辨識和語音合成功能。使用這些功能時，您的部分資料將被傳送至以下第三方服務進行處理：";
+"consent.service.gemini" = "您的聊天訊息、對話歷史和書籍文字片段將傳送至 Google 進行 AI 對話處理";
+"consent.service.googleTTS" = "需要朗讀的文字內容將傳送至 Google 進行語音合成";
+"consent.service.deepgram" = "您的語音錄音將傳送至 Deepgram 進行語音辨識；文字內容可能傳送至 Deepgram 進行語音合成";
+"consent.protection.encrypted" = "所有資料傳輸均使用加密連線（TLS）";
+"consent.protection.noTraining" = "您的資料不會被用於訓練 AI 模型";
+"consent.protection.withdraw" = "您可以隨時在設定中撤回同意";
+"consent.viewPrivacyPolicy" = "查看完整隱私權政策";
+"consent.agree" = "同意並繼續";
+"consent.decline" = "暫不同意";
+"consent.declineNote" = "如不同意，您仍可使用書籍閱讀功能，但 AI 對話、語音辨識和語音合成功能將不可用。";
+
+/* Settings - Privacy */
+"settings.privacy.title" = "AI 資料隱私";
+"settings.privacy.aiConsent" = "AI 資料共享";
+"settings.privacy.aiConsent.desc" = "允許將資料傳送至第三方 AI 服務（Google、Deepgram）";
+"settings.privacy.footer" = "關閉後，AI 對話、語音辨識和語音合成功能將不可用。您可以隨時重新開啟。";

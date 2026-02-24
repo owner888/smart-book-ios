@@ -423,3 +423,23 @@
 "vip.trial" = "1周免费试用";
 "vip.subscribe" = "立即订阅";
 "vip.cancelAnytime" = "订阅后可随时取消";
+
+/* AI Data Consent - AI 数据共享同意 */
+"consent.title" = "AI 数据共享说明";
+"consent.description" = "本应用使用第三方 AI 服务提供智能对话、语音识别和语音合成功能。使用这些功能时，您的部分数据将被发送至以下第三方服务进行处理：";
+"consent.service.gemini" = "您的聊天消息、对话历史和书籍文本片段将发送至 Google 进行 AI 对话处理";
+"consent.service.googleTTS" = "需要朗读的文本内容将发送至 Google 进行语音合成";
+"consent.service.deepgram" = "您的语音录音将发送至 Deepgram 进行语音识别；文本内容可能发送至 Deepgram 进行语音合成";
+"consent.protection.encrypted" = "所有数据传输均使用加密连接（TLS）";
+"consent.protection.noTraining" = "您的数据不会被用于训练 AI 模型";
+"consent.protection.withdraw" = "您可以随时在设置中撤回同意";
+"consent.viewPrivacyPolicy" = "查看完整隐私政策";
+"consent.agree" = "同意并继续";
+"consent.decline" = "暂不同意";
+"consent.declineNote" = "如不同意，您仍可使用书籍阅读功能，但 AI 对话、语音识别和语音合成功能将不可用。";
+
+/* Settings - Privacy */
+"settings.privacy.title" = "AI 数据隐私";
+"settings.privacy.aiConsent" = "AI 数据共享";
+"settings.privacy.aiConsent.desc" = "允许将数据发送至第三方 AI 服务（Google、Deepgram）";
+"settings.privacy.footer" = "关闭后，AI 对话、语音识别和语音合成功能将不可用。您可以随时重新开启。";

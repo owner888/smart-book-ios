@@ -17,11 +17,13 @@ struct SettingsView: View {
     @AppStorage(AppConfig.Keys.enableGoogleSearch) private var enableGoogleSearch = AppConfig.DefaultValues
         .enableGoogleSearch
     @AppStorage(AppConfig.Keys.enableMCPTools) private var enableMCPTools = AppConfig.DefaultValues.enableMCPTools
+    @AppStorage(AppConfig.Keys.aiDataConsentGiven) private var aiDataConsentGiven = false
 
     @State private var showServerEditor = false
     @State private var editingURL = ""
     @State private var showResetAlert = false
     @State private var showClearCacheAlert = false
+    @State private var showPrivacyPolicy = false
 
     private var colors: ThemeColors {
         themeManager.colors(for: systemColorScheme)
@@ -232,6 +234,46 @@ struct SettingsView: View {
                 }
                 .listRowBackground(colors.cardBackground)
 
+                // AI 数据隐私
+                Section {
+                    // AI 数据共享同意开关
+                    Toggle(isOn: $aiDataConsentGiven) {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "hand.raised.fill", color: .orange)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(L("settings.privacy.aiConsent"))
+                                    .foregroundColor(colors.primaryText)
+                                Text(L("settings.privacy.aiConsent.desc"))
+                                    .font(.caption)
+                                    .foregroundColor(colors.secondaryText)
+                            }
+                        }
+                    }
+                    .tint(.green)
+
+                    // 查看隐私政策
+                    Button {
+                        showPrivacyPolicy = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            SettingsIcon(icon: "doc.text", color: .blue)
+                            Text(L("settings.privacyPolicy"))
+                                .foregroundColor(colors.primaryText)
+                            Spacer()
+                            Image(systemName: "arrow.up.right")
+                                .font(.caption)
+                                .foregroundColor(colors.secondaryText)
+                        }
+                    }
+                } header: {
+                    Text(L("settings.privacy.title"))
+                        .foregroundColor(colors.secondaryText)
+                } footer: {
+                    Text(L("settings.privacy.footer"))
+                        .foregroundColor(colors.secondaryText)
+                }
+                .listRowBackground(colors.cardBackground)
+
                 // 数据管理
                 Section {
                     // 重置设置
@@ -328,6 +370,9 @@ struct SettingsView: View {
                 }
             } message: {
                 Text(L("data.clearCache.message"))
+            }
+            .sheet(isPresented: $showPrivacyPolicy) {
+                PrivacyPolicyWebView()
             }
         }
         .onChange(of: ttsRate) { _, newValue in

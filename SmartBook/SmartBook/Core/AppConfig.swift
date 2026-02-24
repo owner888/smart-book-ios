@@ -48,6 +48,7 @@ enum AppConfig {
         static let ttsProvider = "ttsProvider"  // TTS 提供商
         static let enableGoogleSearch = "enableGoogleSearch"  // Google Search 开关
         static let enableMCPTools = "enableMCPTools"  // MCP 工具开关
+        static let aiDataConsentGiven = "aiDataConsentGiven"  // AI 数据共享同意状态
     }
 
     // MARK: - 默认值

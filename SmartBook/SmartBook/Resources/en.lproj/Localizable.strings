@@ -423,3 +423,23 @@
 "vip.trial" = "1 Week Free Trial";
 "vip.subscribe" = "Subscribe Now";
 "vip.cancelAnytime" = "Cancel anytime after subscription";
+
+/* AI Data Consent */
+"consent.title" = "AI Data Sharing Notice";
+"consent.description" = "This app uses third-party AI services to provide intelligent chat, speech recognition, and text-to-speech features. When using these features, some of your data will be sent to the following third-party services for processing:";
+"consent.service.gemini" = "Your chat messages, conversation history, and book text excerpts are sent to Google for AI conversation processing";
+"consent.service.googleTTS" = "Text content to be read aloud is sent to Google for speech synthesis";
+"consent.service.deepgram" = "Your voice recordings are sent to Deepgram for speech recognition; text may also be sent to Deepgram for speech synthesis";
+"consent.protection.encrypted" = "All data transfers use encrypted connections (TLS)";
+"consent.protection.noTraining" = "Your data is not used to train AI models";
+"consent.protection.withdraw" = "You can withdraw consent at any time in Settings";
+"consent.viewPrivacyPolicy" = "View Full Privacy Policy";
+"consent.agree" = "Agree & Continue";
+"consent.decline" = "Decline";
+"consent.declineNote" = "If you decline, you can still use book reading features, but AI chat, speech recognition, and text-to-speech will be unavailable.";
+
+/* Settings - Privacy */
+"settings.privacy.title" = "AI Data Privacy";
+"settings.privacy.aiConsent" = "AI Data Sharing";
+"settings.privacy.aiConsent.desc" = "Allow sending data to third-party AI services (Google, Deepgram)";
+"settings.privacy.footer" = "When disabled, AI chat, speech recognition, and text-to-speech features will be unavailable. You can re-enable at any time.";
