@@ -18,7 +18,12 @@ extension Button {
                 )
             }
         } else {
-            self.buttonStyle(.glassIcon)
+            self.background {
+                GaussianBlurView()
+                    .opacity(0.45)
+                    .frame(width: size.width, height: size.height)
+                    .clipShape(RoundedRectangle(cornerRadius: size.height / 2))
+            }
         }
     }
 
