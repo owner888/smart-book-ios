@@ -104,9 +104,6 @@ struct ServerEditorView: View {
                     .foregroundColor(colors.primaryText)
                 }
             }
-            .onAppear {
-                isFocused = true
-            }
             .onChange(of: url) { _, _ in
                 isValid = true
             }
