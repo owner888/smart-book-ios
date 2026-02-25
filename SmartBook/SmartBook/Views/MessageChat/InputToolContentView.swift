@@ -220,12 +220,13 @@ struct InputToolContentView: View {
                             RoundedRectangle(cornerRadius: 22)
                                 .stroke(
                                     LinearGradient(
-                                        colors: [
-                                            Color.white.opacity(0.32),
-                                            Color.gray.opacity(0.16),
+                                        stops: [
+                                            .init(color: Color.white.opacity(0.18), location: 0.0),
+                                            .init(color: Color.white.opacity(0.32), location: 0.5),
+                                            .init(color: Color.white.opacity(0.18), location: 1.0),
                                         ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
+                                        startPoint: .topTrailing,
+                                        endPoint: .bottomLeading
                                     ),
                                     lineWidth: 0.8
                                 )
