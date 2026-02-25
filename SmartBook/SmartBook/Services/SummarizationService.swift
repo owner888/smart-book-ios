@@ -33,7 +33,7 @@ class SummarizationService {
 
     // MARK: - Initialization
 
-    init(threshold: Int = 20, streamingService: StreamingChatService? = nil) {
+    init(threshold: Int = AppConfig.DefaultValues.summarizationThresholdRounds, streamingService: StreamingChatService? = nil) {
         self.threshold = threshold
         self.streamingService = streamingService ?? StreamingChatService()
     }

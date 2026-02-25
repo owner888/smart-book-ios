@@ -65,5 +65,6 @@ enum AppConfig {
         static let defaultModel = "gemini-2.5-flash"  // 默认 AI 模型（支持 thinking）
         static let enableGoogleSearch = false  // 默认关闭（与 MCP 冲突）
         static let enableMCPTools = true  // 默认开启 MCP 工具
+        static let summarizationThresholdRounds = 20  // 对话摘要触发阈值（轮次）
     }
 }

@@ -26,7 +26,7 @@ class DIContainer {
     let bookService = BookService()
     let ttsService = TTSService()
     let checkInService = CheckInService()
-    let summarizationService = SummarizationService(threshold: 20)
+    let summarizationService = SummarizationService(threshold: AppConfig.DefaultValues.summarizationThresholdRounds)
 
     /// 共享的 ChatHistoryService（延迟初始化，需要 ModelContext）
     private var _chatHistoryService: ChatHistoryService?
