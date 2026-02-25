@@ -37,6 +37,8 @@ struct InputToolContentView: View {
     @StateObject private var speechService = SpeechService()
     @StateObject private var asrStreamService = ASRStreamService()
 
+    private let inputContainerCornerRadius: CGFloat = 22
+
     // 判断是否有输入内容（文本或媒体）
     private var hasInput: Bool {
         !inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !viewModel.mediaItems.isEmpty
@@ -210,31 +212,7 @@ struct InputToolContentView: View {
         }.padding(.horizontal, 12)
             .padding(.vertical, 6)
             .background {
-                if #available(iOS 26, *) {
-                    Color.white.opacity(0.001).glassEffect(.regular, in: .rect(cornerRadius: 22))
-                } else {
-                    ZStack {
-                        Color.gray.opacity(0.18)
-                        GaussianBlurView()
-                            .opacity(0.5)
-                    }
-                        .clipShape(RoundedRectangle(cornerRadius: 22))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: 22)
-                                .stroke(
-                                    LinearGradient(
-                                        stops: [
-                                            .init(color: Color.white.opacity(0.18), location: 0.0),
-                                            .init(color: Color.white.opacity(0.32), location: 0.5),
-                                            .init(color: Color.white.opacity(0.18), location: 1.0),
-                                        ],
-                                        startPoint: .topTrailing,
-                                        endPoint: .bottomLeading
-                                    ),
-                                    lineWidth: 0.8
-                                )
-                        }
-                }
+                inputContainerBackground
             }
             .padding(.vertical, 6)
             .animation(.spring(duration: 0.3), value: hasInput)
@@ -380,5 +358,14 @@ struct InputToolContentView: View {
         }
 
         Logger.info("🛑 停止录音（连接保持）")
+    }
+
+    @ViewBuilder
+    private var inputContainerBackground: some View {
+        if #available(iOS 26, *) {
+            Color.white.opacity(0.001).glassEffect(.regular, in: .rect(cornerRadius: inputContainerCornerRadius))
+        } else {
+            GlassFallbackBackground(style: .inputContainer(cornerRadius: inputContainerCornerRadius))
+        }
     }
 }

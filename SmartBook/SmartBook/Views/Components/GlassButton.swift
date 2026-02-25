@@ -7,6 +7,94 @@
 
 import SwiftUI
 
+struct GlassFallbackStyle {
+    let cornerRadius: CGFloat
+    let blurOpacity: CGFloat
+    let grayOpacity: CGFloat?
+    let frameSize: CGSize?
+    let borderStops: [Gradient.Stop]
+    let borderStartPoint: UnitPoint
+    let borderEndPoint: UnitPoint
+    let borderWidth: CGFloat
+
+    static func iconButton(size: CGSize) -> GlassFallbackStyle {
+        GlassFallbackStyle(
+            cornerRadius: size.height / 2,
+            blurOpacity: 0.45,
+            grayOpacity: nil,
+            frameSize: size,
+            borderStops: [
+                .init(color: Color.white.opacity(0.35), location: 0.0),
+                .init(color: Color.gray.opacity(0.18), location: 1.0),
+            ],
+            borderStartPoint: .topLeading,
+            borderEndPoint: .bottomTrailing,
+            borderWidth: 0.8
+        )
+    }
+
+    static func modelButton(cornerRadius: CGFloat) -> GlassFallbackStyle {
+        GlassFallbackStyle(
+            cornerRadius: cornerRadius,
+            blurOpacity: 0.5,
+            grayOpacity: nil,
+            frameSize: nil,
+            borderStops: [
+                .init(color: Color.white.opacity(0.32), location: 0.0),
+                .init(color: Color.gray.opacity(0.16), location: 1.0),
+            ],
+            borderStartPoint: .topLeading,
+            borderEndPoint: .bottomTrailing,
+            borderWidth: 0.8
+        )
+    }
+
+    static func inputContainer(cornerRadius: CGFloat) -> GlassFallbackStyle {
+        GlassFallbackStyle(
+            cornerRadius: cornerRadius,
+            blurOpacity: 0.5,
+            grayOpacity: 0.18,
+            frameSize: nil,
+            borderStops: [
+                .init(color: Color.white.opacity(0.18), location: 0.0),
+                .init(color: Color.white.opacity(0.32), location: 0.5),
+                .init(color: Color.white.opacity(0.18), location: 1.0),
+            ],
+            borderStartPoint: .topTrailing,
+            borderEndPoint: .bottomLeading,
+            borderWidth: 0.8
+        )
+    }
+}
+
+struct GlassFallbackBackground: View {
+    let style: GlassFallbackStyle
+
+    var body: some View {
+        ZStack {
+            if let grayOpacity = style.grayOpacity {
+                Color.gray.opacity(grayOpacity)
+            }
+
+            GaussianBlurView()
+                .opacity(style.blurOpacity)
+        }
+        .frame(width: style.frameSize?.width, height: style.frameSize?.height)
+        .clipShape(RoundedRectangle(cornerRadius: style.cornerRadius))
+        .overlay {
+            RoundedRectangle(cornerRadius: style.cornerRadius)
+                .stroke(
+                    LinearGradient(
+                        gradient: Gradient(stops: style.borderStops),
+                        startPoint: style.borderStartPoint,
+                        endPoint: style.borderEndPoint
+                    ),
+                    lineWidth: style.borderWidth
+                )
+        }
+    }
+}
+
 extension Button {
     @ViewBuilder
     func glassEffect(size: CGSize = CGSize(width: 40, height: 40)) -> some View {
@@ -19,24 +107,7 @@ extension Button {
             }
         } else {
             self.background {
-                GaussianBlurView()
-                    .opacity(0.45)
-                    .frame(width: size.width, height: size.height)
-                    .clipShape(RoundedRectangle(cornerRadius: size.height / 2))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: size.height / 2)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.35),
-                                        Color.gray.opacity(0.18),
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.8
-                            )
-                    }
+                GlassFallbackBackground(style: .iconButton(size: size))
             }
         }
     }
@@ -49,23 +120,7 @@ extension Button {
             }
         } else {
             self.background {
-                GaussianBlurView()
-                    .opacity(0.5)
-                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [
-                                        Color.white.opacity(0.32),
-                                        Color.gray.opacity(0.16),
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 0.8
-                            )
-                    }
+                GlassFallbackBackground(style: .modelButton(cornerRadius: cornerRadius))
             }
         }
     }
