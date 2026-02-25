@@ -60,6 +60,7 @@ struct ChatView: View {
     @State private var splitVisibility: NavigationSplitViewVisibility = .all
 
     @State private var showVIPSheet = false
+    @State private var showTwitterDownloader = false
     // 媒体选择器状态
     @State private var showCameraPicker = false
     @State private var showPhotoPicker = false
@@ -152,6 +153,11 @@ struct ChatView: View {
             BookshelfView()
                 .environment(bookState)
                 .environment(themeManager)
+        }
+        .sheet(isPresented: $showTwitterDownloader) {
+            NavigationStack {
+                TwitterDownloadView()
+            }
         }
         .fileImporter(
             isPresented: $showBookImporter,
@@ -370,6 +376,13 @@ struct ChatView: View {
                                 Label(
                                     L("chat.menu.selectBook"),
                                     systemImage: "book"
+                                )
+                            }
+
+                            Button(action: { showTwitterDownloader = true }) {
+                                Label(
+                                    "Twitter 下载",
+                                    systemImage: "arrow.down.circle"
                                 )
                             }
 
