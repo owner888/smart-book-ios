@@ -213,7 +213,23 @@ struct InputToolContentView: View {
                 if #available(iOS 26, *) {
                     Color.white.opacity(0.001).glassEffect(.regular, in: .rect(cornerRadius: 22))
                 } else {
-                    GaussianBlurView().opacity(0.5).clipShape(RoundedRectangle(cornerRadius: 22))
+                    GaussianBlurView()
+                        .opacity(0.5)
+                        .clipShape(RoundedRectangle(cornerRadius: 22))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 22)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.white.opacity(0.32),
+                                            Color.gray.opacity(0.16),
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 0.8
+                                )
+                        }
                 }
             }
             .padding(.vertical, 6)
