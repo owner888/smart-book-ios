@@ -241,10 +241,13 @@ struct TwitterDownloadView: View {
     private func saveAsset(url: URL, isVideo: Bool) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             PHPhotoLibrary.shared().performChanges {
+                let request = PHAssetCreationRequest.forAsset()
+                request.creationDate = Date()
+
                 if isVideo {
-                    PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: url)
-                } else if let image = UIImage(contentsOfFile: url.path) {
-                    PHAssetChangeRequest.creationRequestForAsset(from: image)
+                    request.addResource(with: .video, fileURL: url, options: nil)
+                } else {
+                    request.addResource(with: .photo, fileURL: url, options: nil)
                 }
             } completionHandler: { success, error in
                 if let error {
