@@ -2,6 +2,11 @@
 
 import UIKit
 
+enum GlassEffectPreset {
+    case capsuleDefault
+    case mediaIcon
+}
+
 extension UIButton {
 
     /// 创建液态玻璃效果按钮
@@ -43,18 +48,30 @@ extension UIButton {
 
     /// 应用液态玻璃效果样式（iOS 25 及以下）
     /// - Parameter isDarkMode: 是否为深色模式
-    func applyGlassEffect(isDarkMode: Bool) {
+    func applyGlassEffect(isDarkMode: Bool, preset: GlassEffectPreset = .capsuleDefault) {
         // iOS 26+ 自动有玻璃效果，无需手动处理
         guard #unavailable(iOS 26.0) else { return }
 
-        // 背景色
-        if isDarkMode {
-            backgroundColor = UIColor.apprBlack.withAlphaComponent(0.1)
-        } else {
-            backgroundColor = UIColor.apprWhite.withAlphaComponent(0.15)
+        let cornerRadius: CGFloat
+
+        switch preset {
+        case .capsuleDefault:
+            if isDarkMode {
+                backgroundColor = UIColor.apprBlack.withAlphaComponent(0.1)
+            } else {
+                backgroundColor = UIColor.apprWhite.withAlphaComponent(0.15)
+            }
+            cornerRadius = 22
+        case .mediaIcon:
+            if isDarkMode {
+                backgroundColor = UIColor.apprBlack.withAlphaComponent(0.08)
+            } else {
+                backgroundColor = UIColor.apprWhite.withAlphaComponent(0.10)
+            }
+            cornerRadius = bounds.height > 0 ? bounds.height / 2 : 19
         }
 
-        layer.cornerRadius = 22
+        layer.cornerRadius = cornerRadius
         layer.borderWidth = 0
 
         // ✅ 添加渐变边框层
@@ -63,18 +80,25 @@ extension UIButton {
         let gradientLayer = CAGradientLayer()
         gradientLayer.name = "gradientBorder"
         gradientLayer.frame = bounds
-        gradientLayer.cornerRadius = 22
+        gradientLayer.cornerRadius = cornerRadius
 
-        // 渐变颜色
-        if isDarkMode {
+        switch preset {
+        case .capsuleDefault:
+            if isDarkMode {
+                gradientLayer.colors = [
+                    UIColor.white.withAlphaComponent(0.25).cgColor,
+                    UIColor.white.withAlphaComponent(0.08).cgColor,
+                ]
+            } else {
+                gradientLayer.colors = [
+                    UIColor.black.withAlphaComponent(0.15).cgColor,
+                    UIColor.black.withAlphaComponent(0.05).cgColor,
+                ]
+            }
+        case .mediaIcon:
             gradientLayer.colors = [
-                UIColor.white.withAlphaComponent(0.25).cgColor,
-                UIColor.white.withAlphaComponent(0.08).cgColor,
-            ]
-        } else {
-            gradientLayer.colors = [
-                UIColor.black.withAlphaComponent(0.15).cgColor,
-                UIColor.black.withAlphaComponent(0.05).cgColor,
+                UIColor.white.withAlphaComponent(0.35).cgColor,
+                UIColor.gray.withAlphaComponent(0.18).cgColor,
             ]
         }
 
@@ -83,8 +107,11 @@ extension UIButton {
 
         // 创建遮罩，只显示边框
         let maskLayer = CAShapeLayer()
-        let outerPath = UIBezierPath(roundedRect: gradientLayer.bounds, cornerRadius: 22)
-        let innerPath = UIBezierPath(roundedRect: gradientLayer.bounds.insetBy(dx: 1, dy: 1), cornerRadius: 21)
+        let outerPath = UIBezierPath(roundedRect: gradientLayer.bounds, cornerRadius: cornerRadius)
+        let innerPath = UIBezierPath(
+            roundedRect: gradientLayer.bounds.insetBy(dx: 1, dy: 1),
+            cornerRadius: max(cornerRadius - 1, 0)
+        )
         outerPath.append(innerPath.reversing())
         maskLayer.path = outerPath.cgPath
         maskLayer.fillRule = .evenOdd

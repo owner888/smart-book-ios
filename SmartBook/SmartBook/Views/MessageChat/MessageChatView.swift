@@ -128,6 +128,13 @@ class MessageChatView: UIView {
         NotificationCenter.default.removeObserver(self)
     }
 
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        let isDarkMode = traitCollection.userInterfaceStyle == .dark
+        bottomBtn.configuration?.baseForegroundColor = isDarkMode ? .white : .black
+        bottomBtn.applyGlassEffect(isDarkMode: isDarkMode, preset: .mediaIcon)
+    }
+
     // MARK: - 纯代码构建 UI（替代 XIB）
 
     private func buildUI() {
@@ -179,7 +186,7 @@ class MessageChatView: UIView {
         // iOS <26: 应用液态玻璃边框效果（与 EmptyChatPromptView 的 addBookButton 一致）
         let isDarkMode = traitCollection.userInterfaceStyle == .dark
         bottomBtn.configuration?.baseForegroundColor = isDarkMode ? .white : .black
-        bottomBtn.applyGlassEffect(isDarkMode: isDarkMode)
+        bottomBtn.applyGlassEffect(isDarkMode: isDarkMode, preset: .mediaIcon)
         mainView.addSubview(bottomBtn)
 
         // === inputBar (InputToolView) ===
@@ -280,7 +287,7 @@ class MessageChatView: UIView {
             // ✅ 更新 bottomBtn 液态玻璃效果（暗黑/浅色模式切换）
             let isDark = self.traitCollection.userInterfaceStyle == .dark
             self.bottomBtn.configuration?.baseForegroundColor = isDark ? .white : .black
-            self.bottomBtn.applyGlassEffect(isDarkMode: isDark)
+            self.bottomBtn.applyGlassEffect(isDarkMode: isDark, preset: .mediaIcon)
         }
 
         // 键盘跟随
