@@ -213,8 +213,11 @@ struct InputToolContentView: View {
                 if #available(iOS 26, *) {
                     Color.white.opacity(0.001).glassEffect(.regular, in: .rect(cornerRadius: 22))
                 } else {
-                    GaussianBlurView()
-                        .opacity(0.5)
+                    ZStack {
+                        Color.gray.opacity(0.18)
+                        GaussianBlurView()
+                            .opacity(0.5)
+                    }
                         .clipShape(RoundedRectangle(cornerRadius: 22))
                         .overlay {
                             RoundedRectangle(cornerRadius: 22)
