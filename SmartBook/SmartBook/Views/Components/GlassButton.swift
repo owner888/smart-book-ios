@@ -23,6 +23,20 @@ extension Button {
                     .opacity(0.45)
                     .frame(width: size.width, height: size.height)
                     .clipShape(RoundedRectangle(cornerRadius: size.height / 2))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: size.height / 2)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.35),
+                                        Color.gray.opacity(0.18),
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.8
+                            )
+                    }
             }
         }
     }
@@ -35,7 +49,23 @@ extension Button {
             }
         } else {
             self.background {
-                GaussianBlurView().opacity(0.5).clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                GaussianBlurView()
+                    .opacity(0.5)
+                    .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        Color.white.opacity(0.32),
+                                        Color.gray.opacity(0.16),
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 0.8
+                            )
+                    }
             }
         }
     }
