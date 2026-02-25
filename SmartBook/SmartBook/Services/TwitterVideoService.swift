@@ -103,6 +103,20 @@ private extension TwitterVideoService {
         do {
             return try JSONDecoder().decode(TwitterVideoModel.self, from: data)
         } catch {
+            if let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                let status = object["status"] as? String
+                let payload = object["data"]
+                let dataString: String?
+                if let html = payload as? String {
+                    dataString = html
+                } else if let payload {
+                    dataString = String(describing: payload)
+                } else {
+                    dataString = nil
+                }
+
+                return TwitterVideoModel(status: status, data: dataString)
+            }
             throw TwitterVideoServiceError.parseFailed
         }
     }

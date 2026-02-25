@@ -36,6 +36,16 @@ struct TwitterVideoModel: Codable {
         self.videoDuration = videoDuration
         self.videoList = videoList
     }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        status = try container.decodeIfPresent(String.self, forKey: .status)
+        data = try container.decodeIfPresent(String.self, forKey: .data)
+        videoCover = try container.decodeIfPresent(String.self, forKey: .videoCover)
+        title = try container.decodeIfPresent(String.self, forKey: .title)
+        videoDuration = try container.decodeIfPresent(String.self, forKey: .videoDuration)
+        videoList = try container.decodeIfPresent([TwitterVideoItem].self, forKey: .videoList) ?? []
+    }
 }
 
 struct TwitterVideoItem: Codable, Hashable {
