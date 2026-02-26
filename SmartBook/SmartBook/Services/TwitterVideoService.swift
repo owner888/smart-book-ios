@@ -418,6 +418,7 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, URLS
     private let destinationURL: URL
     private let progress: ((Int) -> Void)?
     private var didResume = false
+    private var didReportIndeterminate = false
 
     init(destinationURL: URL, progress: ((Int) -> Void)?) {
         self.destinationURL = destinationURL
@@ -445,8 +446,27 @@ private final class DownloadDelegate: NSObject, URLSessionDownloadDelegate, URLS
         totalBytesWritten: Int64,
         totalBytesExpectedToWrite: Int64
     ) {
-        guard totalBytesExpectedToWrite > 0 else { return }
-        let value = Int((Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)) * 100)
+        var expectedBytes = totalBytesExpectedToWrite
+
+        if expectedBytes <= 0,
+           let response = downloadTask.response as? HTTPURLResponse,
+           let estimated = response.value(forHTTPHeaderField: "Estimated-Content-Length"),
+           let parsed = Int64(estimated),
+           parsed > 0 {
+            expectedBytes = parsed
+        }
+
+        guard expectedBytes > 0 else {
+            if totalBytesWritten > 0, !didReportIndeterminate {
+                didReportIndeterminate = true
+                DispatchQueue.main.async {
+                    self.progress?(-1)
+                }
+            }
+            return
+        }
+
+        let value = Int((Double(totalBytesWritten) / Double(expectedBytes)) * 100)
         DispatchQueue.main.async {
             self.progress?(max(0, min(100, value)))
         }

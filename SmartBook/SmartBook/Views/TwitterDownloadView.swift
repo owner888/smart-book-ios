@@ -74,10 +74,17 @@ struct TwitterDownloadView: View {
 
                                 let progress = downloadProgress[item.href]
                                 if let progress {
-                                    ProgressView(value: Double(progress), total: 100)
-                                    Text("\(progress)%")
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
+                                    if progress >= 0 {
+                                        ProgressView(value: Double(progress), total: 100)
+                                        Text("\(progress)%")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    } else {
+                                        ProgressView()
+                                        Text("下载中...")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
 
                                 Button {
