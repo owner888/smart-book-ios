@@ -8,6 +8,7 @@ enum TwitterVideoServiceError: LocalizedError {
     case userVerifyFailed
     case parseFailed
     case serviceError(status: String?)
+    case noMediaFound
 
     var errorDescription: String? {
         switch self {
@@ -18,18 +19,46 @@ enum TwitterVideoServiceError: LocalizedError {
         case .userVerifyFailed:
             return "Twitter user verify failed"
         case .parseFailed:
-            return "Failed to parse twitter video info"
+            return "Failed to parse video info"
         case .serviceError(let status):
+            if status == "error.api.auth.jwt.missing" {
+                return "Cobalt 实例需要 Bearer JWT，请更换为你自己的实例，或配置可用的认证令牌。"
+            }
+            if status == "error.api.auth.api-key.missing" || status == "error.api.auth.key.missing" {
+                return "Cobalt 实例需要 Api-Key，请在设置中填写 Cobalt API Key。"
+            }
+            if status == "error.api.auth.key.not_found" {
+                return "当前 Cobalt API Key 不存在或未生效，请检查设置中的 key 是否被旧值覆盖，并与服务端 keys.json 完全一致。"
+            }
+            if status == "error.api.auth.key.invalid" {
+                return "当前 Cobalt API Key 格式无效，请使用 UUID 格式的 key。"
+            }
             return "Twitter service error: \(status ?? "unknown")"
+        case .noMediaFound:
+            return "No downloadable media found"
         }
     }
 }
 
 final class TwitterVideoService {
     private let session: URLSession
+    private let cobaltBaseURL: String
 
-    init(session: URLSession = .shared) {
+    private var parserSource: String {
+        UserDefaults.standard.string(forKey: AppConfig.Keys.twitterParserSource)
+            ?? AppConfig.DefaultValues.twitterParserSource
+    }
+
+    private var cobaltApiKey: String {
+        AppConfig.cobaltApiKey
+    }
+
+    init(
+        session: URLSession = .shared,
+        cobaltBaseURL: String = AppConfig.cobaltAPIURL
+    ) {
         self.session = session
+        self.cobaltBaseURL = cobaltBaseURL
     }
 
     func fetchTwitterVideo(_ value: String) async throws -> TwitterVideoModel {
@@ -37,15 +66,45 @@ final class TwitterVideoService {
             throw TwitterVideoServiceError.invalidURL
         }
 
-        let token = try await verifyUserAndGetToken(url: value)
-        var model = try await searchTwitterVideo(url: value, token: token)
-
-        guard model.isSuccess else {
-            throw TwitterVideoServiceError.serviceError(status: model.status)
+        if isYouTubeURL(value) {
+            return try await searchViaCobalt(url: value)
         }
 
-        enrichModelByHTML(&model)
-        return model
+        let source = parserSource
+
+        if source == "x2twitter" {
+            let token = try await verifyUserAndGetToken(url: value)
+            var model = try await searchTwitterVideo(url: value, token: token)
+            guard model.isSuccess else {
+                throw TwitterVideoServiceError.serviceError(status: model.status)
+            }
+            enrichModelByHTML(&model)
+            if model.videoList.isEmpty {
+                throw TwitterVideoServiceError.noMediaFound
+            }
+            return model
+        }
+
+        if source == "cobalt" {
+            return try await searchViaCobalt(url: value)
+        }
+
+        do {
+            let token = try await verifyUserAndGetToken(url: value)
+            var model = try await searchTwitterVideo(url: value, token: token)
+
+            guard model.isSuccess else {
+                throw TwitterVideoServiceError.serviceError(status: model.status)
+            }
+
+            enrichModelByHTML(&model)
+            if model.videoList.isEmpty {
+                throw TwitterVideoServiceError.noMediaFound
+            }
+            return model
+        } catch {
+            return try await searchViaCobalt(url: value)
+        }
     }
 
     @discardableResult
@@ -68,6 +127,24 @@ final class TwitterVideoService {
 }
 
 private extension TwitterVideoService {
+    struct CobaltPickerItem: Decodable {
+        let type: String?
+        let url: String?
+        let thumb: String?
+    }
+
+    struct CobaltResponse: Decodable {
+        let status: String
+        let url: String?
+        let filename: String?
+        let picker: [CobaltPickerItem]?
+        let error: CobaltError?
+    }
+
+    struct CobaltError: Decodable {
+        let code: String?
+    }
+
     struct UserVerifyResponse: Decodable {
         let success: Bool
         let token: String?
@@ -119,6 +196,178 @@ private extension TwitterVideoService {
             }
             throw TwitterVideoServiceError.parseFailed
         }
+    }
+
+    private func searchViaCobalt(url: String) async throws -> TwitterVideoModel {
+        let endpoint = cobaltBaseURL.hasSuffix("/") ? cobaltBaseURL : cobaltBaseURL + "/"
+        guard let requestURL = URL(string: endpoint) else {
+            throw TwitterVideoServiceError.invalidURL
+        }
+
+        let trimmedApiKey = cobaltApiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        let defaultApiKey = AppConfig.defaultCobaltApiKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        Logger.info(
+            "🎯 Cobalt request start: endpoint=\(requestURL.absoluteString), hasKey=\(!trimmedApiKey.isEmpty), key=\(keyFingerprint(trimmedApiKey)), defaultKey=\(keyFingerprint(defaultApiKey))"
+        )
+        var (data, httpResponse) = try await requestCobalt(
+            requestURL: requestURL,
+            url: url,
+            apiKey: trimmedApiKey,
+            includeApiKey: !trimmedApiKey.isEmpty
+        )
+        Logger.info("📡 Cobalt first response status=\(httpResponse.statusCode)")
+
+        if !(200...299).contains(httpResponse.statusCode),
+           let firstParsed = try? JSONDecoder().decode(CobaltResponse.self, from: data),
+           let errorCode = firstParsed.error?.code,
+           ["error.api.auth.key.not_found", "error.api.auth.key.invalid"].contains(errorCode),
+           !trimmedApiKey.isEmpty {
+            Logger.warning("⚠️ Cobalt key failed with \(errorCode), currentKey=\(keyFingerprint(trimmedApiKey))")
+            if !defaultApiKey.isEmpty, defaultApiKey != trimmedApiKey {
+                Logger.info("🔁 Retry with default key: \(keyFingerprint(defaultApiKey))")
+                let (defaultData, defaultResponse) = try await requestCobalt(
+                    requestURL: requestURL,
+                    url: url,
+                    apiKey: defaultApiKey,
+                    includeApiKey: true
+                )
+                Logger.info("📡 Cobalt default-key response status=\(defaultResponse.statusCode)")
+                if (200...299).contains(defaultResponse.statusCode) {
+                    data = defaultData
+                    httpResponse = defaultResponse
+                }
+            }
+
+            if (200...299).contains(httpResponse.statusCode) {
+                // default key retry already succeeded
+            } else {
+            Logger.info("🔁 Retry without key (anonymous)")
+            let (retryData, retryResponse) = try await requestCobalt(
+                requestURL: requestURL,
+                url: url,
+                apiKey: trimmedApiKey,
+                includeApiKey: false
+            )
+            Logger.info("📡 Cobalt anonymous response status=\(retryResponse.statusCode)")
+            if (200...299).contains(retryResponse.statusCode) {
+                data = retryData
+                httpResponse = retryResponse
+            } else {
+                throw TwitterVideoServiceError.serviceError(status: errorCode)
+            }
+            }
+        }
+
+        if !(200...299).contains(httpResponse.statusCode) {
+            if let parsed = try? JSONDecoder().decode(CobaltResponse.self, from: data) {
+                throw TwitterVideoServiceError.serviceError(
+                    status: parsed.error?.code ?? "cobalt_http_\(httpResponse.statusCode)"
+                )
+            }
+            throw TwitterVideoServiceError.requestFailed(statusCode: httpResponse.statusCode)
+        }
+
+        let parsed = try JSONDecoder().decode(CobaltResponse.self, from: data)
+        var model = TwitterVideoModel(status: "ok", data: nil)
+
+        switch parsed.status {
+        case "redirect", "tunnel":
+            if let mediaURL = parsed.url {
+                let title = parsed.filename ?? "video"
+                let normalizedMediaURL = normalizeCobaltMediaURL(mediaURL)
+                model.videoList = [TwitterVideoItem(href: normalizedMediaURL, title: title)]
+                model.title = parsed.filename
+                return model
+            }
+            throw TwitterVideoServiceError.noMediaFound
+
+        case "picker":
+            let items = parsed.picker ?? []
+            let preferredThumb = items.first(where: { ($0.type ?? "") == "video" })?.thumb
+                ?? items.first?.thumb
+            if let preferredThumb {
+                model.videoCover = normalizeCobaltMediaURL(preferredThumb)
+            }
+            model.videoList = items.compactMap { entry in
+                guard let mediaURL = entry.url, !mediaURL.isEmpty else { return nil }
+                let type = entry.type ?? "media"
+                return TwitterVideoItem(href: normalizeCobaltMediaURL(mediaURL), title: type)
+            }
+
+            if model.videoList.isEmpty {
+                throw TwitterVideoServiceError.noMediaFound
+            }
+            return model
+
+        default:
+            throw TwitterVideoServiceError.serviceError(status: parsed.error?.code ?? parsed.status)
+        }
+    }
+
+    private func keyFingerprint(_ key: String) -> String {
+        guard !key.isEmpty else { return "empty" }
+        let prefix = String(key.prefix(8))
+        return "\(prefix)…(len:\(key.count))"
+    }
+
+    private func normalizeCobaltMediaURL(_ rawURL: String) -> String {
+        guard
+            let mediaURL = URL(string: rawURL),
+            let baseURL = URL(string: cobaltBaseURL),
+            let mediaHost = mediaURL.host,
+            let baseHost = baseURL.host
+        else {
+            return rawURL
+        }
+
+        let lowerMediaHost = mediaHost.lowercased()
+        let isLoopback = lowerMediaHost == "127.0.0.1" || lowerMediaHost == "localhost"
+        guard isLoopback else {
+            return rawURL
+        }
+
+        var components = URLComponents(url: mediaURL, resolvingAgainstBaseURL: false)
+        components?.scheme = baseURL.scheme
+        components?.host = baseHost
+        components?.port = baseURL.port
+
+        let normalized = components?.url?.absoluteString ?? rawURL
+        Logger.info("🔧 Normalize Cobalt URL: \(rawURL) -> \(normalized)")
+        return normalized
+    }
+
+    private func requestCobalt(
+        requestURL: URL,
+        url: String,
+        apiKey: String,
+        includeApiKey: Bool
+    ) async throws -> (Data, HTTPURLResponse) {
+        var request = URLRequest(url: requestURL)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 30
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if includeApiKey {
+            request.setValue("Api-Key \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+        request.httpBody = try JSONSerialization.data(
+            withJSONObject: [
+                "url": url,
+                "videoQuality": "1080",
+                "downloadMode": "auto",
+            ]
+        )
+
+        let (data, response) = try await session.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw TwitterVideoServiceError.parseFailed
+        }
+        return (data, httpResponse)
+    }
+
+    private func isYouTubeURL(_ value: String) -> Bool {
+        let lower = value.lowercased()
+        return lower.contains("youtube.com/") || lower.contains("youtu.be/")
     }
 
     private func postForm(endpoint: String, params: [String: String]) async throws -> (Data, HTTPURLResponse) {

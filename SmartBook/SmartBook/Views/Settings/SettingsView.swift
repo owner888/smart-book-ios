@@ -9,6 +9,9 @@ struct SettingsView: View {
     @Environment(\.colorScheme) var systemColorScheme
     @Environment(\.dismiss) var dismiss
     @AppStorage(AppConfig.Keys.apiBaseURL) private var apiBaseURL = AppConfig.defaultAPIBaseURL
+    @AppStorage(AppConfig.Keys.twitterParserSource) private var twitterParserSource = AppConfig.DefaultValues
+        .twitterParserSource
+    @AppStorage(AppConfig.Keys.cobaltApiKey) private var cobaltApiKey = AppConfig.defaultCobaltApiKey
     @AppStorage(AppConfig.Keys.autoTTS) private var autoTTS = AppConfig.DefaultValues.autoTTS
     @AppStorage(AppConfig.Keys.ttsRate) private var ttsRate = AppConfig.DefaultValues.ttsRate
     @AppStorage(AppConfig.Keys.asrProvider) private var asrProvider = AppConfig.DefaultValues.asrProvider
@@ -95,6 +98,33 @@ struct SettingsView: View {
                                 .font(.caption)
                                 .foregroundColor(colors.secondaryText)
                         }
+                    }
+
+                    HStack(spacing: 12) {
+                        SettingsIcon(icon: "network", color: .indigo)
+                        Text("Twitter 解析源")
+                            .foregroundColor(colors.primaryText)
+                        Spacer()
+                        Picker("", selection: $twitterParserSource) {
+                            Text("自动").tag("auto")
+                            Text("x2twitter").tag("x2twitter")
+                            Text("cobalt").tag("cobalt")
+                        }
+                        .labelsHidden()
+                        .tint(colors.secondaryText)
+                    }
+
+                    HStack(spacing: 12) {
+                        SettingsIcon(icon: "key.fill", color: .orange)
+                        Text("Cobalt API Key")
+                            .foregroundColor(colors.primaryText)
+                        Spacer()
+                        SecureField("可选", text: $cobaltApiKey)
+                            .multilineTextAlignment(.trailing)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .foregroundColor(colors.secondaryText)
+                            .frame(maxWidth: 200)
                     }
                 } header: {
                     Text(L("server.title"))

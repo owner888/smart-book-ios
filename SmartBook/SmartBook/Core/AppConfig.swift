@@ -36,10 +36,33 @@ enum AppConfig {
         Bundle.main.infoDictionary?["API_KEY"] as? String ?? ""
     }
 
+    /// Cobalt API Key
+    /// 优先级：UserDefaults（设置页面修改）> Info.plist (Secrets.xcconfig) > 默认空字符串
+    static var cobaltApiKey: String {
+        if let value = UserDefaults.standard.string(forKey: Keys.cobaltApiKey),
+           !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return value
+        }
+        return defaultCobaltApiKey
+    }
+
+    /// Cobalt API URL
+    /// 从 Info.plist 读取（Secrets.xcconfig），用于 Twitter/YouTube 解析请求
+    static var cobaltAPIURL: String {
+        Bundle.main.infoDictionary?["COBALT_API_URL"] as? String ?? DefaultValues.cobaltAPIURL
+    }
+
+    /// 默认 Cobalt API Key（从 Info.plist 读取）
+    static var defaultCobaltApiKey: String {
+        Bundle.main.infoDictionary?["COBALT_API_KEY"] as? String ?? DefaultValues.cobaltApiKey
+    }
+
     // MARK: - UserDefaults Keys
 
     enum Keys {
         static let apiBaseURL = "apiBaseURL"
+        static let twitterParserSource = "twitterParserSource"
+        static let cobaltApiKey = "cobaltApiKey"
         static let autoTTS = "autoTTS"
         static let ttsRate = "ttsRate"
         static let selectedVoice = "selectedVoice"
@@ -55,6 +78,9 @@ enum AppConfig {
 
     enum DefaultValues {
         static let apiBaseURL = "http://localhost:9527"
+        static let twitterParserSource = "auto"  // auto, x2twitter, cobalt
+        static let cobaltApiKey = ""
+        static let cobaltAPIURL = "https://api.cobalt.tools"
         static let apiASRURL = "ws://localhost:9525"
         static let apiTTSURL = "ws://localhost:9524"
         static let autoTTS = true
