@@ -43,7 +43,7 @@ enum TwitterVideoServiceError: LocalizedError {
 final class TwitterVideoService {
     private let session: URLSession
     private let cobaltBaseURL: String
-    private let youtubeQualities = ["1080", "720", "480", "360"]
+    private let youtubeQualities = ["2160", "1440", "1080", "720", "480", "360"]
 
     private var parserSource: String {
         UserDefaults.standard.string(forKey: AppConfig.Keys.twitterParserSource)
