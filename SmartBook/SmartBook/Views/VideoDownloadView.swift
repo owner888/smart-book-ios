@@ -2,27 +2,27 @@ import SwiftUI
 import Photos
 import UniformTypeIdentifiers
 
-struct TwitterDownloadView: View {
+struct VideoDownloadView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var inputURL = ""
-    @State private var model: TwitterVideoModel?
+    @State private var model: VideoDownloadModel?
     @State private var isParsing = false
     @State private var isDownloading = false
     @State private var errorMessage: String?
     @State private var successMessage: String?
     @State private var downloadProgress: [String: Int] = [:]
     @State private var lastDownloadedPath: String?
-    @State private var lastDownloadedItem: TwitterVideoItem?
+    @State private var lastDownloadedItem: VideoDownloadItem?
     @State private var exportDocument: DownloadedFileDocument?
     @State private var showFileExporter = false
 
-    private let service = TwitterVideoService()
+    private let service = VideoDownloadService()
 
     var body: some View {
         List {
             Section("链接") {
-                TextField("粘贴 Twitter/X 链接", text: $inputURL)
+                TextField("粘贴视频链接", text: $inputURL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
@@ -146,7 +146,7 @@ struct TwitterDownloadView: View {
                 }
             }
         }
-        .navigationTitle("Twitter 下载")
+        .navigationTitle("视频下载")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -180,14 +180,14 @@ struct TwitterDownloadView: View {
         defer { isParsing = false }
 
         do {
-            model = try await service.fetchTwitterVideo(inputURL)
+            model = try await service.fetchVideoDownload(inputURL)
         } catch {
             errorMessage = error.localizedDescription
         }
     }
 
     @MainActor
-    private func download(_ item: TwitterVideoItem) async {
+    private func download(_ item: VideoDownloadItem) async {
         errorMessage = nil
         successMessage = nil
         isDownloading = true
@@ -229,7 +229,7 @@ struct TwitterDownloadView: View {
     }
 
     private var suggestedFileName: String {
-        guard let path = lastDownloadedPath else { return "twitter_download" }
+        guard let path = lastDownloadedPath else { return "video_download" }
         return URL(fileURLWithPath: path).lastPathComponent
     }
 
@@ -264,7 +264,7 @@ struct TwitterDownloadView: View {
                 if success {
                     continuation.resume(returning: ())
                 } else {
-                    continuation.resume(throwing: NSError(domain: "TwitterDownload", code: -1))
+                    continuation.resume(throwing: NSError(domain: "VideoDownload", code: -1))
                 }
             }
         }

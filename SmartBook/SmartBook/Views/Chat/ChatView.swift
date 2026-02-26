@@ -60,7 +60,7 @@ struct ChatView: View {
     @State private var splitVisibility: NavigationSplitViewVisibility = .all
 
     @State private var showVIPSheet = false
-    @State private var showTwitterDownloader = false
+    @State private var showVideoDownloader = false
     // 媒体选择器状态
     @State private var showCameraPicker = false
     @State private var showPhotoPicker = false
@@ -154,9 +154,9 @@ struct ChatView: View {
                 .environment(bookState)
                 .environment(themeManager)
         }
-        .sheet(isPresented: $showTwitterDownloader) {
+        .sheet(isPresented: $showVideoDownloader) {
             NavigationStack {
-                TwitterDownloadView()
+                VideoDownloadView()
             }
         }
         .fileImporter(
@@ -379,9 +379,9 @@ struct ChatView: View {
                                 )
                             }
 
-                            Button(action: { showTwitterDownloader = true }) {
+                            Button(action: { showVideoDownloader = true }) {
                                 Label(
-                                    "Twitter 下载",
+                                    L("chat.menu.videoDownload"),
                                     systemImage: "arrow.down.circle"
                                 )
                             }

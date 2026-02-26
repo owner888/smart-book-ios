@@ -2,7 +2,7 @@ import CryptoKit
 import Foundation
 import UIKit
 
-enum TwitterVideoServiceError: LocalizedError {
+enum VideoDownloadServiceError: LocalizedError {
     case invalidURL
     case requestFailed(statusCode: Int)
     case userVerifyFailed
@@ -13,11 +13,11 @@ enum TwitterVideoServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            return "Invalid Twitter URL"
+            return "Invalid URL"
         case .requestFailed(let statusCode):
             return "Request failed with status: \(statusCode)"
         case .userVerifyFailed:
-            return "Twitter user verify failed"
+            return "User verify failed"
         case .parseFailed:
             return "Failed to parse video info"
         case .serviceError(let status):
@@ -33,14 +33,14 @@ enum TwitterVideoServiceError: LocalizedError {
             if status == "error.api.auth.key.invalid" {
                 return "当前 Cobalt API Key 格式无效，请使用 UUID 格式的 key。"
             }
-            return "Twitter service error: \(status ?? "unknown")"
+            return "Service error: \(status ?? "unknown")"
         case .noMediaFound:
             return "No downloadable media found"
         }
     }
 }
 
-final class TwitterVideoService {
+final class VideoDownloadService {
     private let session: URLSession
     private let cobaltBaseURL: String
     private let youtubeQualities = ["2160", "1440", "1080", "720", "480", "360"]
@@ -62,9 +62,9 @@ final class TwitterVideoService {
         self.cobaltBaseURL = cobaltBaseURL
     }
 
-    func fetchTwitterVideo(_ value: String) async throws -> TwitterVideoModel {
+    func fetchVideoDownload(_ value: String) async throws -> VideoDownloadModel {
         guard !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw TwitterVideoServiceError.invalidURL
+            throw VideoDownloadServiceError.invalidURL
         }
 
         if isYouTubeURL(value) {
@@ -75,13 +75,13 @@ final class TwitterVideoService {
 
         if source == "x2twitter" {
             let token = try await verifyUserAndGetToken(url: value)
-            var model = try await searchTwitterVideo(url: value, token: token)
+            var model = try await searchVideo(url: value, token: token)
             guard model.isSuccess else {
-                throw TwitterVideoServiceError.serviceError(status: model.status)
+                throw VideoDownloadServiceError.serviceError(status: model.status)
             }
             enrichModelByHTML(&model)
             if model.videoList.isEmpty {
-                throw TwitterVideoServiceError.noMediaFound
+                throw VideoDownloadServiceError.noMediaFound
             }
             return model
         }
@@ -92,15 +92,15 @@ final class TwitterVideoService {
 
         do {
             let token = try await verifyUserAndGetToken(url: value)
-            var model = try await searchTwitterVideo(url: value, token: token)
+            var model = try await searchVideo(url: value, token: token)
 
             guard model.isSuccess else {
-                throw TwitterVideoServiceError.serviceError(status: model.status)
+                throw VideoDownloadServiceError.serviceError(status: model.status)
             }
 
             enrichModelByHTML(&model)
             if model.videoList.isEmpty {
-                throw TwitterVideoServiceError.noMediaFound
+                throw VideoDownloadServiceError.noMediaFound
             }
             return model
         } catch {
@@ -110,11 +110,11 @@ final class TwitterVideoService {
 
     @discardableResult
     func downloadMedia(
-        _ item: TwitterVideoItem,
+        _ item: VideoDownloadItem,
         progress: ((Int) -> Void)? = nil
     ) async throws -> URL {
         guard let mediaURL = URL(string: item.href) else {
-            throw TwitterVideoServiceError.invalidURL
+            throw VideoDownloadServiceError.invalidURL
         }
 
         let saveURL = try mediaCacheURL(for: item)
@@ -127,7 +127,7 @@ final class TwitterVideoService {
     }
 }
 
-private extension TwitterVideoService {
+private extension VideoDownloadService {
     struct CobaltPickerItem: Decodable {
         let type: String?
         let url: String?
@@ -155,17 +155,17 @@ private extension TwitterVideoService {
         let endpoint = "https://x2twitter.com/api/userverify"
         let (data, response) = try await postForm(endpoint: endpoint, params: ["url": url])
         guard (200...299).contains(response.statusCode) else {
-            throw TwitterVideoServiceError.requestFailed(statusCode: response.statusCode)
+            throw VideoDownloadServiceError.requestFailed(statusCode: response.statusCode)
         }
 
         let result = try JSONDecoder().decode(UserVerifyResponse.self, from: data)
         guard result.success, let token = result.token, !token.isEmpty else {
-            throw TwitterVideoServiceError.userVerifyFailed
+            throw VideoDownloadServiceError.userVerifyFailed
         }
         return token
     }
 
-    private func searchTwitterVideo(url: String, token: String) async throws -> TwitterVideoModel {
+    private func searchVideo(url: String, token: String) async throws -> VideoDownloadModel {
         let endpoint = "https://x2twitter.com/api/ajaxSearch"
         let (data, response) = try await postForm(
             endpoint: endpoint,
@@ -175,11 +175,11 @@ private extension TwitterVideoService {
             ]
         )
         guard (200...299).contains(response.statusCode) else {
-            throw TwitterVideoServiceError.requestFailed(statusCode: response.statusCode)
+            throw VideoDownloadServiceError.requestFailed(statusCode: response.statusCode)
         }
 
         do {
-            return try JSONDecoder().decode(TwitterVideoModel.self, from: data)
+            return try JSONDecoder().decode(VideoDownloadModel.self, from: data)
         } catch {
             if let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
                 let status = object["status"] as? String
@@ -193,16 +193,16 @@ private extension TwitterVideoService {
                     dataString = nil
                 }
 
-                return TwitterVideoModel(status: status, data: dataString)
+                return VideoDownloadModel(status: status, data: dataString)
             }
-            throw TwitterVideoServiceError.parseFailed
+            throw VideoDownloadServiceError.parseFailed
         }
     }
 
-    private func searchViaCobalt(url: String, videoQuality: String) async throws -> TwitterVideoModel {
+    private func searchViaCobalt(url: String, videoQuality: String) async throws -> VideoDownloadModel {
         let endpoint = cobaltBaseURL.hasSuffix("/") ? cobaltBaseURL : cobaltBaseURL + "/"
         guard let requestURL = URL(string: endpoint) else {
-            throw TwitterVideoServiceError.invalidURL
+            throw VideoDownloadServiceError.invalidURL
         }
 
         let trimmedApiKey = cobaltApiKey.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -216,26 +216,26 @@ private extension TwitterVideoService {
 
         if !(200...299).contains(httpResponse.statusCode) {
             if let parsed = try? JSONDecoder().decode(CobaltResponse.self, from: data) {
-                throw TwitterVideoServiceError.serviceError(
+                throw VideoDownloadServiceError.serviceError(
                     status: parsed.error?.code ?? "cobalt_http_\(httpResponse.statusCode)"
                 )
             }
-            throw TwitterVideoServiceError.requestFailed(statusCode: httpResponse.statusCode)
+            throw VideoDownloadServiceError.requestFailed(statusCode: httpResponse.statusCode)
         }
 
         let parsed = try JSONDecoder().decode(CobaltResponse.self, from: data)
-        var model = TwitterVideoModel(status: "ok", data: nil)
+        var model = VideoDownloadModel(status: "ok", data: nil)
 
         switch parsed.status {
         case "redirect", "tunnel":
             if let mediaURL = parsed.url {
                 let title = parsed.filename ?? "video"
                 let normalizedMediaURL = normalizeCobaltMediaURL(mediaURL)
-                model.videoList = [TwitterVideoItem(href: normalizedMediaURL, title: title)]
+                model.videoList = [VideoDownloadItem(href: normalizedMediaURL, title: title)]
                 model.title = parsed.filename
                 return model
             }
-            throw TwitterVideoServiceError.noMediaFound
+            throw VideoDownloadServiceError.noMediaFound
 
         case "picker":
             let items = parsed.picker ?? []
@@ -247,22 +247,22 @@ private extension TwitterVideoService {
             model.videoList = items.compactMap { entry in
                 guard let mediaURL = entry.url, !mediaURL.isEmpty else { return nil }
                 let type = entry.type ?? "media"
-                return TwitterVideoItem(href: normalizeCobaltMediaURL(mediaURL), title: type)
+                return VideoDownloadItem(href: normalizeCobaltMediaURL(mediaURL), title: type)
             }
 
             if model.videoList.isEmpty {
-                throw TwitterVideoServiceError.noMediaFound
+                throw VideoDownloadServiceError.noMediaFound
             }
             return model
 
         default:
-            throw TwitterVideoServiceError.serviceError(status: parsed.error?.code ?? parsed.status)
+            throw VideoDownloadServiceError.serviceError(status: parsed.error?.code ?? parsed.status)
         }
     }
 
-    private func searchYouTubeViaCobalt(url: String) async throws -> TwitterVideoModel {
-        var mergedModel = TwitterVideoModel(status: "ok", data: nil)
-        var options: [TwitterVideoItem] = []
+    private func searchYouTubeViaCobalt(url: String) async throws -> VideoDownloadModel {
+        var mergedModel = VideoDownloadModel(status: "ok", data: nil)
+        var options: [VideoDownloadItem] = []
         var seenHrefs = Set<String>()
 
         for quality in youtubeQualities {
@@ -279,7 +279,7 @@ private extension TwitterVideoService {
                     guard !seenHrefs.contains(item.href) else { continue }
                     seenHrefs.insert(item.href)
                     let optionTitle = "\(quality)p - \(item.title)"
-                    options.append(TwitterVideoItem(href: item.href, title: optionTitle))
+                    options.append(VideoDownloadItem(href: item.href, title: optionTitle))
                 }
             } catch {
                 continue
@@ -287,7 +287,7 @@ private extension TwitterVideoService {
         }
 
         guard !options.isEmpty else {
-            throw TwitterVideoServiceError.noMediaFound
+            throw VideoDownloadServiceError.noMediaFound
         }
 
         mergedModel.videoList = options
@@ -343,7 +343,7 @@ private extension TwitterVideoService {
 
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw TwitterVideoServiceError.parseFailed
+            throw VideoDownloadServiceError.parseFailed
         }
         return (data, httpResponse)
     }
@@ -355,7 +355,7 @@ private extension TwitterVideoService {
 
     private func postForm(endpoint: String, params: [String: String]) async throws -> (Data, HTTPURLResponse) {
         guard let url = URL(string: endpoint) else {
-            throw TwitterVideoServiceError.invalidURL
+            throw VideoDownloadServiceError.invalidURL
         }
 
         var request = URLRequest(url: url)
@@ -379,12 +379,12 @@ private extension TwitterVideoService {
 
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {
-            throw TwitterVideoServiceError.parseFailed
+            throw VideoDownloadServiceError.parseFailed
         }
         return (data, httpResponse)
     }
 
-    private func enrichModelByHTML(_ model: inout TwitterVideoModel) {
+    private func enrichModelByHTML(_ model: inout VideoDownloadModel) {
         guard let html = model.data, !html.isEmpty else { return }
 
         if let cover = firstMatch(in: html, pattern: "<img[^>]*src=[\\\"']([^\\\"']+)[\\\"']") {
@@ -400,7 +400,7 @@ private extension TwitterVideoService {
             if let href = firstMatch(in: pBlock, pattern: "<a[^>]*href=[\\\"']([^\\\"']+)[\\\"']") {
                 let text = pBlock.removingHTMLTags().htmlDecoded().trimmingCharacters(in: .whitespacesAndNewlines)
                 if !text.isEmpty, !text.lowercased().contains("mp3") {
-                    model.videoList.append(TwitterVideoItem(href: href, title: text))
+                    model.videoList.append(VideoDownloadItem(href: href, title: text))
                 } else if !text.isEmpty {
                     model.videoDuration = text
                 }
@@ -413,9 +413,9 @@ private extension TwitterVideoService {
         }
     }
 
-    private func mediaCacheURL(for item: TwitterVideoItem) throws -> URL {
+    private func mediaCacheURL(for item: VideoDownloadItem) throws -> URL {
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        let mediaDir = caches.appendingPathComponent("TwitterVideoCache", isDirectory: true)
+        let mediaDir = caches.appendingPathComponent("VideoDownloadCache", isDirectory: true)
         if !FileManager.default.fileExists(atPath: mediaDir.path) {
             try FileManager.default.createDirectory(at: mediaDir, withIntermediateDirectories: true)
         }

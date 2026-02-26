@@ -145,6 +145,7 @@
 "chat.emptyState.noBookTitle" = "选择一本书";
 "chat.emptyState.noBookDesc" = "点击右上角菜单按钮，选择一本书开始 AI 对话。";
 "chat.menu.selectBook" = "选择书籍";
+"chat.menu.videoDownload" = "视频下载";
 "chat.menu.clearHistory" = "清除历史";
 "chat.menu.exportChat" = "导出对话";
 "chat.menu.settings" = "设置";
@@ -208,6 +209,7 @@
 /* Server */
 "server.title" = "服务器";
 "server.address" = "服务器地址";
+"settings.videoParserSource" = "视频解析源";
 "server.address.placeholder" = "http://192.168.1.100:8080";
 "server.quickSet" = "快捷设置";
 "server.edit" = "编辑服务器";

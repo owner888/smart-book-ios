@@ -1,12 +1,12 @@
 import Foundation
 
-struct TwitterVideoModel: Codable {
+struct VideoDownloadModel: Codable {
     var status: String?
     var data: String?
     var videoCover: String?
     var title: String?
     var videoDuration: String?
-    var videoList: [TwitterVideoItem]
+    var videoList: [VideoDownloadItem]
 
     var isSuccess: Bool {
         status?.lowercased() == "ok"
@@ -27,7 +27,7 @@ struct TwitterVideoModel: Codable {
         videoCover: String? = nil,
         title: String? = nil,
         videoDuration: String? = nil,
-        videoList: [TwitterVideoItem] = []
+        videoList: [VideoDownloadItem] = []
     ) {
         self.status = status
         self.data = data
@@ -44,11 +44,11 @@ struct TwitterVideoModel: Codable {
         videoCover = try container.decodeIfPresent(String.self, forKey: .videoCover)
         title = try container.decodeIfPresent(String.self, forKey: .title)
         videoDuration = try container.decodeIfPresent(String.self, forKey: .videoDuration)
-        videoList = try container.decodeIfPresent([TwitterVideoItem].self, forKey: .videoList) ?? []
+        videoList = try container.decodeIfPresent([VideoDownloadItem].self, forKey: .videoList) ?? []
     }
 }
 
-struct TwitterVideoItem: Codable, Hashable {
+    struct VideoDownloadItem: Codable, Hashable {
     var href: String
     var title: String
 

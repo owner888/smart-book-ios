@@ -102,7 +102,7 @@ struct SettingsView: View {
 
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "network", color: .indigo)
-                        Text("Twitter 解析源")
+                        Text(L("settings.videoParserSource"))
                             .foregroundColor(colors.primaryText)
                         Spacer()
                         Picker("", selection: $twitterParserSource) {
