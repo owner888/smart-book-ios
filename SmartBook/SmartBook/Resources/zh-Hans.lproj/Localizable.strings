@@ -30,6 +30,8 @@
 "common.confirm" = "确认";
 "common.warning" = "警告";
 "common.tips" = "提示";
+"common.optional" = "可选";
+"common.zeroKB" = "0 KB";
 
 /* Main Tab */
 "tab.home" = "首页";
@@ -166,6 +168,28 @@
 "chat.bookRequired.message" = "使用此助手需要先选择一本书籍";
 "chat.switchAssistant.title" = "切换助手";
 "chat.switchAssistant.message" = "当前对话已有消息，是否新建对话？";
+
+/* Video Download */
+"videoDownload.title" = "视频下载";
+"videoDownload.section.link" = "链接";
+"videoDownload.input.placeholder" = "粘贴视频链接";
+"videoDownload.parsing" = "解析中...";
+"videoDownload.parse" = "解析视频";
+"videoDownload.section.info" = "信息";
+"videoDownload.info.duration" = "时长：%@";
+"videoDownload.info.count" = "可下载数量：%d";
+"videoDownload.section.list" = "下载列表";
+"videoDownload.list.empty" = "未找到可下载项";
+"videoDownload.downloading" = "下载中...";
+"videoDownload.button.downloaded" = "已下载";
+"videoDownload.button.download" = "下载";
+"videoDownload.section.recent" = "最近下载";
+"videoDownload.button.saveToPhotos" = "保存到相册";
+"videoDownload.button.saveToFiles" = "保存到文件";
+"videoDownload.message.savedToFiles" = "已保存到文件";
+"videoDownload.message.downloadCompleted" = "下载完成";
+"videoDownload.message.noPhotoPermission" = "没有相册权限";
+"videoDownload.message.savedToPhotos" = "已保存到相册";
 /* AI */
 "ai.analysis" = "AI 分析";
 "ai.summary" = "内容摘要";
@@ -198,6 +222,7 @@
 "settings.tts.voice" = "语音选择";
 "settings.tts.rate" = "朗读语速";
 "settings.tts.enableAutoPlay" = "朗读完毕后自动播放下一句";
+"settings.cobaltApiKey" = "Cobalt API Key";
 "settings.about" = "关于";
 "settings.version" = "版本";
 "settings.privacyPolicy" = "隐私政策";
@@ -210,6 +235,9 @@
 "server.title" = "服务器";
 "server.address" = "服务器地址";
 "settings.videoParserSource" = "视频解析源";
+"settings.videoParserSource.auto" = "自动";
+"settings.videoParserSource.x2twitter" = "x2twitter";
+"settings.videoParserSource.cobalt" = "cobalt";
 "server.address.placeholder" = "http://192.168.1.100:8080";
 "server.quickSet" = "快捷设置";
 "server.edit" = "编辑服务器";

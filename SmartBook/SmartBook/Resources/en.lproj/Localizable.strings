@@ -30,6 +30,8 @@
 "common.confirm" = "Confirm";
 "common.warning" = "Warning";
 "common.tips" = "Tips";
+"common.optional" = "Optional";
+"common.zeroKB" = "0 KB";
 
 /* Main Tab */
 "tab.home" = "Home";
@@ -166,6 +168,28 @@
 "chat.bookRequired.message" = "Please select a book first to use this assistant";
 "chat.switchAssistant.title" = "Switch Assistant";
 "chat.switchAssistant.message" = "You have messages in the current chat. Would you like to start a new chat?";
+
+/* Video Download */
+"videoDownload.title" = "Video Download";
+"videoDownload.section.link" = "Link";
+"videoDownload.input.placeholder" = "Paste video link";
+"videoDownload.parsing" = "Parsing...";
+"videoDownload.parse" = "Parse Video";
+"videoDownload.section.info" = "Info";
+"videoDownload.info.duration" = "Duration: %@";
+"videoDownload.info.count" = "Downloadable items: %d";
+"videoDownload.section.list" = "Download List";
+"videoDownload.list.empty" = "No downloadable item found";
+"videoDownload.downloading" = "Downloading...";
+"videoDownload.button.downloaded" = "Downloaded";
+"videoDownload.button.download" = "Download";
+"videoDownload.section.recent" = "Recent Download";
+"videoDownload.button.saveToPhotos" = "Save to Photos";
+"videoDownload.button.saveToFiles" = "Save to Files";
+"videoDownload.message.savedToFiles" = "Saved to Files";
+"videoDownload.message.downloadCompleted" = "Download completed";
+"videoDownload.message.noPhotoPermission" = "No photo library permission";
+"videoDownload.message.savedToPhotos" = "Saved to Photos";
 /* AI */
 "ai.analysis" = "AI Analysis";
 "ai.summary" = "Summary";
@@ -198,6 +222,7 @@
 "settings.tts.voice" = "Voice";
 "settings.tts.rate" = "Speech Rate";
 "settings.tts.enableAutoPlay" = "Auto-play on Sentence End";
+"settings.cobaltApiKey" = "Cobalt API Key";
 "settings.about" = "About";
 "settings.version" = "Version";
 "settings.privacyPolicy" = "Privacy Policy";
@@ -210,6 +235,9 @@
 "server.title" = "Server";
 "server.address" = "Server Address";
 "settings.videoParserSource" = "Video Parser Source";
+"settings.videoParserSource.auto" = "Auto";
+"settings.videoParserSource.x2twitter" = "x2twitter";
+"settings.videoParserSource.cobalt" = "cobalt";
 "server.address.placeholder" = "http://192.168.1.100:8080";
 "server.quickSet" = "Quick Settings";
 "server.edit" = "Edit Server";

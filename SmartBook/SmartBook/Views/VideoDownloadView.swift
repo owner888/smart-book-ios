@@ -21,8 +21,8 @@ struct VideoDownloadView: View {
 
     var body: some View {
         List {
-            Section("链接") {
-                TextField("粘贴视频链接", text: $inputURL)
+            Section(L("videoDownload.section.link")) {
+                TextField(L("videoDownload.input.placeholder"), text: $inputURL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
 
@@ -34,33 +34,33 @@ struct VideoDownloadView: View {
                     if isParsing {
                         HStack {
                             ProgressView()
-                            Text("解析中...")
+                            Text(L("videoDownload.parsing"))
                         }
                     } else {
-                        Text("解析视频")
+                        Text(L("videoDownload.parse"))
                     }
                 }
                 .disabled(inputURL.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isParsing)
             }
 
             if let model {
-                Section("信息") {
+                Section(L("videoDownload.section.info")) {
                     if let title = model.title, !title.isEmpty {
                         Text(title)
                     }
                     if let duration = model.videoDuration, !duration.isEmpty {
-                        Text("时长：\(duration)")
+                        Text(String(format: L("videoDownload.info.duration"), duration))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    Text("可下载数量：\(model.videoList.count)")
+                    Text(String(format: L("videoDownload.info.count"), model.videoList.count))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Section("下载列表") {
+                Section(L("videoDownload.section.list")) {
                     if model.videoList.isEmpty {
-                        Text("未找到可下载项")
+                        Text(L("videoDownload.list.empty"))
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(model.videoList, id: \.href) { item in
@@ -81,7 +81,7 @@ struct VideoDownloadView: View {
                                             .foregroundStyle(.secondary)
                                     } else {
                                         ProgressView()
-                                        Text("下载中...")
+                                        Text(L("videoDownload.downloading"))
                                             .font(.caption2)
                                             .foregroundStyle(.secondary)
                                     }
@@ -92,7 +92,7 @@ struct VideoDownloadView: View {
                                         await download(item)
                                     }
                                 } label: {
-                                    Text(progress == 100 ? "已下载" : "下载")
+                                    Text(progress == 100 ? L("videoDownload.button.downloaded") : L("videoDownload.button.download"))
                                 }
                                 .disabled(isDownloading)
                             }
@@ -103,21 +103,21 @@ struct VideoDownloadView: View {
             }
 
             if let path = lastDownloadedPath {
-                Section("最近下载") {
+                Section(L("videoDownload.section.recent")) {
                     Text(path)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
 
                     if let item = lastDownloadedItem {
                         if item.isVideo || item.isPhoto {
-                            Button("保存到相册") {
+                            Button(L("videoDownload.button.saveToPhotos")) {
                                 Task {
                                     await saveToPhotos()
                                 }
                             }
                         }
 
-                        Button("保存到文件") {
+                        Button(L("videoDownload.button.saveToFiles")) {
                             do {
                                 guard let path = lastDownloadedPath else { return }
                                 exportDocument = try DownloadedFileDocument(url: URL(fileURLWithPath: path))
@@ -131,7 +131,7 @@ struct VideoDownloadView: View {
             }
 
             if let successMessage {
-                Section("完成") {
+                Section(L("common.success")) {
                     Text(successMessage)
                         .foregroundStyle(.green)
                         .font(.caption)
@@ -139,18 +139,18 @@ struct VideoDownloadView: View {
             }
 
             if let errorMessage {
-                Section("错误") {
+                Section(L("common.error")) {
                     Text(errorMessage)
                         .foregroundStyle(.red)
                         .font(.caption)
                 }
             }
         }
-        .navigationTitle("视频下载")
+        .navigationTitle(L("videoDownload.title"))
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("关闭") {
+                Button(L("common.close")) {
                     dismiss()
                 }
             }
@@ -163,7 +163,7 @@ struct VideoDownloadView: View {
         ) { result in
             switch result {
             case .success:
-                successMessage = "已保存到文件"
+                successMessage = L("videoDownload.message.savedToFiles")
                 errorMessage = nil
             case .failure(let error):
                 errorMessage = error.localizedDescription
@@ -202,7 +202,7 @@ struct VideoDownloadView: View {
             downloadProgress[item.href] = 100
             lastDownloadedPath = localURL.path
             lastDownloadedItem = item
-            successMessage = "下载完成"
+            successMessage = L("videoDownload.message.downloadCompleted")
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -214,14 +214,14 @@ struct VideoDownloadView: View {
 
         let status = await requestPhotoPermission()
         guard status == .authorized || status == .limited else {
-            errorMessage = "没有相册权限"
+            errorMessage = L("videoDownload.message.noPhotoPermission")
             return
         }
 
         do {
             let url = URL(fileURLWithPath: path)
             try await saveAsset(url: url, isVideo: item.isVideo)
-            successMessage = "已保存到相册"
+            successMessage = L("videoDownload.message.savedToPhotos")
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription

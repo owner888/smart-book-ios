@@ -106,9 +106,9 @@ struct SettingsView: View {
                             .foregroundColor(colors.primaryText)
                         Spacer()
                         Picker("", selection: $twitterParserSource) {
-                            Text("自动").tag("auto")
-                            Text("x2twitter").tag("x2twitter")
-                            Text("cobalt").tag("cobalt")
+                            Text(L("settings.videoParserSource.auto")).tag("auto")
+                            Text(L("settings.videoParserSource.x2twitter")).tag("x2twitter")
+                            Text(L("settings.videoParserSource.cobalt")).tag("cobalt")
                         }
                         .labelsHidden()
                         .tint(colors.secondaryText)
@@ -116,10 +116,10 @@ struct SettingsView: View {
 
                     HStack(spacing: 12) {
                         SettingsIcon(icon: "key.fill", color: .orange)
-                        Text("Cobalt API Key")
+                        Text(L("settings.cobaltApiKey"))
                             .foregroundColor(colors.primaryText)
                         Spacer()
-                        SecureField("可选", text: $cobaltApiKey)
+                        SecureField(L("common.optional"), text: $cobaltApiKey)
                             .multilineTextAlignment(.trailing)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
@@ -427,7 +427,7 @@ struct SettingsView: View {
     /// 计算缓存大小
     private func calculateCacheSize() -> String {
         guard let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
-            return "0 KB"
+            return L("common.zeroKB")
         }
 
         do {
@@ -442,7 +442,7 @@ struct SettingsView: View {
             }
             return formatBytes(totalSize)
         } catch {
-            return "0 KB"
+            return L("common.zeroKB")
         }
     }
 
