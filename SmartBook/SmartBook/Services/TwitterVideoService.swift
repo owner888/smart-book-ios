@@ -43,6 +43,7 @@ enum TwitterVideoServiceError: LocalizedError {
 final class TwitterVideoService {
     private let session: URLSession
     private let cobaltBaseURL: String
+    private let youtubeQualities = ["1080", "720", "480", "360"]
 
     private var parserSource: String {
         UserDefaults.standard.string(forKey: AppConfig.Keys.twitterParserSource)
@@ -67,7 +68,7 @@ final class TwitterVideoService {
         }
 
         if isYouTubeURL(value) {
-            return try await searchViaCobalt(url: value)
+            return try await searchYouTubeViaCobalt(url: value)
         }
 
         let source = parserSource
@@ -86,7 +87,7 @@ final class TwitterVideoService {
         }
 
         if source == "cobalt" {
-            return try await searchViaCobalt(url: value)
+            return try await searchViaCobalt(url: value, videoQuality: "720")
         }
 
         do {
@@ -103,7 +104,7 @@ final class TwitterVideoService {
             }
             return model
         } catch {
-            return try await searchViaCobalt(url: value)
+            return try await searchViaCobalt(url: value, videoQuality: "720")
         }
     }
 
@@ -198,7 +199,7 @@ private extension TwitterVideoService {
         }
     }
 
-    private func searchViaCobalt(url: String) async throws -> TwitterVideoModel {
+    private func searchViaCobalt(url: String, videoQuality: String) async throws -> TwitterVideoModel {
         let endpoint = cobaltBaseURL.hasSuffix("/") ? cobaltBaseURL : cobaltBaseURL + "/"
         guard let requestURL = URL(string: endpoint) else {
             throw TwitterVideoServiceError.invalidURL
@@ -208,6 +209,7 @@ private extension TwitterVideoService {
         let (data, httpResponse) = try await requestCobalt(
             requestURL: requestURL,
             url: url,
+            videoQuality: videoQuality,
             apiKey: trimmedApiKey,
             includeApiKey: !trimmedApiKey.isEmpty
         )
@@ -258,6 +260,40 @@ private extension TwitterVideoService {
         }
     }
 
+    private func searchYouTubeViaCobalt(url: String) async throws -> TwitterVideoModel {
+        var mergedModel = TwitterVideoModel(status: "ok", data: nil)
+        var options: [TwitterVideoItem] = []
+        var seenHrefs = Set<String>()
+
+        for quality in youtubeQualities {
+            do {
+                let model = try await searchViaCobalt(url: url, videoQuality: quality)
+                if mergedModel.title == nil {
+                    mergedModel.title = model.title
+                }
+                if mergedModel.videoCover == nil {
+                    mergedModel.videoCover = model.videoCover
+                }
+
+                for item in model.videoList {
+                    guard !seenHrefs.contains(item.href) else { continue }
+                    seenHrefs.insert(item.href)
+                    let optionTitle = "\(quality)p - \(item.title)"
+                    options.append(TwitterVideoItem(href: item.href, title: optionTitle))
+                }
+            } catch {
+                continue
+            }
+        }
+
+        guard !options.isEmpty else {
+            throw TwitterVideoServiceError.noMediaFound
+        }
+
+        mergedModel.videoList = options
+        return mergedModel
+    }
+
     private func normalizeCobaltMediaURL(_ rawURL: String) -> String {
         guard
             let mediaURL = URL(string: rawURL),
@@ -285,6 +321,7 @@ private extension TwitterVideoService {
     private func requestCobalt(
         requestURL: URL,
         url: String,
+        videoQuality: String,
         apiKey: String,
         includeApiKey: Bool
     ) async throws -> (Data, HTTPURLResponse) {
@@ -299,7 +336,7 @@ private extension TwitterVideoService {
         request.httpBody = try JSONSerialization.data(
             withJSONObject: [
                 "url": url,
-                "videoQuality": "720",
+                "videoQuality": videoQuality,
                 "downloadMode": "auto",
             ]
         )
