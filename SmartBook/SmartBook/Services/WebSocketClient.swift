@@ -169,31 +169,33 @@ class WebSocketClient: NSObject {
 
     private func receiveMessage() {
         webSocketTask?.receive { [weak self] result in
-            guard let self = self else { return }
+            Task { @MainActor in
+                guard let self = self else { return }
 
-            switch result {
-            case .success(let message):
-                // 处理消息
-                switch message {
-                case .string(let text):
-                    self.onMessage?(.text(text))
-                case .data(let data):
-                    self.onMessage?(.data(data))
-                @unknown default:
-                    break
+                switch result {
+                case .success(let message):
+                    // 处理消息
+                    switch message {
+                    case .string(let text):
+                        self.onMessage?(.text(text))
+                    case .data(let data):
+                        self.onMessage?(.data(data))
+                    @unknown default:
+                        break
+                    }
+
+                    // 继续接收下一条消息
+                    self.receiveMessage()
+
+                case .failure(let error):
+                    Logger.error("WebSocket 接收消息失败: \(error.localizedDescription)")
+                    await MainActor.run {
+                        self.isConnected = false
+                        self.onDisconnected?(error)
+                    }
+                    // 尝试重连
+                    self.attemptReconnect()
                 }
-
-                // 继续接收下一条消息
-                self.receiveMessage()
-
-            case .failure(let error):
-                Logger.error("WebSocket 接收消息失败: \(error.localizedDescription)")
-
-                self.isConnected = false
-                self.onDisconnected?(error)
-
-                // 尝试重连
-                self.attemptReconnect()
             }
         }
     }
@@ -263,3 +265,4 @@ class WebSocketClient: NSObject {
         reconnectAttempts = 0
     }
 }
+
