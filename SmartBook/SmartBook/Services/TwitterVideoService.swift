@@ -205,58 +205,12 @@ private extension TwitterVideoService {
         }
 
         let trimmedApiKey = cobaltApiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        let defaultApiKey = AppConfig.defaultCobaltApiKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        Logger.info(
-            "🎯 Cobalt request start: endpoint=\(requestURL.absoluteString), hasKey=\(!trimmedApiKey.isEmpty), key=\(keyFingerprint(trimmedApiKey)), defaultKey=\(keyFingerprint(defaultApiKey))"
-        )
-        var (data, httpResponse) = try await requestCobalt(
+        let (data, httpResponse) = try await requestCobalt(
             requestURL: requestURL,
             url: url,
             apiKey: trimmedApiKey,
             includeApiKey: !trimmedApiKey.isEmpty
         )
-        Logger.info("📡 Cobalt first response status=\(httpResponse.statusCode)")
-
-        if !(200...299).contains(httpResponse.statusCode),
-           let firstParsed = try? JSONDecoder().decode(CobaltResponse.self, from: data),
-           let errorCode = firstParsed.error?.code,
-           ["error.api.auth.key.not_found", "error.api.auth.key.invalid"].contains(errorCode),
-           !trimmedApiKey.isEmpty {
-            Logger.warning("⚠️ Cobalt key failed with \(errorCode), currentKey=\(keyFingerprint(trimmedApiKey))")
-            if !defaultApiKey.isEmpty, defaultApiKey != trimmedApiKey {
-                Logger.info("🔁 Retry with default key: \(keyFingerprint(defaultApiKey))")
-                let (defaultData, defaultResponse) = try await requestCobalt(
-                    requestURL: requestURL,
-                    url: url,
-                    apiKey: defaultApiKey,
-                    includeApiKey: true
-                )
-                Logger.info("📡 Cobalt default-key response status=\(defaultResponse.statusCode)")
-                if (200...299).contains(defaultResponse.statusCode) {
-                    data = defaultData
-                    httpResponse = defaultResponse
-                }
-            }
-
-            if (200...299).contains(httpResponse.statusCode) {
-                // default key retry already succeeded
-            } else {
-            Logger.info("🔁 Retry without key (anonymous)")
-            let (retryData, retryResponse) = try await requestCobalt(
-                requestURL: requestURL,
-                url: url,
-                apiKey: trimmedApiKey,
-                includeApiKey: false
-            )
-            Logger.info("📡 Cobalt anonymous response status=\(retryResponse.statusCode)")
-            if (200...299).contains(retryResponse.statusCode) {
-                data = retryData
-                httpResponse = retryResponse
-            } else {
-                throw TwitterVideoServiceError.serviceError(status: errorCode)
-            }
-            }
-        }
 
         if !(200...299).contains(httpResponse.statusCode) {
             if let parsed = try? JSONDecoder().decode(CobaltResponse.self, from: data) {
@@ -304,12 +258,6 @@ private extension TwitterVideoService {
         }
     }
 
-    private func keyFingerprint(_ key: String) -> String {
-        guard !key.isEmpty else { return "empty" }
-        let prefix = String(key.prefix(8))
-        return "\(prefix)…(len:\(key.count))"
-    }
-
     private func normalizeCobaltMediaURL(_ rawURL: String) -> String {
         guard
             let mediaURL = URL(string: rawURL),
@@ -331,9 +279,7 @@ private extension TwitterVideoService {
         components?.host = baseHost
         components?.port = baseURL.port
 
-        let normalized = components?.url?.absoluteString ?? rawURL
-        Logger.info("🔧 Normalize Cobalt URL: \(rawURL) -> \(normalized)")
-        return normalized
+        return components?.url?.absoluteString ?? rawURL
     }
 
     private func requestCobalt(
@@ -353,7 +299,7 @@ private extension TwitterVideoService {
         request.httpBody = try JSONSerialization.data(
             withJSONObject: [
                 "url": url,
-                "videoQuality": "1080",
+                "videoQuality": "720",
                 "downloadMode": "auto",
             ]
         )
