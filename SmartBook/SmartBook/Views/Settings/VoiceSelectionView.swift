@@ -46,6 +46,7 @@ struct VoiceSelectionView: View {
         .toolbarBackground(colors.navigationBar, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .onAppear {
+            ttsService.ensureVoicesLoaded()
             selectedVoiceId = ttsService.selectedVoice?.identifier ?? ""
         }
     }

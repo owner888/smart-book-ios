@@ -3,43 +3,72 @@
 import AVFoundation
 import Combine
 import Foundation
+import SwiftUI
 
 class TTSService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
     @Published var isSpeaking = false
     @Published var availableVoices: [AVSpeechSynthesisVoice] = []
 
-    private let synthesizer = AVSpeechSynthesizer()
+    private var synthesizer: AVSpeechSynthesizer?
     private var onComplete: (() -> Void)?
+    private var hasLoadedVoices = false
+
+    @AppStorage(AppConfig.Keys.selectedVoice) private var selectedVoiceId = ""
 
     var rate: Float = AVSpeechUtteranceDefaultSpeechRate
-    var selectedVoice: AVSpeechSynthesisVoice?
+    var selectedVoice: AVSpeechSynthesisVoice? {
+        didSet {
+            selectedVoiceId = selectedVoice?.identifier ?? ""
+        }
+    }
 
     override init() {
         super.init()
-        synthesizer.delegate = self
-        loadVoices()
+    }
+
+    private func getSynthesizer() -> AVSpeechSynthesizer {
+        if let synthesizer {
+            return synthesizer
+        }
+        let newSynthesizer = AVSpeechSynthesizer()
+        newSynthesizer.delegate = self
+        synthesizer = newSynthesizer
+        return newSynthesizer
     }
 
     // MARK: - 加载可用语音
-    func loadVoices() {
+    func loadVoices(force: Bool = false) {
+        if hasLoadedVoices && !force {
+            return
+        }
+
         // 获取中文语音
         availableVoices = AVSpeechSynthesisVoice.speechVoices().filter { voice in
             voice.language.hasPrefix("zh")
         }
 
+        hasLoadedVoices = true
+
         // 选择默认语音（优先选择高质量语音）
         selectedVoice =
+            availableVoices.first { $0.identifier == selectedVoiceId }
+            ??
             availableVoices.first { $0.quality == .enhanced }
             ?? availableVoices.first { $0.language == "zh-CN" }
             ?? availableVoices.first
 
-        Logger.info("可用中文语音: \(availableVoices.map { $0.name })")
-        Logger.info("选择语音: \(selectedVoice?.name ?? "无")")
+        Logger.debug("TTS voices loaded: \(availableVoices.count)")
+    }
+
+    func ensureVoicesLoaded() {
+        loadVoices()
     }
 
     // MARK: - 朗读文本
     @MainActor
     func speak(_ text: String) async {
+        ensureVoicesLoaded()
+
         // 清理文本（移除 Markdown 等）
         let cleanText = cleanMarkdown(text)
         guard !cleanText.isEmpty else { return }
@@ -73,13 +102,17 @@ class TTSService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
             }
 
             isSpeaking = true
-            synthesizer.speak(utterance)
+            getSynthesizer().speak(utterance)
         }
     }
 
     // MARK: - 停止朗读
     @MainActor
     func stop() {
+        guard let synthesizer else {
+            isSpeaking = false
+            return
+        }
         if synthesizer.isSpeaking {
             synthesizer.stopSpeaking(at: .immediate)
         }
@@ -88,10 +121,12 @@ class TTSService: NSObject, ObservableObject, AVSpeechSynthesizerDelegate {
 
     // MARK: - 暂停/继续
     func pause() {
+        guard let synthesizer else { return }
         synthesizer.pauseSpeaking(at: .word)
     }
 
     func resume() {
+        guard let synthesizer else { return }
         synthesizer.continueSpeaking()
     }
 
