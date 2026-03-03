@@ -77,9 +77,24 @@ extension UIButton {
         // ✅ 添加渐变边框层
         layer.sublayers?.filter { $0.name == "gradientBorder" }.forEach { $0.removeFromSuperlayer() }
 
+        // buildUI 初期可能在 Auto Layout 前调用，bounds 可能为 0 或无效；
+        // 这时构建 roundedRect/inset path 会触发 CoreGraphics NaN 警告甚至崩溃。
+        let rect = bounds
+        let hasValidBounds = rect.origin.x.isFinite
+            && rect.origin.y.isFinite
+            && rect.size.width.isFinite
+            && rect.size.height.isFinite
+            && !rect.size.width.isNaN
+            && !rect.size.height.isNaN
+            && rect.size.width > 2
+            && rect.size.height > 2
+        guard hasValidBounds else {
+            return
+        }
+
         let gradientLayer = CAGradientLayer()
         gradientLayer.name = "gradientBorder"
-        gradientLayer.frame = bounds
+        gradientLayer.frame = rect
         gradientLayer.cornerRadius = cornerRadius
 
         switch preset {
@@ -107,9 +122,9 @@ extension UIButton {
 
         // 创建遮罩，只显示边框
         let maskLayer = CAShapeLayer()
-        let outerPath = UIBezierPath(roundedRect: gradientLayer.bounds, cornerRadius: cornerRadius)
+        let outerPath = UIBezierPath(roundedRect: rect, cornerRadius: cornerRadius)
         let innerPath = UIBezierPath(
-            roundedRect: gradientLayer.bounds.insetBy(dx: 1, dy: 1),
+            roundedRect: rect.insetBy(dx: 1, dy: 1),
             cornerRadius: max(cornerRadius - 1, 0)
         )
         outerPath.append(innerPath.reversing())
