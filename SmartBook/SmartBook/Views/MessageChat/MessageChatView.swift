@@ -203,6 +203,21 @@ class MessageChatView: UIView {
         tableViewTopConstraint = tableView.topAnchor.constraint(equalTo: mainView.topAnchor)
         emptyBgViewTopConstraint = emptyBgView.topAnchor.constraint(equalTo: mainView.topAnchor)
 
+        let tableLeading = tableView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 15)
+        tableLeading.priority = .defaultHigh
+        let tableTrailing = tableView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -15)
+        tableTrailing.priority = .defaultHigh
+
+        let topLeading = topView!.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 12)
+        topLeading.priority = .defaultHigh
+        let topTrailing = topView!.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -12)
+        topTrailing.priority = .defaultHigh
+
+        let inputLeading = inputBar.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 15)
+        inputLeading.priority = .defaultHigh
+        let inputTrailing = inputBar.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -15)
+        inputTrailing.priority = .defaultHigh
+
         NSLayoutConstraint.activate([
             // mainView: safeArea 约束
             mainView.topAnchor.constraint(equalTo: safeAreaLayoutGuide.topAnchor),
@@ -217,13 +232,13 @@ class MessageChatView: UIView {
 
             // tableView: mainView 内部，左右各 15pt padding
             tableViewTopConstraint,
-            tableView.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 15),
-            tableView.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -15),
+            tableLeading,
+            tableTrailing,
             tableView.bottomAnchor.constraint(equalTo: mainView.bottomAnchor),
 
             // topView: 底部对齐 mainView，高度 50，左右 12pt
-            topView!.leadingAnchor.constraint(equalTo: mainView.leadingAnchor, constant: 12),
-            topView!.trailingAnchor.constraint(equalTo: mainView.trailingAnchor, constant: -12),
+            topLeading,
+            topTrailing,
             topView!.bottomAnchor.constraint(equalTo: mainView.bottomAnchor, constant: -6),
             topView!.heightAnchor.constraint(equalToConstant: 50),
 
@@ -237,8 +252,8 @@ class MessageChatView: UIView {
             bottomBtn.heightAnchor.constraint(equalToConstant: 38),
 
             // inputBar: 左右各 15pt（safeArea），低优先级高度
-            inputBar.leadingAnchor.constraint(equalTo: safeAreaLayoutGuide.leadingAnchor, constant: 15),
-            inputBar.trailingAnchor.constraint(equalTo: safeAreaLayoutGuide.trailingAnchor, constant: -15),
+            inputLeading,
+            inputTrailing,
             bottomConstraint,
         ])
 
