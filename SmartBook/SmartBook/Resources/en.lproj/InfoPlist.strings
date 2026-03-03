@@ -1,6 +1,8 @@
 /* Camera Permission */
-"NSCameraUsageDescription" = "Camera access is needed to take photos";
+"NSCameraUsageDescription" = "Used to capture photos in chat and send them to our server for image recognition and analysis.";
 
 /* Photo Library Permissions */
-"NSPhotoLibraryUsageDescription" = "Photo library access is needed to select photos";
-"NSPhotoLibraryAddUsageDescription" = "Photo library access is needed to save photos";
+"NSPhotoLibraryUsageDescription" = "Used to select photos in chat and send them to our server for image recognition and intelligent analysis to generate responses.";
+"NSPhotoLibraryAddUsageDescription" = "Used to save images generated or processed in chat to your photo library.";
+"NSMicrophoneUsageDescription" = "Will use your microphone for voice mode and dictation.";
+"NSSpeechRecognitionUsageDescription" = "Used to convert voice input into text for speech recognition and conversation.";

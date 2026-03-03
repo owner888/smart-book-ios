@@ -1,6 +1,8 @@
 /* Camera Permission */
-"NSCameraUsageDescription" = "需要訪問您的相機以拍攝照片";
+"NSCameraUsageDescription" = "用於拍攝圖片並發送至伺服器進行內容識別與智慧分析，以產生回复";
 
 /* Photo Library Permissions */
-"NSPhotoLibraryUsageDescription" = "需要訪問您的相冊以選擇照片";
-"NSPhotoLibraryAddUsageDescription" = "需要訪問您的相冊以保存照片";
+"NSPhotoLibraryUsageDescription" = "用於在聊天中選擇圖片並發送至伺服器進行識別和智慧分析，以產生回复";
+"NSPhotoLibraryAddUsageDescription" = "用於在聊天中保存生成的圖片或處理後的圖片到您的相冊";
+"NSMicrophoneUsageDescription" = "將使用您的麥克風進行語音模式和聽寫";
+"NSSpeechRecognitionUsageDescription" = "用於在聊天中將語音轉換為文字以進行語音識別和智慧對話";
