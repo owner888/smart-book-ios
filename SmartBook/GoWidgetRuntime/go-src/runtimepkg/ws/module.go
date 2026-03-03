@@ -39,7 +39,7 @@ func (b *wsModule) _from(args ...goja.Value) *goja.Object {
 		panic(errors.NewTypeError(b.r, errors.ErrCodeInvalidArgType, "The first argument must be of type string"))
 	}
 	arg := args[0]
-	var url = ""
+	url := ""
 	if arg != nil && arg.ExportType() != nil {
 		switch arg.ExportType().Kind() {
 		case reflect.String:

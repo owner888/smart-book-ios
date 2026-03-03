@@ -71,9 +71,9 @@ type vmRuntime struct {
 }
 
 type ffiResult struct {
-	Code int         `json:"code"`
-	Msg  string      `json:"msg"`
-	Data any `json:"data"`
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+	Data any    `json:"data"`
 }
 
 var (
