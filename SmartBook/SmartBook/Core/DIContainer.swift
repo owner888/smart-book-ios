@@ -27,6 +27,8 @@ class DIContainer {
     let ttsService = TTSService()
     let checkInService = CheckInService()
     let summarizationService = SummarizationService(threshold: AppConfig.DefaultValues.summarizationThresholdRounds)
+    lazy var widgetRuntime: WidgetRuntime = GoWidgetRuntimeAdapter()
+    lazy var widgetRuntimeService = WidgetRuntimeService(runtime: widgetRuntime)
 
     /// 共享的 ChatHistoryService（延迟初始化，需要 ModelContext）
     private var _chatHistoryService: ChatHistoryService?

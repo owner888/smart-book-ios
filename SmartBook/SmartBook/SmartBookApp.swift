@@ -15,6 +15,12 @@ struct SmartBookApp: App {
             DebugConfig.printAllConfiguration()
         #endif
 
+        Task.detached(priority: .background) {
+            let service = await DIContainer.shared.widgetRuntimeService
+            await service.installBundledSmokeSampleIfNeeded()
+            await service.runSmokeFromLaunchArguments()
+        }
+
         // 启动时加载模型列表和助手列表
         Task {
             await MenuConfig.loadAIModels()

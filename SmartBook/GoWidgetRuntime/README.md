@@ -31,6 +31,9 @@ cd SmartBook/GoWidgetRuntime/scripts
 ./build_local_go_src.sh
 ```
 
+> 该脚本默认输出 iOS（`GOOS=ios`, `GOARCH=arm64`）静态库，避免出现
+> `built for 'macOS'` 但在 iOS target 链接的错误。
+
 2. 产物会输出到：
 - `SmartBook/GoWidgetRuntime/artifacts/libwidget_runtime_local.a`
 - `SmartBook/GoWidgetRuntime/artifacts/libwidget_runtime_local.h`
