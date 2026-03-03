@@ -368,7 +368,7 @@ func cStringToGo(v *C.char) string {
 	return C.GoString(v)
 }
 
-func marshalResponse(code int, msg string, data interface{}) *C.char {
+func marshalResponse(code int, msg string, data any) *C.char {
 	payload, _ := json.Marshal(ffiResult{Code: code, Msg: msg, Data: data})
 	return C.CString(string(payload))
 }
@@ -505,7 +505,7 @@ func wr_run(handle C.int64_t, script *C.char) *C.char {
 		return marshalResponse(-2, err.Error(), nil)
 	}
 
-	var jsonData interface{}
+	var jsonData any
 	if json.Unmarshal([]byte(result), &jsonData) == nil {
 		return marshalResponse(0, "ok", jsonData)
 	}

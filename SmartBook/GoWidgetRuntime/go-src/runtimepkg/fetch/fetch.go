@@ -54,9 +54,9 @@ func request(loop *eventloop.EventLoop, proxy http.Handler) func(call goja.Funct
 	return func(call goja.FunctionCall) goja.Value {
 		if fn, ok := goja.AssertFunction(call.Argument(2)); ok {
 			u := call.Argument(0).String()
-			o := map[string]interface{}{}
+			o := map[string]any{}
 			if arg := call.Argument(1); !goja.IsUndefined(arg) && !goja.IsNull(arg) {
-				if exported, ok := arg.Export().(map[string]interface{}); ok {
+				if exported, ok := arg.Export().(map[string]any); ok {
 					o = exported
 				}
 			}
@@ -71,9 +71,9 @@ func request(loop *eventloop.EventLoop, proxy http.Handler) func(call goja.Funct
 				method := http.MethodGet
 				header := make(http.Header)
 				if headers, ex := o["headers"]; ex {
-					if hmap, okh := headers.(map[string]interface{}); okh {
+					if hmap, okh := headers.(map[string]any); okh {
 						for key, value := range hmap {
-							if arr, ok := value.([]interface{}); ok {
+							if arr, ok := value.([]any); ok {
 								var items []string
 								for _, item := range arr {
 									if s, ok := item.(string); ok {
@@ -102,9 +102,9 @@ func request(loop *eventloop.EventLoop, proxy http.Handler) func(call goja.Funct
 
 				res := httptest.NewRecorder()
 				req, err := http.NewRequest(method, u, body)
-				var toRet map[string]interface{}
+				var toRet map[string]any
 				if err != nil {
-					toRet = map[string]interface{}{
+					toRet = map[string]any{
 						"url":     u,
 						"method":  method,
 						"status":  http.StatusInternalServerError,
@@ -114,7 +114,7 @@ func request(loop *eventloop.EventLoop, proxy http.Handler) func(call goja.Funct
 				} else {
 					req.Header = header
 					proxy.ServeHTTP(res, req)
-					toRet = map[string]interface{}{
+					toRet = map[string]any{
 						"url":     u,
 						"method":  method,
 						"status":  res.Code,
