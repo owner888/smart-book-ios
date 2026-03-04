@@ -7,8 +7,29 @@ final class WidgetRuntimeService {
         self.runtime = runtime
     }
 
+    func installBundledSamplesIfNeeded() {
+        installBundledSampleIfNeeded(
+            relativePath: "widget-samples/smoke",
+            bundledFiles: bundledSmokeFiles(),
+            sampleName: "smoke"
+        )
+
+        installBundledSampleIfNeeded(
+            relativePath: "widget-samples/ip",
+            bundledFiles: bundledIPFiles(),
+            sampleName: "ip"
+        )
+    }
+
     func installBundledSmokeSampleIfNeeded() {
-        let relativePath = "widget-samples/smoke"
+        installBundledSamplesIfNeeded()
+    }
+
+    private func installBundledSampleIfNeeded(
+        relativePath: String,
+        bundledFiles: (widget: URL, index: URL)?,
+        sampleName: String
+    ) {
 
         guard let appSupportURL = applicationSupportDirectoryURL() else {
             Logger.warning("[WidgetFFI] app support directory unavailable")
@@ -23,8 +44,8 @@ final class WidgetRuntimeService {
         }
 
         do {
-            guard let bundledFiles = bundledSmokeFiles() else {
-                Logger.error("[WidgetFFI] bundled smoke sample missing from app resources")
+            guard let bundledFiles else {
+                Logger.error("[WidgetFFI] bundled \(sampleName) sample missing from app resources")
                 return
             }
 
@@ -43,9 +64,9 @@ final class WidgetRuntimeService {
                 options: .atomic
             )
 
-            Logger.info("[WidgetFFI] installed bundled smoke sample to: \(destinationURL.path)")
+            Logger.info("[WidgetFFI] installed bundled \(sampleName) sample to: \(destinationURL.path)")
         } catch {
-            Logger.error("[WidgetFFI] copy smoke sample failed: \(error.localizedDescription)")
+            Logger.error("[WidgetFFI] copy \(sampleName) sample failed: \(error.localizedDescription)")
         }
     }
 
@@ -113,7 +134,15 @@ final class WidgetRuntimeService {
                 Logger.info("[WidgetFFI] tool event=\(event), payload=\(payload)")
             }
             try runtime.start(initialScript: nil)
-            let result = try runtime.run(script ?? "1+1")
+            let defaultScript: String
+            if script == nil && (widget == "ip" || widget.hasSuffix("/ip")) {
+                defaultScript = "(async()=>JSON.stringify(await getClientIP()))()"
+            } else {
+                defaultScript = "1+1"
+            }
+
+            let rawResult = try runtime.run(script ?? defaultScript)
+            let normalizedResult = normalizeRunResult(rawResult)
 
             if let eventName {
                 try runtime.on(event: eventName, payload: payloadString)
@@ -124,7 +153,7 @@ final class WidgetRuntimeService {
 
             return [
                 "widget_path": widgetPath,
-                "run_result": result,
+                "run_result": normalizedResult,
                 "event_sent": eventName != nil,
             ]
         } catch {
@@ -191,6 +220,12 @@ final class WidgetRuntimeService {
 
         var candidates: [URL] = []
 
+        if !input.contains("/") {
+            if let appSupport = applicationSupportDirectoryURL() {
+                candidates.append(appSupport.appendingPathComponent("widget-samples/\(input)", isDirectory: true))
+            }
+        }
+
         if let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first {
             candidates.append(documents.appendingPathComponent(input, isDirectory: true))
         }
@@ -237,5 +272,31 @@ final class WidgetRuntimeService {
             return nil
         }
         return (widget, index)
+    }
+
+    private func bundledIPFiles() -> (widget: URL, index: URL)? {
+        guard
+            let widget = Bundle.main.url(forResource: "widget_runtime_ip_widget", withExtension: "js"),
+            let index = Bundle.main.url(forResource: "widget_runtime_ip_index", withExtension: "js")
+        else {
+            return nil
+        }
+        return (widget, index)
+    }
+
+    private func normalizeRunResult(_ raw: String) -> Any {
+        guard let data = raw.data(using: .utf8) else {
+            return raw
+        }
+
+        guard let decoded = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return raw
+        }
+
+        if let runData = decoded["data"] {
+            return runData
+        }
+
+        return decoded
     }
 }

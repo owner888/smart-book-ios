@@ -17,7 +17,7 @@ struct SmartBookApp: App {
 
         Task.detached(priority: .background) {
             let service = await DIContainer.shared.widgetRuntimeService
-            await service.installBundledSmokeSampleIfNeeded()
+            await service.installBundledSamplesIfNeeded()
             await service.runSmokeFromLaunchArguments()
         }
 
