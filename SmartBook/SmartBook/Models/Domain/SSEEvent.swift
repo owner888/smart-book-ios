@@ -14,6 +14,32 @@ struct ToolCallRequest {
     let calls: [[String: Any]]
 }
 
+struct ToolAckInfo: Codable {
+    let requestId: String
+    let round: Int
+    let callsCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case requestId = "request_id"
+        case round
+        case callsCount = "calls_count"
+    }
+}
+
+struct ToolProgressInfo: Codable {
+    let requestId: String
+    let status: String
+    let elapsedSec: Int
+    let timeoutSec: Int
+
+    enum CodingKeys: String, CodingKey {
+        case requestId = "request_id"
+        case status
+        case elapsedSec = "elapsed_sec"
+        case timeoutSec = "timeout_sec"
+    }
+}
+
 /// SSE 事件类型
 enum SSEEvent {
     case systemPrompt(String)
@@ -21,6 +47,8 @@ enum SSEEvent {
     case content(String)
     case sources([RAGSource])
     case tools([ToolInfo])
+    case toolAck(ToolAckInfo)
+    case toolProgress(ToolProgressInfo)
     case toolCall(ToolCallRequest)
     case usage(UsageInfo)
     case cached(Bool)
@@ -56,6 +84,22 @@ enum SSEEvent {
                 let tools = try? JSONDecoder().decode([ToolInfo].self, from: jsonData)
             {
                 return .tools(tools)
+            }
+            return nil
+
+        case "tool_ack":
+            if let jsonData = data.data(using: .utf8),
+                let ack = try? JSONDecoder().decode(ToolAckInfo.self, from: jsonData)
+            {
+                return .toolAck(ack)
+            }
+            return nil
+
+        case "tool_progress":
+            if let jsonData = data.data(using: .utf8),
+                let progress = try? JSONDecoder().decode(ToolProgressInfo.self, from: jsonData)
+            {
+                return .toolProgress(progress)
             }
             return nil
 

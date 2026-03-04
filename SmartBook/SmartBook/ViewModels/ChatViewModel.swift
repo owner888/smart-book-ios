@@ -284,6 +284,45 @@ class ChatViewModel: ObservableObject {
                         await self.streamingService.submitToolResult(requestId: request.requestId, results: results)
                     }
 
+                case .toolAck(let ack):
+                    Logger.info("🟢 tool_ack: request_id=\(ack.requestId), round=\(ack.round), calls=\(ack.callsCount)")
+                    self.streamingTools = [ToolInfo(name: "执行中 0s", success: true)]
+                    if messageIndex < self.messages.count {
+                        self.messages[messageIndex] = ChatMessage(
+                            id: self.messages[messageIndex].id,
+                            role: .assistant,
+                            content: self.streamingContent,
+                            thinking: self.streamingThinking,
+                            sources: self.streamingSources,
+                            tools: self.streamingTools,
+                            isStreaming: true
+                        )
+                    }
+
+                case .toolProgress(let progress):
+                    Logger.info("🟡 tool_progress: request_id=\(progress.requestId), status=\(progress.status), elapsed=\(progress.elapsedSec)s/\(progress.timeoutSec)s")
+                    let waitingName = "执行中 \(progress.elapsedSec)s/\(progress.timeoutSec)s"
+                    switch progress.status {
+                    case "waiting":
+                        self.streamingTools = [ToolInfo(name: waitingName, success: true)]
+                    case "timeout":
+                        self.streamingTools = [ToolInfo(name: "超时 \(progress.elapsedSec)s", success: false)]
+                    default:
+                        break
+                    }
+
+                    if messageIndex < self.messages.count {
+                        self.messages[messageIndex] = ChatMessage(
+                            id: self.messages[messageIndex].id,
+                            role: .assistant,
+                            content: self.streamingContent,
+                            thinking: self.streamingThinking,
+                            sources: self.streamingSources,
+                            tools: self.streamingTools,
+                            isStreaming: true
+                        )
+                    }
+
                 case .thinking(let thinkingText):
                     Logger.info("🧠 收到思考: \(thinkingText.prefix(50))...")
                     // 累积思考内容
@@ -297,6 +336,7 @@ class ChatViewModel: ObservableObject {
                             content: self.streamingContent,
                             thinking: self.streamingThinking,  // 添加思考内容
                             sources: self.streamingSources,  // 保留来源
+                            tools: self.streamingTools,  // 保留工具进度
                             isStreaming: true
                         )
                     }
