@@ -286,7 +286,7 @@ class ChatViewModel: ObservableObject {
 
                 case .toolAck(let ack):
                     Logger.info("🟢 tool_ack: request_id=\(ack.requestId), round=\(ack.round), calls=\(ack.callsCount)")
-                    self.streamingTools = [ToolInfo(name: "执行中 0s", success: true)]
+                    self.streamingTools = [ToolInfo(name: localizedToolRunningText(elapsed: 0), success: true)]
                     if messageIndex < self.messages.count {
                         self.messages[messageIndex] = ChatMessage(
                             id: self.messages[messageIndex].id,
@@ -301,12 +301,12 @@ class ChatViewModel: ObservableObject {
 
                 case .toolProgress(let progress):
                     Logger.info("🟡 tool_progress: request_id=\(progress.requestId), status=\(progress.status), elapsed=\(progress.elapsedSec)s/\(progress.timeoutSec)s")
-                    let waitingName = "执行中 \(progress.elapsedSec)s/\(progress.timeoutSec)s"
+                    let waitingName = localizedToolWaitingText(elapsed: progress.elapsedSec, timeout: progress.timeoutSec)
                     switch progress.status {
                     case "waiting":
                         self.streamingTools = [ToolInfo(name: waitingName, success: true)]
                     case "timeout":
-                        self.streamingTools = [ToolInfo(name: "超时 \(progress.elapsedSec)s", success: false)]
+                        self.streamingTools = [ToolInfo(name: localizedToolTimeoutText(elapsed: progress.elapsedSec), success: false)]
                     default:
                         break
                     }
@@ -568,5 +568,31 @@ class ChatViewModel: ObservableObject {
         }
 
         return output
+    }
+
+    private var isChineseLanguage: Bool {
+        let code = Locale.current.language.languageCode?.identifier.lowercased() ?? ""
+        return code.hasPrefix("zh")
+    }
+
+    private func localizedToolWaitingText(elapsed: Int, timeout: Int) -> String {
+        if isChineseLanguage {
+            return "执行中 \(elapsed)s/\(timeout)s"
+        }
+        return "Running \(elapsed)s/\(timeout)s"
+    }
+
+    private func localizedToolRunningText(elapsed: Int) -> String {
+        if isChineseLanguage {
+            return "执行中 \(elapsed)s"
+        }
+        return "Running \(elapsed)s"
+    }
+
+    private func localizedToolTimeoutText(elapsed: Int) -> String {
+        if isChineseLanguage {
+            return "超时 \(elapsed)s"
+        }
+        return "Timed out \(elapsed)s"
     }
 }
