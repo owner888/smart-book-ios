@@ -274,6 +274,16 @@ class ChatViewModel: ObservableObject {
                         Logger.error("❌ messageIndex 越界: \(messageIndex) >= \(self.messages.count)")
                     }
 
+                case .toolCall(let request):
+                    Logger.info("📱 收到客户端工具调用请求: \(request.requestId), count=\(request.calls.count)")
+
+                    Task.detached { [weak self] in
+                        guard let self else { return }
+                        let results = await self.executeClientToolCalls(request.calls)
+                        Logger.info("📤 回传客户端工具结果: request_id=\(request.requestId), items=\(results.count)")
+                        await self.streamingService.submitToolResult(requestId: request.requestId, results: results)
+                    }
+
                 case .thinking(let thinkingText):
                     Logger.info("🧠 收到思考: \(thinkingText.prefix(50))...")
                     // 累积思考内容
@@ -469,5 +479,54 @@ class ChatViewModel: ObservableObject {
     func cancelDisplay() {
         wordTimer?.invalidate()
         wordTimer = nil
+    }
+
+    private func executeClientToolCalls(_ calls: [[String: Any]]) async -> [[String: Any]] {
+        var output: [[String: Any]] = []
+
+        for call in calls {
+            let callId = call["id"] as? Int ?? -1
+            let name = call["name"] as? String ?? ""
+            let args = call["args"] as? [String: Any] ?? [:]
+
+            if name == "run_widget" {
+                do {
+                    let widget = (args["widget"] as? String) ?? ""
+                    let script = args["script"] as? String
+                    let event = args["event"] as? String
+                    let payload = args["payload"]
+
+                    let result = try DIContainer.shared.widgetRuntimeService.runTool(
+                        widget: widget,
+                        script: script,
+                        eventName: event,
+                        eventPayloadObject: payload
+                    )
+
+                    output.append([
+                        "call_id": callId,
+                        "name": name,
+                        "result": result,
+                    ])
+                    Logger.info("✅ 本地工具执行成功: call_id=\(callId), name=\(name)")
+                } catch {
+                    output.append([
+                        "call_id": callId,
+                        "name": name,
+                        "error": error.localizedDescription,
+                    ])
+                    Logger.error("❌ 本地工具执行失败: call_id=\(callId), name=\(name), error=\(error.localizedDescription)")
+                }
+            } else {
+                output.append([
+                    "call_id": callId,
+                    "name": name,
+                    "error": "unsupported client tool: \(name)",
+                ])
+                Logger.warning("⚠️ 未支持的客户端工具: call_id=\(callId), name=\(name)")
+            }
+        }
+
+        return output
     }
 }

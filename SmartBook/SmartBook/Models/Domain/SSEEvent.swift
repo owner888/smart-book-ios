@@ -9,6 +9,11 @@ struct ToolInfo: Codable {
     let success: Bool
 }
 
+struct ToolCallRequest {
+    let requestId: String
+    let calls: [[String: Any]]
+}
+
 /// SSE 事件类型
 enum SSEEvent {
     case systemPrompt(String)
@@ -16,6 +21,7 @@ enum SSEEvent {
     case content(String)
     case sources([RAGSource])
     case tools([ToolInfo])
+    case toolCall(ToolCallRequest)
     case usage(UsageInfo)
     case cached(Bool)
     case error(String)
@@ -52,6 +58,13 @@ enum SSEEvent {
                 return .tools(tools)
             }
             return nil
+
+        case "tool_call":
+            guard let jsonData = data.data(using: .utf8) else { return nil }
+            guard let obj = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else { return nil }
+            guard let requestId = obj["request_id"] as? String else { return nil }
+            guard let calls = obj["calls"] as? [[String: Any]] else { return nil }
+            return .toolCall(ToolCallRequest(requestId: requestId, calls: calls))
 
         case "usage":
             if let jsonData = data.data(using: .utf8),

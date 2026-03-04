@@ -82,6 +82,58 @@ final class WidgetRuntimeService {
         }
     }
 
+    func runTool(
+        widget: String,
+        script: String? = nil,
+        eventName: String? = nil,
+        eventPayloadObject: Any? = nil
+    ) throws -> [String: Any] {
+        guard let widgetPath = resolveWidgetPath(widget) else {
+            throw NSError(domain: "WidgetRuntimeService", code: 1, userInfo: [NSLocalizedDescriptionKey: "invalid widget path: \(widget)"])
+        }
+
+        let payloadString: String?
+        if let eventPayloadObject {
+            if JSONSerialization.isValidJSONObject(eventPayloadObject),
+                let data = try? JSONSerialization.data(withJSONObject: eventPayloadObject, options: []),
+                let str = String(data: data, encoding: .utf8)
+            {
+                payloadString = str
+            } else if let str = eventPayloadObject as? String {
+                payloadString = str
+            } else {
+                payloadString = nil
+            }
+        } else {
+            payloadString = nil
+        }
+
+        do {
+            try runtime.create(path: widgetPath) { event, payload in
+                Logger.info("[WidgetFFI] tool event=\(event), payload=\(payload)")
+            }
+            try runtime.start(initialScript: nil)
+            let result = try runtime.run(script ?? "1+1")
+
+            if let eventName {
+                try runtime.on(event: eventName, payload: payloadString)
+            }
+
+            runtime.stop()
+            runtime.destroy()
+
+            return [
+                "widget_path": widgetPath,
+                "run_result": result,
+                "event_sent": eventName != nil,
+            ]
+        } catch {
+            runtime.stop()
+            runtime.destroy()
+            throw error
+        }
+    }
+
     func runSmokeFromLaunchArguments(arguments: [String] = ProcessInfo.processInfo.arguments) {
         Logger.info("[WidgetFFI] launch args: \(arguments.joined(separator: " "))")
 

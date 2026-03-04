@@ -93,6 +93,8 @@ class StreamingChatService: NSObject {
             "chat_id": UUID().uuidString,
             "search": enableSearch,  // ✅ 从配置读取
             "tools": enableTools,  // ✅ 从配置读取
+            "client_tools": enableTools,
+            "client_tool_names": ["run_widget"],
             "rag": enableRag,
             "model": model,
             "assistant_id": assistant.id,
@@ -134,6 +136,26 @@ class StreamingChatService: NSObject {
         // 保存并启动 task
         currentTask = task
         task.resume()
+    }
+
+    func submitToolResult(requestId: String, results: [[String: Any]]) async {
+        let body: [String: Any] = [
+            "request_id": requestId,
+            "results": results,
+        ]
+
+        Logger.info("📡 提交 tool_result: request_id=\(requestId), items=\(results.count)")
+
+        do {
+            let (_, response) = try await HTTPClient.shared.post("/v1/chat/tool-result", body: body)
+            if response.statusCode < 200 || response.statusCode >= 300 {
+                Logger.error("❌ submitToolResult failed, status=\(response.statusCode)")
+            } else {
+                Logger.info("✅ submitToolResult ok: request_id=\(requestId), status=\(response.statusCode)")
+            }
+        } catch {
+            Logger.error("❌ submitToolResult error: \(error.localizedDescription)")
+        }
     }
 
     // 停止流式响应
