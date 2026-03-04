@@ -73,19 +73,25 @@ class StreamingChatService: NSObject {
             "content": message,
         ])
 
-        // 从配置读取工具开关（如果没有设置过，使用默认值）
-        var enableSearch =
+        // 从配置读取开关（如果没有设置过，使用默认值）
+        let userEnableSearch =
             UserDefaults.standard.object(forKey: AppConfig.Keys.enableGoogleSearch) as? Bool
             ?? AppConfig.DefaultValues.enableGoogleSearch
-        let enableTools =
+        let userEnableTools =
             UserDefaults.standard.object(forKey: AppConfig.Keys.enableMCPTools) as? Bool
             ?? AppConfig.DefaultValues.enableMCPTools
 
+        let capabilityMode = resolveCapabilityMode(
+            message: message,
+            preferSearch: userEnableSearch,
+            preferTools: userEnableTools
+        )
+        let enableSearch = capabilityMode.search
+        let enableTools = capabilityMode.tools
+        let clientToolNames = capabilityMode.clientToolNames
+
         // ✅ 互斥检查（Gemini 不支持同时使用）
-        if enableSearch && enableTools {
-            // 优先使用 MCP Tools
-            enableSearch = false
-        }
+        // （已在 resolveCapabilityMode 中完成）
 
         // 构建统一的请求体（OpenAI 格式 + 扩展字段）
         var body: [String: Any] = [
@@ -94,7 +100,7 @@ class StreamingChatService: NSObject {
             "search": enableSearch,  // ✅ 从配置读取
             "tools": enableTools,  // ✅ 从配置读取
             "client_tools": enableTools,
-            "client_tool_names": ["run_widget"],
+            "client_tool_names": clientToolNames,
             "rag": enableRag,
             "model": model,
             "assistant_id": assistant.id,
@@ -156,6 +162,27 @@ class StreamingChatService: NSObject {
         } catch {
             Logger.error("❌ submitToolResult error: \(error.localizedDescription)")
         }
+    }
+
+    private func resolveCapabilityMode(
+        message: String,
+        preferSearch: Bool,
+        preferTools: Bool
+    ) -> (search: Bool, tools: Bool, clientToolNames: [String]) {
+        if AppConfig.WidgetToolIntent.shouldUseWidgetTool(message: message) {
+            Logger.info("🔧 命中 run_widget 意图，切换为 tools 模式（search 关闭）")
+            return (search: false, tools: true, clientToolNames: AppConfig.WidgetToolIntent.clientToolNames)
+        }
+
+        if preferSearch && preferTools {
+            return (search: false, tools: true, clientToolNames: AppConfig.WidgetToolIntent.clientToolNames)
+        }
+
+        return (
+            search: preferSearch,
+            tools: preferTools,
+            clientToolNames: AppConfig.WidgetToolIntent.clientToolNames
+        )
     }
 
     // 停止流式响应

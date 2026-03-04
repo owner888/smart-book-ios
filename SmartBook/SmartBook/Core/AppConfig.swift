@@ -71,6 +71,8 @@ enum AppConfig {
         static let ttsProvider = "ttsProvider"  // TTS 提供商
         static let enableGoogleSearch = "enableGoogleSearch"  // Google Search 开关
         static let enableMCPTools = "enableMCPTools"  // MCP 工具开关
+        static let widgetToolDirectKeywords = "widgetToolDirectKeywords"  // run_widget 直达关键词
+        static let widgetToolIntentKeywords = "widgetToolIntentKeywords"  // run_widget 意图关键词
         static let aiDataConsentGiven = "aiDataConsentGiven"  // AI 数据共享同意状态
     }
 
@@ -91,6 +93,46 @@ enum AppConfig {
         static let defaultModel = "gemini-2.5-flash"  // 默认 AI 模型（支持 thinking）
         static let enableGoogleSearch = false  // 默认关闭（与 MCP 冲突）
         static let enableMCPTools = true  // 默认开启 MCP 工具
+        static let widgetToolDirectKeywords = [
+            "run_widget", "widget=", "widget:", "widget=ip", "widget:ip",
+        ]
+        static let widgetToolIntentKeywords = [
+            "调用工具", "调用 run_widget", "执行小组件", "用小组件", "use tool", "call tool", "function call",
+        ]
         static let summarizationThresholdRounds = 20  // 对话摘要触发阈值（轮次）
+    }
+}
+
+extension AppConfig {
+    enum WidgetToolIntent {
+        static let clientToolNames = ["run_widget"]
+
+        static var directKeywords: [String] {
+            UserDefaults.standard.stringArray(forKey: Keys.widgetToolDirectKeywords)
+                ?? DefaultValues.widgetToolDirectKeywords
+        }
+
+        static var intentKeywords: [String] {
+            UserDefaults.standard.stringArray(forKey: Keys.widgetToolIntentKeywords)
+                ?? DefaultValues.widgetToolIntentKeywords
+        }
+
+        static func shouldUseWidgetTool(message: String) -> Bool {
+            let lowercased = message.lowercased()
+
+            if directKeywords.contains(where: { lowercased.contains($0.lowercased()) }) {
+                return true
+            }
+
+            if intentKeywords.contains(where: { lowercased.contains($0.lowercased()) }) {
+                return true
+            }
+
+            if lowercased.contains("\"widget\"") && lowercased.contains("ip") {
+                return true
+            }
+
+            return false
+        }
     }
 }
